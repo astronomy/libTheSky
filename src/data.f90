@@ -735,7 +735,7 @@ contains
   
   subroutine readasteroidelements()
     use SUFR_constants, only: d2r
-    use SUFR_system, only: find_free_io_unit, file_open_error, file_read_end_error
+    use SUFR_system, only: find_free_io_unit, file_read_end_error
     use SUFR_dummy, only: dumstr9
     use TheSky_constants, only: TheSkydir
     use TheSky_planetdata, only: asternames, nasteroids, asterelems
