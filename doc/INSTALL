@@ -1,0 +1,101 @@
+
+libTheSky INSTALL
+
+
+
+DEPENDENCIES:
+
+You will need CMake to configure and compile the code.  CMake is open-source
+software, is included in many GNU/Linux distributions, and can be downloaded 
+from http://www.cmake.org/.
+
+libTheSky needs the Fortran library libSUFR in order to compile and run.  libSUFR is
+free and open software, and available under the GPL v.3 from 
+http://libsufr.sf.net/.
+
+
+
+UNPACKING:
+
+After downloading from libthesky.sf.net, you can unpack the tarball and cd into its 
+directory by doing e.g.:
+
+  $ tar xfz libthesky-0.1.1.tar.gz
+  $ cd libthesky-0.1.1/
+
+(replace you 0.1.1 with the correct version number).
+
+
+
+COMPILING AND INSTALLING:
+
+To compile and install the code and data files (in the default directories; /usr/...), 
+from the main package directory (the one that contains the file CMakeLists.txt), do:
+
+ $ mkdir build && cd build/
+ $ cmake ..
+ $ make install
+
+
+To install the package in a specific directory, do e.g.:
+
+ $ mkdir build && cd build/
+ $ cmake -DCMAKE_INSTALL_PREFIX:PATH=/home/me/usr ..
+ $ make install
+
+
+To compile the code with your favourite compiler, prepend the cmake line with e.g. 
+FC=gfortran:
+
+ $ FC=gfortran cmake ..
+
+
+To compile the code without installing it anywhere, replace the last step
+ $ make install
+with
+ $ make
+
+
+By default, library and module files will be installed as:
+/usr/lib/libTheSky.*
+/usr/include/libTheSky/*.mod
+
+
+If you want to use the libraries with multiple Fortran compilers, you will want to 
+keep the different versions of the library separated.  In this case, use (in addition 
+to any other options):
+ $ cmake -DCOMPILER_SPECIFIC_LIBS=on ..
+
+The library files will then be installed as:
+/usr/lib/libTheSky_<NameOfFortranCompiler>.*
+/usr/include/libTheSky/<NameOfFortranCompiler>/*.mod
+
+If one of your Fortran compilers is your default, you can use both the default
+installation method and the compiler-specific method to install the library.
+
+
+
+DATA FILES:
+
+The data files are in the data/ subdirectory of the package and will be installed in
+/usr/shared/libTheSky/ by default.  All data files needed to run the code are provided 
+in the package, except one:  asteroids.dat is not included, since it bloats the package 
+by a factor of ~8 and it is readily available online.  To include it, download the file
+http://ssd.jpl.nasa.gov/dat/ELEMENTS.NUMBR.gz, unzip it, rename it to asteroids.dat, 
+and copy it to the data/ subdirectory before running make install, or to e.g. 
+/usr/shared/libTheSky/ after installing the package.
+
+The following commands should take care of this after unpacking the tarball and cd-ing 
+into the package's directory:
+
+  $ wget http://ssd.jpl.nasa.gov/dat/ELEMENTS.NUMBR.gz
+  $ unzip ELEMENTS.NUMBR.gz
+  $ mv ELEMENTS.NUMBR.gz data/asteroids.dat
+
+
+
+CETERA:
+
+If you run into problems or have questions, please feel free to contact the developer 
+(preferably by email) through libthesky.sf.net or marc.vandersluys.nl
+
