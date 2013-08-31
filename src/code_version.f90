@@ -16,7 +16,7 @@ contains
   subroutine print_libTheSky_version(unit)
     implicit none
     integer, intent(in) :: unit
-    character :: libTheSky_version*(99) = 'v0.0.3'
+    character :: libTheSky_version*(99) = 'v0.1.0'
     character :: release_date*(99) = '2013-08-31'
     
     write(unit,'(A)', advance='no') 'libTheSky '//trim(libTheSky_version)//' ('//trim(release_date)//') - libthesky.sf.net'
