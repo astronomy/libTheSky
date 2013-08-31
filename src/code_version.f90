@@ -16,13 +16,10 @@ contains
   subroutine print_libTheSky_version(unit)
     implicit none
     integer, intent(in) :: unit
-    character :: libTheSky_version*(99) = 'rev.1, hash 65a3904 (2013-08-26)'
-    character :: compile_date*(99) = 'Mon Aug 26 16:45:52 CEST 2013'
-    character :: compiler*(99) = 'ifort'
-    character :: compiler_flags*(99) = '-O2'
+    character :: libTheSky_version*(99) = 'v0.0.3'
+    character :: release_date*(99) = '2013-08-31'
     
-    write(unit,'(A)', advance='no') 'libTheSky '//trim(libTheSky_version)//', compiled on '//trim(compile_date)//' with '// &
-         trim(compiler)//' '//trim(compiler_flags)
+    write(unit,'(A)', advance='no') 'libTheSky '//trim(libTheSky_version)//' ('//trim(release_date)//') - libthesky.sf.net'
     
   end subroutine print_libTheSky_version
   !*********************************************************************************************************************************

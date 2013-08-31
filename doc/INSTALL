@@ -103,12 +103,16 @@ provided in the package, except one:  asteroids.dat is not included, since it bl
 the package by a factor of ~8 and it is readily available online.  To include it, 
 download the file http://ssd.jpl.nasa.gov/dat/ELEMENTS.NUMBR.gz, unzip it, rename it 
 to asteroids.dat, and copy it to the data/ subdirectory before running make (install), 
-or to e.g. /usr/local/shared/libTheSky/ after installing the package.
+or to e.g. /usr/local/shared/libTheSky/ after installing the package.  A reduced version
+of the file, containing all bodies with H<15 and a<100 AU (~25% of total, ~90,000 objects)
+can be found at http://sf.net/projects/libthesky/files/asteroids.dat.bz2
 
-The following command should take care of this after unpacking the tarball and cd-ing 
-into the package's directory:
+One of the following commands should take care of this after unpacking the tarball and 
+cd-ing into the package's directory:
 
   $ wget http://ssd.jpl.nasa.gov/dat/ELEMENTS.NUMBR.gz -O - | gunzip -c > data/asteroids.dat
+or
+  $ wget http://sf.net/projects/libthesky/files/asteroids.dat.bz2 -O - | bunzip2 -c > data/asteroids.dat
 
 
 CETERA:

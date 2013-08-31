@@ -731,7 +731,8 @@ contains
   !! - Epoch (JD), a, e, i, omega, Omega, M, H, G, for J2000.0
   !!
   !! \see
-  !! - asteroids.dat: http://ssd.jpl.nasa.gov/dat/ELEMENTS.NUMBR.gz
+  !! - asteroids.dat: http://sf.net/projects/libthesky/files/asteroids.dat.bz2 (selection: H<15, a<100 - 25% of all bodies)
+  !! - original: http://ssd.jpl.nasa.gov/dat/ELEMENTS.NUMBR.gz
   
   subroutine readasteroidelements()
     use SUFR_constants, only: d2r
@@ -745,12 +746,12 @@ contains
     character :: infile*(199)
     
     call find_free_io_unit(ip)
-    infile = trim(TheSkydir)//'asteroids.dat'  ! Copy of http://ssd.jpl.nasa.gov/dat/ELEMENTS.NUMBR.gz
+    infile = trim(TheSkydir)//'asteroids.dat'  ! (Reduced) copy of http://ssd.jpl.nasa.gov/dat/ELEMENTS.NUMBR.gz
     open(ip, form='formatted', status='old', action='read', file=trim(infile), iostat=status)
     if(status.ne.0) then
        write(0,'(/,A)') '  I could not open the file '//trim(infile)//' - you will not be able to compute asteroid data.'
-       write(0,'(A,/)') '  Download http://ssd.jpl.nasa.gov/dat/ELEMENTS.NUMBR.gz, unzip it and move it to '//trim(infile)// &
-            ' to fix this.'
+       write(0,'(A,/)') '  Download http://sf.net/projects/libthesky/files/asteroids.dat.bz2 - unzip it and move it to '// &
+            trim(infile)//' to fix this.'
        return
     end if
     
