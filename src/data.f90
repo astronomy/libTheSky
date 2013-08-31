@@ -759,7 +759,7 @@ contains
     read(ip,*) dumstr9
     
     do i=1,nasteroids
-       read(ip,'(7x,A18,I5,F11.5,F11.8,3F10.5,F12.7,F6.2,F5.2)', iostat=status) asternames(i),epoch,asterelems(i,2:9)
+       read(ip,'(7x,A18,I5,F11.7,F11.8,3F10.5,F12.7,F6.2,F5.2)', iostat=status) asternames(i),epoch,asterelems(i,2:9)
        if(status.ne.0) call file_read_end_error(trim(infile), 2+i, status, 1, 1)  ! stopcode=1, exitstatus=1
        
        if(status.ne.0) then
