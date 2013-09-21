@@ -726,21 +726,27 @@ contains
   !*********************************************************************************************************************************
   !> \brief  Compute physical data for Saturn
   !!
-  !! \param  jd  Julian day of computation
+  !! \param  jd    Julian day of computation
   !!
-  !! \retval be  Saturnicentric latitude of the Earth
-  !! \retval bs  Saturnicentric latitude of the Sun
-  !! \retval pa  Position angle of Saturn's north pole (from N to E)
-  !! \retval ar  Projected major axis of ring (NOT semi-!!!)
-  !! \retval br  Projected minor axes of ring (NOT semi-!!!), br has same sign as bs
-  !! \retval du  Difference between saturnicentric longitudes of Sun and Earth (NOT abs!!!)
+  !! \retval be    Saturnicentric latitude of the Earth
+  !! \retval bs    Saturnicentric latitude of the Sun
+  !! \retval pa    Position angle of Saturn's north pole (from N to E)
+  !!
+  !! \retval ar    Projected major axis of ring (NOT semi-!!!)
+  !! \retval br    Projected minor axes of ring (NOT semi-!!!), br has same sign as bs
+  !! \retval du    Difference between saturnicentric longitudes of Sun and Earth (NOT abs!!!)
   !! 
-  !! \see Meeus, Astronomical Algorithms, 1998, Ch.45
+  !! \retval pa_s  Position angle of Saturn's north pole (from N to E), as seen from the SUN
+  !! \retval ar_s  Projected major axis of ring (NOT semi-!!!), as seen from the SUN
+  !! \retval br_s  Projected minor axes of ring (NOT semi-!!!), br has same sign as bs, as seen from the SUN
+  !!
+  !!
+  !! \see Meeus, Astronomical Algorithms, 1998, Ch.45  (The ring of Saturn)
   !!
   !! \todo
   !! - check true/apparent coordinates (see CHECK)
   
-  subroutine saturnphys(jd, be,bs, pa, ar,br, du)
+  subroutine saturnphys(jd, be,bs, pa, ar,br, du,  pa_s, ar_s,br_s)
     use SUFR_kinds, only: double
     use SUFR_constants, only: pi, as2r,d2r
     use SUFR_angles, only: rev
@@ -750,26 +756,17 @@ contains
     
     implicit none
     real(double), intent(in) :: jd
-    real(double), intent(out) :: be,bs, pa, ar,br, du
+    real(double), intent(out) :: be,bs, pa, ar,br, du,  pa_s, ar_s,br_s
+    integer :: loop
     real(double) :: t, lam,bet, d,l,b,r, l0,b0,r0, x,y,z, dpsi,eps, ascn
     real(double) :: in,om, l2,b2, u1,u2, lam0,bet0, dl,db, ra,dec, ra0,dec0,  sinbe
     
-    call planet_position(jd,6)
-    
-    ! Meeus, step 5:
-    lam =  planpos(1)   ! Geocentric longitude
-    bet =  planpos(2)   ! Geocentric latitude
-    d   =  planpos(4)   ! Geocentric distance
+    call planet_position(jd,6)  ! Position of Saturn
     
     ! Meeus, step 3:
-    l   =  planpos(33)  ! Heliocentric longitude
-    b   =  planpos(34)  ! Heliocentric latitude
-    r   =  planpos(35)  ! Heliocentric distance
-    
-    ! Meeus, step 2:
-    l0  =  rev(planpos(41)+pi)  ! Geocentric, true L,B,R for the Earth, in FK5  -  CHECK - need apparent?
-    b0  = -planpos(42)
-    r0  =  planpos(43)
+    l   =  planpos(33)  ! Heliocentric longitude of Saturn
+    b   =  planpos(34)  ! Heliocentric latitude of Saturn
+    r   =  planpos(35)  ! Heliocentric distance of Saturn
     
     t    = planpos(46)  ! App. dyn. time in Julian Centuries since 2000.0
     
@@ -777,53 +774,76 @@ contains
     dpsi = planpos(47)  ! Nutation in longitude
     eps  = planpos(48)  ! True obliquity of the ecliptic; corrected for nutation
     
-    call hc_spher_2_gc_rect(l,b,r, l0,b0,r0, x,y,z)
-    call rect_2_spher(x,y,z, lam,bet,d)
-    
-    ! Meeus, step 1:
-    in = (28.075216d0  - 0.012998d0*t + 4.d-6 * t**2)   * d2r  ! Inclination of rotation axis,               Eq. 45.1a
-    om = (169.508470d0 + 1.394681d0*t + 4.12d-4 * t**2) * d2r  ! Longitude of asc. node of equator - Omega,  Eq. 45.1b
-    
-    ! Meeus, step 6:
-    sinbe = sin(in)*cos(bet)*sin(lam-om) - cos(in)*sin(bet)
-    ar    = 375.35d0*as2r/d  ! Major axis of outer edge of outer ring
-    br    = ar*sinbe         ! Minor axis of outer edge of outer ring
-    be    = asin(sinbe)      ! B
-    
-    ! Meeus, step 7:
-    call planetelements(jd)
-    ascn = plelems(6,5)                     ! Longitude of Saturn's ascending node
-    l2 = l - 0.01759d0*d2r / r              ! Correct for the Sun's aberration on Saturn - lon
-    b2 = b - 7.64d-4*d2r * cos(l-ascn) / r  ! Correct for the Sun's aberration on Saturn - lat
-    
-    ! Meeus, step 8:
-    bs = asin(sin(in)*cos(b2)*sin(l2-om) - cos(in)*sin(b2))  ! B'
-    
-    ! Meeus, step 9:
-    u1 = atan2(sin(in)*sin(b2)  + cos(in)*cos(b2)*sin(l2-om),   cos(b2)*cos(l2-om))    ! Saturnicentric longitude of the Sun
-    u2 = atan2(sin(in)*sin(bet) + cos(in)*cos(bet)*sin(lam-om), cos(bet)*cos(lam-om))  ! Saturnicentric longitude of the Earth
-    du = u1-u2
-    
-    ! Meeus, step 11:
-    lam0 = om - pi/2.d0  ! Ecliptical longitude of Saturn's north pole
-    bet0 = pi/2.d0 - in  ! Ecliptical latitude of Saturn's north pole
-    
-    ! Meeus, step 12 - correct for the aberration of Saturn:
-    dl  = 0.005693d0*d2r * cos(l0-lam)/cos(bet)
-    db  = 0.005693d0*d2r * sin(l0-lam)*sin(bet)
-    lam = lam + dl
-    bet = bet + db
-    
-    ! Meeus, step 13:
-    lam0 = lam0 + dpsi
-    lam  = lam  + dpsi
-    
-    ! Meeus, step 14:
-    call ecl_2_eq(lam,bet,eps,   ra,dec)
-    call ecl_2_eq(lam0,bet0,eps, ra0,dec0)
-    
-    ! Meeus, step 15:
-    pa = atan2(cos(dec0)*sin(ra0-ra),sin(dec0)*cos(dec) - cos(dec0)*sin(dec)*cos(ra0-ra))  ! Position angle
+    do loop=1,2  ! From Sun, Earth:
+       
+       ! Meeus, step 2:
+       if(loop.eq.1) then  ! Seen from the Sun:
+          lam = l
+          bet = b
+          d = r
+       else  ! Seen from the Earth:
+          l0  =  rev(planpos(41)+pi)  ! Geocentric, true L,B,R for the Earth, in FK5  -  CHECK - need apparent?
+          b0  = -planpos(42)
+          r0  =  planpos(43)
+          
+          ! Meeus, Ch. 45, step 5:
+          call hc_spher_2_gc_rect(l,b,r, l0,b0,r0, x,y,z)
+          call rect_2_spher(x,y,z, lam,bet,d)
+       end if
+       
+       ! Meeus, step 1:
+       in = (28.075216d0  - 0.012998d0*t + 4.d-6 * t**2)   * d2r  ! Inclination of rotation axis,               Eq. 45.1a
+       om = (169.508470d0 + 1.394681d0*t + 4.12d-4 * t**2) * d2r  ! Longitude of asc. node of equator - Omega,  Eq. 45.1b
+       
+       ! Meeus, step 6:
+       sinbe = sin(in)*cos(bet)*sin(lam-om) - cos(in)*sin(bet)
+       ar    = 375.35d0*as2r/d  ! Major axis of outer edge of outer ring
+       br    = ar*sinbe         ! Minor axis of outer edge of outer ring
+       be    = asin(sinbe)      ! B
+       
+       ! Meeus, step 7:
+       call planetelements(jd)
+       ascn = plelems(6,5)                     ! Longitude of Saturn's ascending node
+       l2 = l - 0.01759d0*d2r / r              ! Correct for the Sun's aberration on Saturn - lon
+       b2 = b - 7.64d-4*d2r * cos(l-ascn) / r  ! Correct for the Sun's aberration on Saturn - lat
+       
+       ! Meeus, step 8:
+       bs = asin(sin(in)*cos(b2)*sin(l2-om) - cos(in)*sin(b2))  ! B'
+       
+       ! Meeus, step 9:
+       u1 = atan2(sin(in)*sin(b2)  + cos(in)*cos(b2)*sin(l2-om),   cos(b2)*cos(l2-om))    ! Saturnicentric longitude of the Sun
+       u2 = atan2(sin(in)*sin(bet) + cos(in)*cos(bet)*sin(lam-om), cos(bet)*cos(lam-om))  ! Saturnicentric longitude of the Earth
+       du = u1-u2
+       
+       ! Meeus, step 11:
+       lam0 = om - pi/2.d0  ! Ecliptical longitude of Saturn's north pole
+       bet0 = pi/2.d0 - in  ! Ecliptical latitude of Saturn's north pole
+       
+       if(loop.eq.2) then  ! Seen from the Earth:
+          ! Meeus, step 12 - correct for the aberration of Saturn:
+          dl  = 0.005693d0*d2r * cos(l0-lam)/cos(bet)
+          db  = 0.005693d0*d2r * sin(l0-lam)*sin(bet)
+          lam = lam + dl
+          bet = bet + db
+          
+          ! Meeus, step 13 - correct for nutation:
+          lam0 = lam0 + dpsi
+          lam  = lam  + dpsi
+       end if
+       
+       ! Meeus, step 14:
+       call ecl_2_eq(lam,bet,eps,   ra,dec)
+       call ecl_2_eq(lam0,bet0,eps, ra0,dec0)
+       
+       ! Meeus, step 15:
+       pa = atan2(cos(dec0)*sin(ra0-ra),sin(dec0)*cos(dec) - cos(dec0)*sin(dec)*cos(ra0-ra))  ! Position angle
+       
+       if(loop.eq.1) then  ! Save data for the Sun's pov:
+          pa_s = pa
+          ar_s = ar
+          br_s = br
+       end if
+    end do  ! loop=1,2 - from Sun, Earth
     
   end subroutine saturnphys
   !*********************************************************************************************************************************

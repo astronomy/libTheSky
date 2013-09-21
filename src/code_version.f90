@@ -16,10 +16,13 @@ contains
   subroutine print_libTheSky_version(unit)
     implicit none
     integer, intent(in) :: unit
-    character :: libTheSky_version*(99) = 'v0.1.0'
-    character :: release_date*(99) = '2013-08-31'
+    character :: libTheSky_version*(99) = 'rev.6, hash 7c57b08 (2013-08-31)'
+    character :: compile_date*(99) = 'Sat Sep 21 17:18:23 CEST 2013'
+    character :: compiler*(99) = 'gfortran'
+    character :: compiler_flags*(99) = '-O2'
     
-    write(unit,'(A)', advance='no') 'libTheSky '//trim(libTheSky_version)//' ('//trim(release_date)//') - libthesky.sf.net'
+    write(unit,'(A)', advance='no') 'libTheSky '//trim(libTheSky_version)//', compiled on '//trim(compile_date)//' with '// &
+         trim(compiler)//' '//trim(compiler_flags)
     
   end subroutine print_libTheSky_version
   !*********************************************************************************************************************************
