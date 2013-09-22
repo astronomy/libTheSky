@@ -740,7 +740,10 @@ contains
   !!
   !! \retval be    Saturnicentric latitude of the Earth
   !! \retval bs    Saturnicentric latitude of the Sun
+  !!
   !! \retval pa    Position angle of Saturn's north pole (from N to E)
+  !! \retval in    Inclination of Saturn's rotation axis to the orbital plane
+  !! \retval om    Longitude of node of Saturn's equator on ecliptic
   !!
   !! \retval ar    Projected major axis of ring (NOT semi-!!!)
   !! \retval br    Projected minor axes of ring (NOT semi-!!!), br has same sign as bs
@@ -756,7 +759,7 @@ contains
   !! \todo
   !! - check true/apparent coordinates (see CHECK)
   
-  subroutine saturnphys(jd, be,bs, pa, ar,br, du,  pa_s, ar_s,br_s)
+  subroutine saturnphys(jd, be,bs, pa, in,om, ar,br, du,  pa_s, ar_s,br_s)
     use SUFR_kinds, only: double
     use SUFR_constants, only: pi, as2r,d2r
     use SUFR_angles, only: rev
@@ -766,10 +769,10 @@ contains
     
     implicit none
     real(double), intent(in) :: jd
-    real(double), intent(out) :: be,bs, pa, ar,br, du,  pa_s, ar_s,br_s
+    real(double), intent(out) :: be,bs, pa, in,om, ar,br, du,  pa_s, ar_s,br_s
     integer :: loop
     real(double) :: t, lam,bet, d,l,b,r, l0,b0,r0, x,y,z, dpsi,eps, ascn
-    real(double) :: in,om, l2,b2, u1,u2, lam0,bet0, dl,db, ra,dec, ra0,dec0,  sinbe
+    real(double) :: l2,b2, u1,u2, lam0,bet0, dl,db, ra,dec, ra0,dec0,  sinbe
     
     call planet_position(jd,6)  ! Position of Saturn
     
