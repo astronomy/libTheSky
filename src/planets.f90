@@ -627,13 +627,16 @@ contains
   !! \retval ds    Jovocentric latitude of the Sun
   !! \retval omg1  Longitude of central meridian of System I (equator+-10deg)
   !! \retval omg2  Longitude of central meridian of System II
-  !! \retval p     Position angle of Jupiter's north pole (from N to E)
+  !!
+  !! \retval pa    Position angle of Jupiter's north pole (from N to E)
+  !! \retval in    Inclination of Jupiter's rotation axis to the orbital plane
+  !! \retval om    Longitude of node of Jupiter's equator on ecliptic
   !!
   !! \see Meeus, Astronomical Algorithms, 1998, Ch.43
   
-  subroutine jupiterphys(jd, de,ds,omg1,omg2,p)
+  subroutine jupiterphys(jd,  de,ds, omg1,omg2, pa, in,om)
     use SUFR_kinds, only: double
-    use SUFR_constants, only: d2r  !,pi
+    use SUFR_constants, only: d2r, jd1900  !,pi
     use SUFR_angles, only: rev
     
     use TheSky_local, only: deltat
@@ -643,8 +646,8 @@ contains
     
     implicit none
     real(double), intent(in) :: jd
-    real(double), intent(out) :: de,ds, omg1,omg2, p
-    real(double) :: jde,d,t1
+    real(double), intent(out) :: de,ds, omg1,omg2, pa, in,om
+    real(double) :: jde,d,t1,t2,t3
     real(double) :: alp0,del0,w1,w2,x,y,z,eps0,eps,dpsi,l,b,alps,dels !,r ,l0,b0,r0
     real(double) :: u,v,alp,del,dze,delta,l1,b1  ! ,c
     
@@ -660,8 +663,15 @@ contains
     jde    = jd + deltat/86400.d0
     
     ! Meeus, step 1:
-    d      = jde - 2433282.5d0
+    d      = jde - 2433282.5d0  ! Since 1950 (!)
     t1     = d/36525.d0  ! In julian centuries
+    
+    t2     = (jde - jd1900)/36525.d0           ! Time since J1900.0, in Julian centuries
+    in = (3.120262d0 + 0.0006d0 * t2) * d2r    ! Inclination of Jupiter's rotation axis to the orbital plane (Meeus, p.311)
+    
+    t3 = jde - 2443000.5d0 - planpos(7)        ! Days since 1976-08-10 (Meeus, p.305), minus light-travel time
+    om = (316.518203d0 - 2.08362d-6*t3) * d2r  ! Long. of node of Jupiter's equator on ecliptic, psi in Meeus, p.306
+    om = om + (1.3966626d0*t1 + 3.088d-4*t1**2)*d2r  ! Correct for precession (since B1950, but J1950 will do), Meeus p.311
     
     alp0 = rev((268.d0 + 0.1061d0*t1)*d2r)  ! Right ascension of Jupiter's north pole
     del0 = rev((64.5d0 - 0.0164d0*t1)*d2r)  ! Declination of Jupiter's north pole
@@ -717,7 +727,7 @@ contains
     call ecl_2_eq(l1+dpsi,b1,eps, alp0,del0)  ! Has to be eps
     
     ! Meeus, step 18:
-    p = atan2( cos(del0)*sin(alp0-alp) , sin(del0)*cos(del) - cos(del0)*sin(del)*cos(alp0-alp) )  ! PA of Jupiter's north pole
+    pa = atan2( cos(del0)*sin(alp0-alp) , sin(del0)*cos(del) - cos(del0)*sin(del)*cos(alp0-alp) )  ! PA of Jupiter's north pole
     
   end subroutine jupiterphys
   !*********************************************************************************************************************************
@@ -801,19 +811,21 @@ contains
        br    = ar*sinbe         ! Minor axis of outer edge of outer ring
        be    = asin(sinbe)      ! B
        
-       ! Meeus, step 7:
-       call planetelements(jd)
-       ascn = plelems(6,5)                     ! Longitude of Saturn's ascending node
-       l2 = l - 0.01759d0*d2r / r              ! Correct for the Sun's aberration on Saturn - lon
-       b2 = b - 7.64d-4*d2r * cos(l-ascn) / r  ! Correct for the Sun's aberration on Saturn - lat
-       
-       ! Meeus, step 8:
-       bs = asin(sin(in)*cos(b2)*sin(l2-om) - cos(in)*sin(b2))  ! B'
-       
-       ! Meeus, step 9:
-       u1 = atan2(sin(in)*sin(b2)  + cos(in)*cos(b2)*sin(l2-om),   cos(b2)*cos(l2-om))    ! Saturnicentric longitude of the Sun
-       u2 = atan2(sin(in)*sin(bet) + cos(in)*cos(bet)*sin(lam-om), cos(bet)*cos(lam-om))  ! Saturnicentric longitude of the Earth
-       du = u1-u2
+       if(loop.eq.2) then  ! Seen from Earth:
+          ! Meeus, step 7:
+          call planetelements(jd)
+          ascn = plelems(6,5)                     ! Longitude of Saturn's ascending node
+          l2 = l - 0.01759d0*d2r / r              ! Correct for the Sun's aberration on Saturn - lon
+          b2 = b - 7.64d-4*d2r * cos(l-ascn) / r  ! Correct for the Sun's aberration on Saturn - lat
+          
+          ! Meeus, step 8:
+          bs = asin(sin(in)*cos(b2)*sin(l2-om) - cos(in)*sin(b2))  ! B'
+          
+          ! Meeus, step 9:
+          u1 = atan2(sin(in)*sin(b2)  + cos(in)*cos(b2)*sin(l2-om),   cos(b2)*cos(l2-om))    ! Saturnicentric longitude of the Sun
+          u2 = atan2(sin(in)*sin(bet) + cos(in)*cos(bet)*sin(lam-om), cos(bet)*cos(lam-om))  ! Saturnicentric longitude of the Earth
+          du = u1-u2
+       end if
        
        ! Meeus, step 11:
        lam0 = om - pi/2.d0  ! Ecliptical longitude of Saturn's north pole
