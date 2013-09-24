@@ -623,8 +623,8 @@ contains
   !!
   !! \param  jd    Julian day for computation
   !!
-  !! \retval de    Jovocentric latitude of the Earth
-  !! \retval ds    Jovocentric latitude of the Sun
+  !! \retval de    Jovocentric latitude of the Earth = inclination of planet axis to plane of the sky as seen from Earth
+  !! \retval ds    Jovocentric latitude of the Sun   = inclination of planet axis to plane of the sky as seen from Earth
   !! \retval omg1  Longitude of central meridian of System I (equator+-10deg)
   !! \retval omg2  Longitude of central meridian of System II
   !!
@@ -738,20 +738,20 @@ contains
   !!
   !! \param  jd    Julian day of computation
   !!
-  !! \retval be    Saturnicentric latitude of the Earth
-  !! \retval bs    Saturnicentric latitude of the Sun
+  !! \retval be    Saturnicentric latitude of the Earth = inclination of planet axis to plane of the sky as seen from Earth
+  !! \retval bs    Saturnicentric latitude of the Sun   = inclination of planet axis to plane of the sky as seen from the Sun
   !!
   !! \retval pa    Position angle of Saturn's north pole (from N to E)
   !! \retval in    Inclination of Saturn's rotation axis to the orbital plane
   !! \retval om    Longitude of node of Saturn's equator on ecliptic
   !!
   !! \retval ar    Projected major axis of ring (NOT semi-!!!)
-  !! \retval br    Projected minor axes of ring (NOT semi-!!!), br has same sign as bs
-  !! \retval du    Difference between saturnicentric longitudes of Sun and Earth (NOT abs!!!)
+  !! \retval br    Projected minor axes of ring (NOT semi-!!!), = ar * sin(be)
+  !! \retval du    Difference between saturnicentric longitudes of Sun and Earth (Sun - Earth, NOT abs!!!)
   !! 
   !! \retval pa_s  Position angle of Saturn's north pole (from N to E), as seen from the SUN
   !! \retval ar_s  Projected major axis of ring (NOT semi-!!!), as seen from the SUN
-  !! \retval br_s  Projected minor axes of ring (NOT semi-!!!), br has same sign as bs, as seen from the SUN
+  !! \retval br_s  Projected minor axes of ring (NOT semi-!!!), as seen from the SUN, = ar_s * sin(bs)
   !!
   !!
   !! \see Meeus, Astronomical Algorithms, 1998, Ch.45  (The ring of Saturn)
