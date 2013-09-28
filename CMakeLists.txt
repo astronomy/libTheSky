@@ -109,7 +109,9 @@ endif( CREATE_STATICLIB )
 
 add_custom_target( "libTheSky_data" ALL
   mkdir -p ${CMAKE_SOURCE_DIR}/usr/share/libTheSky/
-  COMMAND cp -vf ${CMAKE_SOURCE_DIR}/data/* ${CMAKE_SOURCE_DIR}/usr/share/libTheSky/
+  COMMAND cp -vf ${CMAKE_SOURCE_DIR}/data/* ${CMAKE_SOURCE_DIR}/usr/share/libTheSky/ || echo "*** WARNING: No data files found - did you forget to download them? ***"
+  COMMAND echo
+  COMMENT "Installation of data files"
   )
 
 # Install to destination:
