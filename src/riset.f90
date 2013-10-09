@@ -91,7 +91,7 @@ contains
     
     ! Use the old routine for all but Moon and Sun:
     if(pl.ne.0.and.pl.ne.3) then
-       call riset_ipol(jd,pl,rt,tt,st,rh,ta,sh,sa0)
+       call riset_ipol(jd,pl, rt,tt,st, rh,ta,sh, sa0)
        return
     end if
     
@@ -255,7 +255,7 @@ contains
   !! \see
   !! - Meeus, Astronomical algorithms, Ch.15, but with geographic longitude east of Greenwich defined as > 0
   
-  subroutine riset_ipol(jd,pl, rt,tt,st,rh,ta,sh, sa0)
+  subroutine riset_ipol(jd,pl, rt,tt,st, rh,ta,sh, sa0)
     use SUFR_kinds, only: double
     use SUFR_constants, only: pi,pi2, d2r,am2r, enpname
     use SUFR_system, only: warn
@@ -269,7 +269,7 @@ contains
     implicit none
     integer, intent(in) :: pl
     real(double), intent(in) :: jd, sa0
-    real(double), intent(out) :: rt,tt,st,rh,ta,sh
+    real(double), intent(out) :: rt,tt,st, rh,ta,sh
     
     integer :: mi,mj,yr,mnt,tc,mmax, indic
     real(double) :: dy,day0,  jd0,jd1,jd2,m(3)
@@ -282,6 +282,7 @@ contains
        indic = 12345
     end if
     
+    rt=0.d0; tt=0.d0; st=0.d0;  rh=0.d0; ta=0.d0; sh=0.d0
     alt = 0.d0;  ha = 0.d0;  corr = 0.d0;  h0 = 0.d0;  dec = 0.d0
     tc = 0        ! 0: geocentric, 1: topocentric, seems to give wrong results (for the Moon), see also different sa
     event = (/'Transit time ','Rise time    ','Set time     '/)

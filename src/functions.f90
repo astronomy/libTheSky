@@ -21,7 +21,8 @@
 !  plsep:                               Calculates angular separation between two planets
 !  plpa:                                Calculates position angle between two planets
 
-!  best_planet_visibility:              Find the best moment (JD) to observe a planet on a given day (jd)
+!  best_planet_visibility:              Find the best moment (JD) to observe a planet on a given day (JD)
+!  transitalt:                          Compute the transit altitude for a given geographic latitude and declination
 
 !  conabr2conid:                        Convert a three-letter constellation abbreviation to a constellation ID number
 
@@ -214,7 +215,7 @@ contains
     ! Maximum altitude of the Sun (starting value):
     sun_maxalt = -6.d0  ! ~ -6, -9, -12, the first gives nicer 'twilight' maps?
     
-    call riset(jd,pl, mrt,mtt,mst,mrh,mta,msh,0.d0)  ! Planet
+    call riset(jd,pl, mrt,mtt,mst, mrh,mta,msh, 0.d0)  ! Planet
     
     ! Moment of planet transit:
     call jd2cal(jd,yr,mn,dy)
@@ -234,7 +235,7 @@ contains
     
     do while(smaxalt.lt.-0.25d0)
        smaxalt = smaxalt/2.d0
-       call riset(jd,3, srt,stt,sst,srh,sta,ssh, smaxalt)  ! Sun
+       call riset(jd,3, srt,stt,sst, srh,sta,ssh, smaxalt)  ! Sun
        
        if(abs(rv12(mtt-sst)).lt.abs(rv12(mtt-srt))) then   ! Evening
           dy = floor(dy) + (sst-tz)/24.d0
@@ -251,6 +252,26 @@ contains
     
   end function best_planet_visibility
   !*********************************************************************************************************************************
+  
+  
+  
+  !*********************************************************************************************************************************
+  !> \brief  Compute the transit altitude of an object with given declination for an observer with a given geographic latitude
+  !!
+  !! \param  lat  Geographic latitude of the observer (-pi/2 - pi/2; rad)
+  !! \param  dec  Declination of the object (-pi/2 - pi/2; rad)
+  
+  function transitalt(lat, dec)
+    use SUFR_kinds, only: double
+    implicit none
+    real(double), intent(in) :: lat, dec
+    real(double) :: transitalt
+    
+    transitalt = asin(sin(lat)*sin(dec) + cos(lat)*cos(dec))
+    
+  end function transitalt
+  !*********************************************************************************************************************************
+  
   
   
   !*********************************************************************************************************************************
