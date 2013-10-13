@@ -62,16 +62,15 @@ contains
     j2  = 0
     del = 1.d-10           ! Convergence criterion
     
-    
-    o1 = cometElems(com,5)                ! Argument of perihelion (lowercase omega)
-    o2 = cometElems(com,6)                ! Longitude of ascending node (uppercase omega)
-    in = cometElems(com,4)                ! Inclination
-    q  = cometElems(com,2)                ! Perihelion distance
-    e  = cometElems(com,3)                ! Eccentricity
-    tp = cometElems(com,7)                ! Perihelion date (JD)
-    comepoche   = cometElems(com,1)       ! J2000.0
-    nlpname(11) = trim(cometNames(com))   ! Warning: cometNames is much longer than nlpname
-    enpname(11) = trim(cometNames(com))   ! Warning: cometNames is much longer than enpname
+    comepoche   = cometElems(com,1)      ! J2000.0
+    q           = cometElems(com,2)      ! Perihelion distance (AU?)
+    e           = cometElems(com,3)      ! Eccentricity
+    in          = cometElems(com,4)      ! Inclination
+    o1          = cometElems(com,5)      ! Argument of perihelion (lowercase omega)
+    o2          = cometElems(com,6)      ! Longitude of ascending node (uppercase omega)
+    tp          = cometElems(com,7)      ! Perihelion date (JD)
+    nlpname(11) = trim(cometNames(com))  ! Warning: cometNames is much longer than nlpname
+    enpname(11) = trim(cometNames(com))  ! Warning: cometNames is much longer than enpname
     
     !write(0,'(I9,9F15.5)') com, o1,o2,in,q,e,tp,comepoche
     !write(6,'(I9,2x,A50,9F15.5)') com, trim(cometNames(com)), q,e,in*r2d, o1*r2d,o2*r2d, tp,comepoche

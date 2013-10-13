@@ -188,7 +188,7 @@ contains
     integer :: i,j, ip,status
     character :: infile*(199)
     
-    ! Read constellation names (abbr., Lat, Nl):
+    ! Read constellation names (abbr., Lat, Lat.Gen., Nl, En):
     call find_free_io_unit(ip)
     infile = trim(TheSkydir)//'const_names.dat'
     open(ip, status='old', action='read', file=trim(infile), iostat=status)
@@ -217,7 +217,7 @@ contains
        if(status.ne.0) call file_read_end_error(trim(infile), i, status, 1, 1)  ! stopcode=1, exitstatus=1
        
        do j=1,nconstel
-          if(conabr(j).eq.conidabr(i)) conid(i) = j  ! Assign a constellation number rather than abbrev.
+          if(conabr(j).eq.conidabr(i)) conid(i) = j  ! Assign a constellation number ID rather than abbrev.
        end do
     end do
     
@@ -860,6 +860,7 @@ contains
        
     case default
        call quit_program_error('readCometElements():  non-exisiting value of cometDatFile',0)
+       
     end select
     
     

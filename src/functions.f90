@@ -217,7 +217,7 @@ contains
     
     call riset(jd,pl, mrt,mtt,mst, mrh,mta,msh, 0.d0)  ! Planet
     
-    ! Moment of planet transit:
+    ! First, try moment of planet transit:
     call jd2cal(jd,yr,mn,dy)
     dy = floor(dy) + (mtt-tz)/24.d0
     jd1 = cal2jd(yr,mn,dy)
@@ -225,26 +225,29 @@ contains
     call planet_position(jd1,3)  ! Sun
     sundat = planpos
     
-    if(sundat(30)*r2d.lt.sun_maxalt) then    ! Night
-       call planet_position(jd1,pl)  ! Planet
+    if(sundat(30)*r2d.lt.sun_maxalt) then    ! It is "night" at planet transit
+       call planet_position(jd1,pl)          ! Planet
        best_planet_visibility = jd1
        return
     end if
     
+    
+    ! Then try relaxed conditions for the Sun, and demand that planet is at least half as far above the horizon as the Sun is below
+    ! (can presumably still see Venus with Sun at -4d and Venus at +2 ...?)
     smaxalt = 2*sun_maxalt
     
     do while(smaxalt.lt.-0.25d0)
        smaxalt = smaxalt/2.d0
        call riset(jd,3, srt,stt,sst, srh,sta,ssh, smaxalt)  ! Sun
        
-       if(abs(rv12(mtt-sst)).lt.abs(rv12(mtt-srt))) then   ! Evening
+       if(abs(rv12(mtt-sst)).lt.abs(rv12(mtt-srt))) then    ! Evening
           dy = floor(dy) + (sst-tz)/24.d0
-       else                                                ! Morning
+       else                                                 ! Morning
           dy = floor(dy) + (srt-tz)/24.d0
        end if
        
        jd1 = cal2jd(yr,mn,dy)
-       call planet_position(jd1,pl)                ! Planet
+       call planet_position(jd1,pl)                         ! Planet
        if(planpos(30)*r2d.gt.-smaxalt/2.d0) exit
     end do
     
