@@ -41,7 +41,7 @@ contains
   !! \retval ta    Transit altitude (rad)
   !! \retval sh    Setting wind direction (rad)
   !! 
-  !! \param ltime  Passed to planet_position().  Set to .false. to ignore light time; save ~50% CPU time at the cost of some accur.
+  !! \param ltime  Passed to planet_position(). If .true., include light time, doubling the CPU time while gaining a bit of accur.
   !!
   !! \note
   !! - for sa0 = 0.d0, rise and set times are computed
@@ -90,7 +90,7 @@ contains
     character :: event(3)*(13)
     logical :: use_vsop, lltime
     
-    lltime = .true.                    ! Call planet_position() with ltime=.true. by default
+    lltime = .false.                    ! Call planet_position() IGNORING light time by default (faster, lower accuracy)
     if(present(ltime)) lltime = ltime
     
     ! Use the old interpolation routine for all but Moon and Sun:
@@ -247,7 +247,7 @@ contains
   !! \retval ta   Transit altitude (rad)
   !! \retval sh   Setting wind direction (rad)
   !! 
-  !! \param ltime  Passed to planet_position().  Set to .false. to ignore light time; save ~50% CPU time at the cost of some accur.
+  !! \param ltime  Passed to planet_position(). If .true., include light time, doubling the CPU time while gaining a bit of accur.
   !! 
   !! \note
   !! - for sa0 = 0.d0, rise and set times are computed
