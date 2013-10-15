@@ -28,19 +28,20 @@ contains
   
   !*********************************************************************************************************************************
   !> \brief  Rise, transit and set times routine for Sun, Moon, planets and asteroids.
-  !!         Based on riset_ipol(), but recomputes positions (low accuracy first, the full accuracy) rather than interpolating.
+  !!         Based on riset_ipol(), but recomputes positions (low accuracy first, then full accuracy) rather than interpolating.
   !!
-  !! \param jd    Julian day number
-  !! \param pl    Planet/object number  (-1 - 9: ES, Moon, Mer-Plu; >10000 asteroids)
-  !! \param sa0   Altitude to return rise/set data for (degrees; 0. is actual rise/set).  sa0>90: compute transit only
+  !! \param jd     Julian day number
+  !! \param pl     Planet/object number  (-1 - 9: ES, Moon, Mer-Plu; >10000 asteroids)
+  !! \param sa0    Altitude to return rise/set data for (degrees; 0. is actual rise/set).  sa0>90: compute transit only
   !!
-  !! \retval rt   Rise time (hours)
-  !! \retval tt   Transit time (hours)
-  !! \retval st   Set time (hours)
-  !! \retval rh   Rising wind direction (rad)
-  !! \retval ta   Transit altitude (rad)
-  !! \retval sh   Setting wind direction (rad)
+  !! \retval rt    Rise time (hours)
+  !! \retval tt    Transit time (hours)
+  !! \retval st    Set time (hours)
+  !! \retval rh    Rising wind direction (rad)
+  !! \retval ta    Transit altitude (rad)
+  !! \retval sh    Setting wind direction (rad)
   !! 
+  !! \param ltime  Passed to planet_position().  Set to .false. to ignore light time; save ~50% CPU time at the cost of some accur.
   !!
   !! \note
   !! - for sa0 = 0.d0, rise and set times are computed
@@ -67,7 +68,7 @@ contains
   !! - Meeus, Astronomical algorithms, Ch.15, but with geographic longitude east of Greenwich defined as > 0
   
   
-  subroutine riset(jd,pl,  rt,tt,st, rh,ta,sh,  sa0)
+  subroutine riset(jd,pl,  rt,tt,st, rh,ta,sh,  sa0, ltime)
     use SUFR_kinds, only: double
     use SUFR_constants, only: pi,pi2, d2r,am2r, enpname
     use SUFR_angles, only: rev
@@ -81,17 +82,20 @@ contains
     integer, intent(in) :: pl
     real(double), intent(in) :: jd, sa0
     real(double), intent(out) :: rt,tt,st,rh,ta,sh
+    logical, intent(in), optional :: ltime
     
     integer :: mi,mj,yr,mnt,tc,mmax
     real(double) :: dy,day0,  jd0,jd1,m(3),  ra,dec
     real(double) :: sa,ch0,h0,agst,th0,dm,corr(3),accur,  ha,alt,azalt(3)
     character :: event(3)*(13)
-    logical :: use_vsop
+    logical :: use_vsop, lltime
     
+    lltime = .true.                    ! Call planet_position() with ltime=.true. by default
+    if(present(ltime)) lltime = ltime
     
-    ! Use the old routine for all but Moon and Sun:
+    ! Use the old interpolation routine for all but Moon and Sun:
     if(pl.ne.0.and.pl.ne.3) then
-       call riset_ipol(jd,pl, rt,tt,st, rh,ta,sh, sa0)
+       call riset_ipol(jd,pl, rt,tt,st, rh,ta,sh, sa0, lltime)
        return
     end if
     
@@ -114,8 +118,7 @@ contains
     day0 = dble(int(dy))-tz/24.d0
     jd0  = cal2jd(yr,mnt,day0)
     
-    call planet_position_la(jd0, pl, 3, 60)  ! Uses low-accuracy formulae for Sun,Moon, calls planet_position for
-    !                                            other planets - calc=2 computes ra,dec, calc=3 computes agst
+    call planet_position_la(jd0, pl, 3, 60)  ! Compute low-accuracy positions - calc=2 computes ra,dec, calc=3 computes agst
     
     ra   = planpos(5+tc*20)
     dec  = planpos(6+tc*20)
@@ -163,10 +166,9 @@ contains
           end if
           
           if(use_vsop) then
-             call planet_position(jd1,pl)           ! Uses full VSOP
+             call planet_position(jd1,pl, ltime=lltime)           ! Uses full VSOP
           else
-             call planet_position_la(jd1,pl, 2,60)  ! Uses low-accuracy formulae for Sun, Moon; calls planet_position
-             !                                          for other planets - calc=2 computes ra,dec - use 60 terms
+             call planet_position_la(jd1,pl, 2,60)  ! Computes low-accuracy positions - calc=2 computes ra,dec - use 60 terms
           end if
           
           ra  = planpos(5+tc*20)  ! Right ascension
@@ -245,6 +247,8 @@ contains
   !! \retval ta   Transit altitude (rad)
   !! \retval sh   Setting wind direction (rad)
   !! 
+  !! \param ltime  Passed to planet_position().  Set to .false. to ignore light time; save ~50% CPU time at the cost of some accur.
+  !! 
   !! \note
   !! - for sa0 = 0.d0, rise and set times are computed
   !! - for (sa0.ne.0), the routine calculates when alt=sa0 is reached
@@ -255,7 +259,7 @@ contains
   !! \see
   !! - Meeus, Astronomical algorithms, Ch.15, but with geographic longitude east of Greenwich defined as > 0
   
-  subroutine riset_ipol(jd,pl, rt,tt,st, rh,ta,sh, sa0)
+  subroutine riset_ipol(jd,pl, rt,tt,st, rh,ta,sh, sa0, ltime)
     use SUFR_kinds, only: double
     use SUFR_constants, only: pi,pi2, d2r,am2r, enpname
     use SUFR_system, only: warn
@@ -270,6 +274,7 @@ contains
     integer, intent(in) :: pl
     real(double), intent(in) :: jd, sa0
     real(double), intent(out) :: rt,tt,st, rh,ta,sh
+    logical, intent(in) :: ltime
     
     integer :: mi,mj,yr,mnt,tc,mmax, indic
     real(double) :: dy,day0,  jd0,jd1,jd2,m(3)
@@ -302,11 +307,11 @@ contains
     jd1  = cal2jd(yr,mnt,day0)
     jd2  = cal2jd(yr,mnt,day0+1.d0)
     
-    call planet_position(jd0,pl)
+    call planet_position(jd0,pl, ltime=ltime)
     ra0  = planpos(5+tc*20)
     dec0 = planpos(6+tc*20)
     
-    call planet_position(jd1,pl)
+    call planet_position(jd1,pl, ltime=ltime)
     ! Exact altitude for moon, ~0.1-0.2deg, for geocentric coordinates:
     if(tc.eq.0.and.pl.eq.0) sa = asin(4.26345d-5/planpos(4))*0.7275d0-0.5667d0*d2r
     
@@ -316,7 +321,7 @@ contains
     dec1 = planpos(6+tc*20)
     agst = planpos(45)
     
-    call planet_position(jd2,pl)
+    call planet_position(jd2,pl, ltime=ltime)
     ra2  = planpos(5+tc*20)
     dec2 = planpos(6+tc*20)
     
