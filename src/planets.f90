@@ -878,11 +878,11 @@ contains
   
   
   !*********************************************************************************************************************************
-  !> \brief  Low-accuracy planet positions - currently available only for Sun and Moon
+  !> \brief  Compute low-accuracy planet positions.  Sun and Moon have dedicated routines, for planets the light time is ignored
   !! 
   !! \param jd    Julian Day of computation
-  !! \param pl    Planet number: currently 0 (Moon) and 3 (Sun) only  (for other pl, planet_position() is called)
-  !! \param calc  Calculate  1: l,b,r, 2: & ra,dec, 3: & gmst,agst, 4: & az,alt
+  !! \param pl    Planet number:  0: Moon,  1-2: Mer-Ven,  3: Sun,  4-9: Mar-Plu
+  !! \param calc  Calculate  1: l,b,r, 2: & ra,dec, 3: & gmst,agst, 4: & az,alt (Sun and Moon only)
   !! \param nt    Number of terms to use for the calculation (has an effect for Moon only; nt<=60); 
   !!              a smaller nt gives faster, but less accurate results
   
@@ -932,10 +932,13 @@ contains
        end if
        
     case(3)  ! Sun
+       
        call sunpos_la(jd,calc)
        
-    case default
-       call planet_position(jd,pl)  ! Low-accuracy routines not yet available for planets
+    case default  ! Planets
+       
+       call planet_position(jd,pl, ltime=.false.)  ! Do not take into account light-time correction
+       
     end select
     
   end subroutine planet_position_la
