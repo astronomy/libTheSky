@@ -30,10 +30,11 @@ contains
   !*********************************************************************************************************************************
   !> \brief  Compute the position, distance, etc of a planet
   !!
-  !! \param jd  Julian date of computation
-  !! \param pl  Planet number: Moon=0, Merc=1,Nep=8,Plu=9 3=Sun, 0=Moon, >10 for other objects
+  !! \param jd     Julian date of computation
+  !! \param pl     Planet number: Moon=0, Merc=1,Nep=8,Plu=9 3=Sun, 0=Moon, >10 for other objects
+  !! \param ltime  Set to .false. to disable light-time correction, and save ~50% in CPU time at the cost of some accuracy
   
-  subroutine planet_position(jd,pl)
+  subroutine planet_position(jd,pl, ltime)
     use SUFR_kinds, only: double
     use SUFR_constants, only: pi, au,earthr,pland, enpname
     use SUFR_system, only: warn
@@ -56,12 +57,15 @@ contains
     implicit none
     real(double), intent(in) :: jd
     integer, intent(in) :: pl
+    logical, intent(in), optional :: ltime
+    
     integer :: j
     real(double) :: tjm,jde,tjm0,  dpsi,eps0,deps,eps,tau,tau1
     real(double) :: hcl0,hcb0,hcr0, hcl,hcb,hcr, hcl00,hcb00,hcr00, sun_gcl,sun_gcb, gcx,gcy,gcz, gcx0,gcy0,gcz0, dhcr
     real(double) :: gcl,gcb,delta,gcl0,gcb0,delta0
     real(double) :: ra,dec,gmst,agst,lst,hh,az,alt,elon,  topra,topdec,topl,topb,topdiam,topdelta,tophh,topaz,topalt
     real(double) :: diam,illfr,pa,magn,  parang,hp,res1,res2
+    logical :: lltime
     
     ! Make sure these are always defined:
     gcl0 = 0.d0;  gcb0 = 0.d0;  hcr00 = 0.d0
@@ -70,6 +74,10 @@ contains
     topdelta = 0.d0;  delta0 = 0.d0
     diam = 0.d0
     magn = 0.d0  ! Make sure magn is always defined
+    
+    lltime = .true.                    ! Take into account light time by default
+    if(present(ltime)) lltime = ltime
+    
     
     ! Calc JDE & t:
     deltat = calc_deltat(jd)
@@ -139,6 +147,8 @@ contains
        end if
        
        tau1 = 5.77551830441d-3 * delta                                 ! Light time in days
+       
+       if(.not.lltime) exit                                            ! Do not take into account light time
        
        j = j+1
        if(j.ge.30) then

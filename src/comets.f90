@@ -267,15 +267,14 @@ contains
     call nutation(t,dpsi,eps0,deps)
     eps = eps0 + deps
     !call calcsunxyz(t,l0,b0,r0,x0,y0,z0)
-    call cometxyz(t,com, x,y,z)                          ! Heliocentric equatorial rectangular coordinates
+    call cometxyz(t,com, x,y,z)                                  ! Heliocentric equatorial rectangular coordinates
     call ecl_spher_2_eq_rect(rev(l0+pi),-b0,r0, eps0, x0,y0,z0)  ! l0+pi,-b0,r0 is geocentric SPHERICAL ECLIPTICAL pos. of Sun,
     !                                                              convert to geocentric RECTANGULAR EQUATORIAL position of Sun
-    jd1 = t*365250.d0 + 2451545.d0                       ! From equinox of date...
-    jd2 = comepoche                                      !  ... to equinox of elements
-    call precess_xyz(jd1,jd2, x0,y0,z0)                  ! Precess geocentric position of the Sun
+    jd1 = t*365250.d0 + 2451545.d0                               ! From equinox of date...
+    jd2 = comepoche                                              !  ... to equinox of elements
+    call precess_xyz(jd1,jd2, x0,y0,z0)                          ! Precess geocentric position of the Sun
     
-    
-    r = sqrt(x*x + y*y + z*z)                            ! Heliocentric distance comet
+    r = sqrt(x*x + y*y + z*z)                                    ! Heliocentric distance comet
     
     ! Heliocentric -> geocentric position of the comet:
     x = x + x0
