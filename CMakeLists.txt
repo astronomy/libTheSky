@@ -107,12 +107,14 @@ if( CREATE_STATICLIB )
   set_target_properties( libTheSky_static PROPERTIES Fortran_MODULE_DIRECTORY ${MODULE_DIRECTORY} )
 endif( CREATE_STATICLIB )
 
-add_custom_target( "libTheSky_data" ALL
+
+add_custom_target( "libTheSky_data"
   mkdir -p ${CMAKE_SOURCE_DIR}/usr/share/libTheSky/
-  COMMAND cp -vf ${CMAKE_SOURCE_DIR}/data/* ${CMAKE_SOURCE_DIR}/usr/share/libTheSky/ || echo "*** WARNING: No data files found - did you forget to download them? ***"
+  COMMAND cp -vf ${CMAKE_SOURCE_DIR}/data/* ${CMAKE_SOURCE_DIR}/usr/share/libTheSky/ || echo "*** WARNING: No data files found - did you forget to download them?  This will not affect the creation of the libraries ***"
   COMMAND echo
-  COMMENT "Installation of data files"
+  COMMENT "Installing data files"
   )
+
 
 # Install to destination:
 #   use DIRECTORY rather than TARGETS to allow include/<fortrancompiler>/

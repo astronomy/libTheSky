@@ -1,5 +1,6 @@
 
 libTheSky INSTALL
+libthesky.sf.net
 
 
 
@@ -11,8 +12,7 @@ downloaded from http://www.cmake.org/.  Alternatively, you can create your own
 Makefile or compile and link the code manually.
 
 libTheSky needs the Fortran library libSUFR in order to compile and run.  libSUFR is
-free and open software, and available under the GPL v.3 from 
-http://libsufr.sf.net/.
+free and open software, and available under the GPL v.3 from http://libsufr.sf.net/.
 
 
 
@@ -24,7 +24,7 @@ directory by doing e.g.:
   $ tar xfz libthesky-0.0.1.tar.gz
   $ cd libthesky-0.0.1/
 
-(replace you 0.0.1 with the correct version number).
+(replace "0.0.1" with the correct version number).
 
 
 
@@ -72,7 +72,7 @@ To compile the code without installing it anywhere, leave out the install step
  $ cmake ..
  $ make
 
-The compiled libraries, modules and data files can then be found in the usr/ subdirectory
+The compiled libraries and modules can then be found in the usr/ subdirectory
 of the package dir.
 
 
@@ -97,22 +97,29 @@ installation method and the compiler-specific method to install the library.
 
 DATA FILES:
 
-The data files are in the data/ subdirectory of the package and will be installed in
-/usr/local/shared/libTheSky/ by default.  All data files needed to run the code are 
-provided in the package, except one:  asteroids.dat is not included, since it bloats 
-the package by a factor of ~8 and it is readily available online.  To include it, 
-download the file http://ssd.jpl.nasa.gov/dat/ELEMENTS.NUMBR.gz, unzip it, rename it 
-to asteroids.dat, and copy it to the data/ subdirectory before running make (install), 
-or to e.g. /usr/local/shared/libTheSky/ after installing the package.  A reduced version
-of the file, containing all bodies with H<15 and a<100 AU (~25% of total, ~90,000 objects)
-can be found at http://sf.net/projects/libthesky/files/asteroids.dat.bz2
+The data files are distributed in a separate tarball, named libthesky-data-<YYYYMMDD>.tar.bz2
+They will unpack into the data/ subdirectory of the package and the code will expect to find
+them in /usr/local/shared/libTheSky/ by default.  Hence, to install the data files manually,
+do e.g.:
+  $ tar xfj libthesky-data-<YYYYMMDD>.tar.bz2
+  $ sudo mkdir /usr/local/shared/libTheSky/
+  $ sudo cp -vi data/* /usr/local/shared/libTheSky/
 
-One of the following commands should take care of this after unpacking the tarball and 
-cd-ing into the package's directory:
+Alternatively, you can use the libTheSky_data target in the CMake file of the source code,
+by copying the data files into that package's subdirectory before compiling it, and making
+sure you install the data files as well:
+  $ tar xfz libthesky-<0.0.1>.tar.gz
+  $ tar xfj libthesky-data-<YYYYMMDD>.tar.bz2
+  $ mv data libthesky-0.0.1/
+  $ cd libthesky-0.0.1/
+  ...
+  $ sudo make libTheSky_data install
 
+All data files needed to use libTheSky are provided in the tarball.  The file asteroids.dat 
+is a reduced version of the file http://ssd.jpl.nasa.gov/dat/ELEMENTS.NUMBR.gz, containing 
+all bodies with H<15 and a<100 AU (~25% of total, ~90,000 objects).  If you want to use the
+full/latest version instead, do something like:
   $ wget http://ssd.jpl.nasa.gov/dat/ELEMENTS.NUMBR.gz -O - | gunzip -c > data/asteroids.dat
-or
-  $ wget http://sf.net/projects/libthesky/files/asteroids.dat.bz2 -O - | bunzip2 -c > data/asteroids.dat
 
 
 CETERA:
