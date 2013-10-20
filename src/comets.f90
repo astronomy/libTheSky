@@ -42,6 +42,7 @@ contains
   subroutine cometxyz(t1,com,x,y,z)
     use SUFR_kinds, only: double
     use SUFR_constants, only: nlpname,enpname
+    use SUFR_numerics, only: deq
     
     use TheSky_nutation, only: nutation
     use TheSky_cometdata, only: cometNames, cometElems, comepoche
@@ -130,7 +131,7 @@ contains
        
        
        ! Parabolic orbit:
-       if(e.eq.1.d0) then
+       if(deq(e,1.d0)) then
           !write(6,*)'iter, delta: ',i,s-s0
           nu = 2.d0*atan(s)    ! True anomaly, parabolic orbits, Eq. 34.2
           

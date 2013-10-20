@@ -378,13 +378,14 @@ contains
   subroutine rect_2_spher(x,y,z, l,b,r) 
     use SUFR_kinds, only: double
     use SUFR_angles, only: rev
+    use SUFR_numerics, only: deq
     
     implicit none
     real(double), intent(in) :: x,y,z
     real(double), intent(out) :: l,b,r
     real(double) :: x2,y2
     
-    if(x.eq.0.d0.and.y.eq.0.d0.and.z.eq.0.d0) then
+    if(deq(x,0.d0) .and. deq(y,0.d0) .and. deq(z,0.d0)) then
        l = 0.d0
        b = 0.d0
        r = 0.d0
@@ -460,6 +461,7 @@ contains
     use SUFR_kinds, only: double
     use SUFR_angles, only: rev
     use SUFR_dummy, only: dumdbl
+    use SUFR_numerics, only: dne
     use TheSky_nutation, only: nutation
     
     implicit none
@@ -471,7 +473,7 @@ contains
     
     
     ! Compute these constants (independent of ra,dec) only if jd has changed since the last call
-    if(jd.ne.jdold) then
+    if(dne(jd,jdold)) then
        
        ! Meeus, Ch. 25:
        tjc   =  (jd-2451545.d0)/36525.0d0  ! Julian centuries since 2000.0, Meeus Eq. 25.1

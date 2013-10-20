@@ -435,6 +435,7 @@ contains
     use SUFR_kinds, only: double, dbl
     use SUFR_constants, only: pi, pio2, d2r, as2r, r2as
     use SUFR_system, only: find_free_io_unit,file_open_error_quit, file_read_end_error
+    use SUFR_numerics, only: dne
     
     use TheSky_constants, only: TheSkydir
     use TheSky_moondata, only: nterm,nrang, pc1,pc2,pc3, per1,per2,per3, w, ath
@@ -561,7 +562,7 @@ contains
     open(ip, form='formatted', status='old', action='read', file=trim(infile), iostat=status)
     if(status.ne.0) call file_open_error_quit(trim(infile), 1, 1)  ! 1-input file, 1-exit status
     
-    if(prec.ne.prec0) then
+    if(dne(prec,prec0)) then
        prec0 = prec
        pre(1) = prec * r2as  -  1.d-12
        pre(2) = prec * r2as  -  1.d-12

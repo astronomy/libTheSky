@@ -187,6 +187,7 @@ contains
   function calc_deltat(jd)
     use SUFR_kinds, only: double
     use SUFR_date_and_time, only: jd2cal
+    use SUFR_numerics, only: deq
     use TheSky_local, only: year,month,day
     
     implicit none
@@ -194,7 +195,7 @@ contains
     real(double) :: calc_deltat,d
     integer :: y,m
     
-    if(jd.eq.0.d0) then  ! Use variables from module local
+    if(deq(jd,0.d0)) then  ! Use variables from module local
        y = year
        m = month
        d = day
@@ -220,6 +221,7 @@ contains
   
   function calc_deltat_ymd(y,m,d)
     use SUFR_kinds, only: double
+    use SUFR_numerics, only: deq
     use TheSky_constants, only: deltat_0, deltat_accel, deltat_change, deltat_minyr, deltat_maxyr, deltat_years, deltat_values
     
     implicit none
@@ -236,7 +238,7 @@ contains
     y0 = (dble(m-1)+((d-1)/31.d0))/12.d0 + y  ! ~decimal year
     
     ! Return old value if same instance:
-    if(y0.eq.y0_old) then
+    if(deq(y0,y0_old)) then
        calc_deltat_ymd = calc_deltat_old
        return
     end if

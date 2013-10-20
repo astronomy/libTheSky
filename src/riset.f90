@@ -73,6 +73,7 @@ contains
     use SUFR_constants, only: pi,pi2, d2r,am2r, enpname
     use SUFR_angles, only: rev
     use SUFR_date_and_time, only: cal2jd,jd2cal
+    use SUFR_numerics, only: deq
     
     use TheSky_planets, only: planet_position, planet_position_la
     use TheSky_planetdata, only: planpos
@@ -209,7 +210,7 @@ contains
           azalt(mi) = 0.d0
        end if
        
-       if(m(mi).lt.0.d0 .and. sa0.eq.0.d0) then
+       if(m(mi).lt.0.d0 .and. deq(sa0,0.d0)) then
           m(mi) = 0.d0
           azalt(mi) = 0.d0
        end if
@@ -265,6 +266,7 @@ contains
     use SUFR_system, only: warn
     use SUFR_angles, only: rev
     use SUFR_date_and_time, only: cal2jd,jd2cal
+    use SUFR_numerics, only: deq
     
     use TheSky_planets, only: planet_position
     use TheSky_planetdata, only: planpos
@@ -414,7 +416,7 @@ contains
        end if  ! if(pl.eq.0)
        
        
-       if(m(mi).lt.0..and.sa0.eq.0.) then
+       if(m(mi).lt.0. .and. deq(sa0,0.d0)) then
           m(mi) = 0.d0
           azalt(mi) = 0.d0
        end if
@@ -466,6 +468,7 @@ contains
     use SUFR_constants, only: pi2, d2r
     use SUFR_angles, only: rev, rev2
     use SUFR_date_and_time, only: cal2jd, jd2cal
+    use SUFR_numerics, only: deq
     
     use TheSky_planets, only: planet_position
     use TheSky_planetdata, only: planpos
@@ -547,7 +550,7 @@ contains
           end if
        end if
        
-       if(m(mi).lt.0. .and. sa0.eq.0.) then
+       if(m(mi).lt.0. .and. deq(sa0,0.d0)) then
           m(mi) = 0.d0
           azalt(mi) = 0.d0
        end if
@@ -587,6 +590,7 @@ contains
     use SUFR_constants, only: r2h
     use SUFR_angles, only: rev,rv12
     use SUFR_date_and_time, only: jd2cal
+    use SUFR_numerics, only: deq
     
     use TheSky_planets, only: planet_position
     use TheSky_planetdata, only: planpos, nplanpos
@@ -621,7 +625,7 @@ contains
        jd0 = jd0 - tz/24.d0                         ! Local midnight
        
        ! Consider result 'converged':
-       if(jd0.eq.oldjd) exit
+       if(deq(jd0,oldjd)) exit
        if(iter.gt.5 .and. abs(dd).lt.0.7d0) exit
        if(iter.gt.10 .and. abs(dd).lt.1.d0) exit
        if(iter.gt.100) exit
