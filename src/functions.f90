@@ -22,6 +22,7 @@
 !  plpa:                                Calculates position angle between two planets
 
 !  best_planet_visibility:              Find the best moment (JD) to observe a planet on a given day (JD)
+!  comet_invisible:                     Determine whether a comet is invisible, given a magnitude and altitude limit
 !  transitalt:                          Compute the transit altitude for a given geographic latitude and declination
 
 !  conabr2conid:                        Convert a three-letter constellation abbreviation to a constellation ID number
@@ -254,6 +255,54 @@ contains
     best_planet_visibility = jd1
     
   end function best_planet_visibility
+  !*********************************************************************************************************************************
+  
+  
+  
+  !*********************************************************************************************************************************
+  !> \brief  Cheap function to determine whether a comet is invisible at a given time, based on a magnitude and altitude limit
+  !!
+  !! \param jd        Julian day for calculation
+  !! \param cometID   Comet ID
+  !! \param mlim      Maximum magnitude, below which the comet is defined as visible (deg)
+  !! \param minalt    Minimum transit altitude, above which the comet is defined as visible (deg)
+  !!
+  !! \note  The comet may still be invisible if comet_invisible=.false., e.g. when it's too close to the Sun
+  
+  function comet_invisible(jd, cometID, mlim, minalt)
+    use SUFR_kinds, only: double
+    use SUFR_constants, only: r2d
+    use TheSky_planetdata, only: planpos
+    use TheSky_comets, only: cometgc
+    use TheSky_cometdata, only: cometElems
+    use TheSky_local, only: lat0
+    use TheSky_coordinates, only: ecl_2_eq
+    
+    implicit none
+    real(double), intent(in) :: jd, mlim, minalt
+    integer, intent(in) :: cometID
+    real(double) :: tjm, hcr,gcl,gcb,delta, magn, eps, ra,dec, maxalt
+    logical :: comet_invisible
+    
+    comet_invisible = .false.
+    
+    tjm = (jd-2451545.d0)/365250.d0                    ! Julian Millennia after 2000.0 (not dyn. time - approx)
+    call cometgc(tjm,tjm, cometID, hcr,gcl,gcb,delta)
+    
+    ! Typical difference with full method: ~10^-4 mag:
+    magn = cometElems(cometID,8) + 5*log10(delta) + 2.5d0*cometElems(cometID,9)*log10(hcr)
+    if(magn.gt.mlim) then
+       comet_invisible = .true.
+       return
+    end if
+    
+    eps = planpos(48)
+    call ecl_2_eq(gcl,gcb,eps, ra,dec)    ! RA, Dec
+    
+    maxalt = transitalt(lat0, dec) * r2d
+    if(maxalt.lt.minalt) comet_invisible = .true.
+    
+  end function comet_invisible
   !*********************************************************************************************************************************
   
   
