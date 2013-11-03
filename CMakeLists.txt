@@ -97,6 +97,10 @@ if( CREATE_SHAREDLIB )
   set_target_properties( libTheSky_shared PROPERTIES Fortran_MODULE_DIRECTORY ${MODULE_DIRECTORY} )
 endif( CREATE_SHAREDLIB )
 
+# Use add_dependencies below in order to pretend the static lib depends on the shared.  This
+#   seems to be necessary to ensure that it is built *after* shared.  If this doesn't
+#   happen, multiple threads will be pouring data into the code_version file simultaneously.
+
 if( CREATE_STATICLIB )
   add_library( "libTheSky_static"  STATIC  ${SRC_FILES} )
   if( COMPILER_SPECIFIC_LIBS )
@@ -105,6 +109,7 @@ if( CREATE_STATICLIB )
     set_target_properties( libTheSky_static PROPERTIES OUTPUT_NAME "TheSky" )
   endif( COMPILER_SPECIFIC_LIBS )
   set_target_properties( libTheSky_static PROPERTIES Fortran_MODULE_DIRECTORY ${MODULE_DIRECTORY} )
+  add_dependencies( libTheSky_static libTheSky_shared )  # Ensure it is build after the shared lib
 endif( CREATE_STATICLIB )
 
 
