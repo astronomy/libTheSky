@@ -632,22 +632,23 @@ contains
   !*********************************************************************************************************************************
   !> \brief  Compute physical data for Jupiter
   !!
-  !! \param  jd    Julian day for computation
+  !! \param  jd      Julian day for computation
   !!
-  !! \retval de    Jovocentric latitude of the Earth = inclination of planet axis to plane of the sky as seen from Earth
-  !! \retval ds    Jovocentric latitude of the Sun   = inclination of planet axis to plane of the sky as seen from Earth
-  !! \retval omg1  Longitude of central meridian of System I (equator+-10deg)
-  !! \retval omg2  Longitude of central meridian of System II
+  !! \retval de      Jovocentric latitude of the Earth = inclination of planet axis to plane of the sky as seen from Earth
+  !! \retval ds      Jovocentric latitude of the Sun   = inclination of planet axis to plane of the sky as seen from Earth
+  !! \retval omg1    Longitude of central meridian of System I (equator+-10deg)
+  !! \retval omg2    Longitude of central meridian of System II
   !!
-  !! \retval pa    Position angle of Jupiter's north pole (from N to E)
-  !! \retval in    Inclination of Jupiter's rotation axis to the orbital plane
-  !! \retval om    Longitude of node of Jupiter's equator on ecliptic
+  !! \retval dphase  Phase correction
+  !! \retval pa      Position angle of Jupiter's north pole (from N to E)
+  !! \retval in      Inclination of Jupiter's rotation axis to the orbital plane
+  !! \retval om      Longitude of node of Jupiter's equator on ecliptic
   !!
-  !! \see Meeus, Astronomical Algorithms, 1998, Ch.43
+  !! \see Meeus, Astronomical Algorithms, 1998, Ch.43, p.293-295
   
-  subroutine jupiterphys(jd,  de,ds, omg1,omg2, pa, in,om)
+  subroutine jupiterphys(jd,  de,ds, omg1,omg2, dphase, pa, in,om)
     use SUFR_kinds, only: double
-    use SUFR_constants, only: d2r, jd1900  !,pi
+    use SUFR_constants, only: d2r, pi, jd1900
     use SUFR_angles, only: rev
     
     use TheSky_local, only: deltat
@@ -657,10 +658,10 @@ contains
     
     implicit none
     real(double), intent(in) :: jd
-    real(double), intent(out) :: de,ds, omg1,omg2, pa, in,om
+    real(double), intent(out) :: de,ds, omg1,omg2, dphase, pa, in,om
     real(double) :: jde,d,t1,t2,t3
-    real(double) :: alp0,del0,w1,w2,x,y,z,eps0,eps,dpsi,l,b,alps,dels !,r ,l0,b0,r0
-    real(double) :: u,v,alp,del,dze,delta,l1,b1  ! ,c
+    real(double) :: alp0,del0,w1,w2,x,y,z,eps0,eps,dpsi,l,b,alps,dels, r,r0,l0
+    real(double) :: u,v,alp,del,dze,delta,l1,b1
     
     ! To get data for the exact (rounded off) moment of Meeus' example:
     !d = 15690.00068d0
@@ -673,7 +674,7 @@ contains
     deltat = calc_deltat(jd)
     jde    = jd + deltat/86400.d0
     
-    ! Meeus, step 1:
+    ! Meeus, step 1, p.293:
     d      = jde - 2433282.5d0  ! Since 1950 (!)
     t1     = d/36525.d0  ! In julian centuries
     
@@ -687,7 +688,7 @@ contains
     alp0 = rev((268.d0 + 0.1061d0*t1)*d2r)  ! Right ascension of Jupiter's north pole
     del0 = rev((64.5d0 - 0.0164d0*t1)*d2r)  ! Declination of Jupiter's north pole
     
-    ! Meeus, step 2:
+    ! Meeus, step 2, p.294:
     w1 = rev((17.710d0 + 877.90003539d0*d)*d2r)  ! Longitude system I
     w2 = rev((16.838d0 + 870.27003539d0*d)*d2r)  ! Longitude system II
     
@@ -697,25 +698,24 @@ contains
     
     l = planpos(33)  ! Heliocentric apparent l
     b = planpos(34)  ! Heliocentric apparent b
-    !r = planpos(35)  ! Heliocentric apparent r
+    r = planpos(35)  ! Heliocentric apparent r
     delta = planpos(4)  ! Apparent geocentric distance
     
-    !l0 = rev(planpos(41)+pi)  ! Heliocentric, true coordinates of the Earth
-    !b0 = -planpos(42)
-    !r0 = planpos(43)
+    l0 = rev(planpos(41)+pi)  ! Heliocentric, true coordinates of the Earth
+    r0 = planpos(43)
     
-    ! Meeus, step 8:
+    ! Meeus, step 8, p.294:
     eps0 = planpos(50)  ! Mean obliquity of the ecliptic; without nutation
     eps  = planpos(48)  ! True obliquity of the ecliptic; corrected for nutation
     dpsi = planpos(47)  ! Nutation in longitude
     
-    ! Meeus, step 9:
+    ! Meeus, step 9, p.294:
     call ecl_2_eq(l,b,eps, alps,dels)
     
-    ! Meeus, step 10:
+    ! Meeus, step 10, p.294:
     ds = -sin(del0)*sin(dels) - cos(del0)*cos(dels)*cos(alp0-alps)  ! Planetocentric declination of the Sun
     
-    ! Meeus, step 11:
+    ! Meeus, step 11, p.294:
     u = y*cos(eps0) - z*sin(eps0)
     v = y*sin(eps0) + z*cos(eps0)
     
@@ -723,21 +723,21 @@ contains
     del = atan2(v,sqrt(x*x+u*u))
     dze = rev( atan2( sin(del0)*cos(del)*cos(alp0-alp) - sin(del)*cos(del0) , cos(del)*sin(alp0-alp) ) )
     
-    ! Meeus, step 12:
+    ! Meeus, step 12, p.294:
     de = -sin(del0)*sin(del) - cos(del0)*cos(del)*cos(alp0-alp)  ! Planetocentric declination of the Earth
     
-    ! Meeus, step 13:
-    omg1 = rev(w1 - dze - 5.07033d0*d2r * delta)  ! Longitude of central meridian of System I (equator +- 10deg)
-    omg2 = rev(w2 - dze - 5.02626d0*d2r * delta)  ! Longitude of central meridian of System II (higher lat)
+    ! Meeus, step 14, p.295 - phase correction - same sign as sin(l-l0):
+    dphase = abs( (2*r*delta + r0*r0 - r*r - delta*delta)/(4*r*delta) ) * sin(l-l0)/abs(sin(l-l0))
     
-    ! Meeus, step 14 - phase correction - same sign as sin(l-l0):
-    !c = abs( (2*r*delta + r0*r0 - r*r - delta*delta)/(4*r*delta) ) * sin(l-l0)/abs(sin(l-l0))
+    ! Meeus, step 13, p.295:
+    omg1 = rev(w1 - dze - 5.07033d0*d2r * delta + dphase)  ! Longitude of central meridian of System I (equator +- 10deg)
+    omg2 = rev(w2 - dze - 5.02626d0*d2r * delta + dphase)  ! Longitude of central meridian of System II (higher lat)
     
-    ! Meeus, steps 16, 17:
+    ! Meeus, steps 16, 17, p.295:
     call eq_2_ecl(alp0,del0,eps0, l1,b1)      ! Has to be eps0
     call ecl_2_eq(l1+dpsi,b1,eps, alp0,del0)  ! Has to be eps
     
-    ! Meeus, step 18:
+    ! Meeus, step 18, p.295:
     pa = atan2( cos(del0)*sin(alp0-alp) , sin(del0)*cos(del) - cos(del0)*sin(del)*cos(alp0-alp) )  ! PA of Jupiter's north pole
     
   end subroutine jupiterphys
