@@ -22,6 +22,8 @@
 !  transitalt:                          Compute the transit altitude for a given geographic latitude and declination
 !  get_dra_obj:                         Compute the difference between a given right ascension and the RA of the Sun
 !  best_obs_date_ra:                    Compute the best date to observe an object with a given right ascension
+!  limmag_sunmoon                       Calculate limiting magnitude based on Sun and Moon
+!  limmag                               Calculate limiting magnitude, based on the altitude of the Sun.  Simplif'd limmag_sunmoon()
 
 
 
@@ -426,6 +428,205 @@ contains
     
   end function airmass_ext
   !*********************************************************************************************************************************
+  
+  
+  !*********************************************************************************************************************************
+  !> \brief  Calculate limiting magnitude based on Sun altitude and Moon phase
+  !!
+  !! \param  year        Year of observation
+  !! \param  month       Month of observation
+  !! \param  obselev     Elevation of the observer (m)
+  !! \param  obslat      Latitude of the observer (rad)
+  !!
+  !! \param  sunalt      Altitude of the Sun (rad)
+  !! \param  sunelon     Elongation object-Sun (rad)
+  !!
+  !! \param  moonphase   Phase of the Moon (fraction?)
+  !! \param  moonalt     Altitude of the Moon (rad)
+  !! \param  moonelon    Elongation object-Moon (rad)
+  !!
+  !! \param  objalt      Altitude of the observed object (rad)
+  !!
+  !! \retval limmag_sunmoon  Limiting magnitude
+  !!
+  !! \see http://www.go.ednet.ns.ca/~larry/astro/vislimit.html, 
+  !!      a JavaScript version of a BASIC program by Bradley E. Schaefer, Sky and Telescope, May 1998, p.57
+  
+  function limmag_sunmoon(year,month, obselev,obslat, sunalt,sunelon, moonphase,moonalt,moonelon, objalt)
+    use SUFR_kinds, only: double
+    use SUFR_constants, only: d2r,r2d
+    
+    implicit none
+    integer, intent(in) :: year, month
+    real(double), intent(in) :: obselev,obslat, sunalt,sunelon, moonphase,moonalt,moonelon, objalt
+    
+    integer :: i,m,y
+    real(double) :: limmag_sunmoon,  b(5),k(5),dm(5),wa(5),mo(5),oz(5),wt(5),bo(5),cm(5),ms(5),  am,zm,rm,zs,rs,rh,te,la,al,sn,z
+    real(double) :: lt,ra,sl,zz,xg,xa,xo,kr,ka,ko,kw,  x,xm,xs,bn,mm,c3,fm,bm,hs,bt,c4,fs,bd,bl,c1,c2,th,mn
+    
+    
+    b = 0.d0;  k = 0.d0;  dm = 0.d0
+    wa = (/0.365d0, 0.44d0, 0.55d0, 0.7d0, 0.9d0/)
+    mo = (/-10.93d0, -10.45d0, -11.05d0, -11.90d0, -12.70d0/)
+    oz = (/0.000d0, 0.000d0, 0.031d0, 0.008d0, 0.000d0/)
+    wt = (/0.074d0, 0.045d0, 0.031d0, 0.020d0, 0.015d0/)
+    bo = (/8.0d-14, 7.0d-14, 1.0d-13, 1.0d-13, 3.0d-13/)
+    cm = (/1.36d0, 0.91d0, 0.00d0, -0.76d0, -1.17d0/)
+    ms = (/-25.96d0, -26.09d0, -26.74d0, -27.26d0, -27.55d0/)
+    
+    am = (1.d0 - moonphase)*180  ! Phase angle moon (deg)
+    zm = 90.d0 - moonalt*r2d     ! Zenith angle moon (deg)
+    rm = moonelon*r2d            ! Elongation moon-star (deg)
+    zs = 90.d0 - sunalt*r2d      ! Zenith angle sun (deg)
+    rs = sunelon*r2d             ! Elongation sun-star (deg)
+    rh = 50.d0                   ! Relative humidity (%)
+    te = 10.d0                   ! Temperature (deg.C)
+    la = obslat*r2d              ! Observer's latitude (deg)
+    al = obselev                 ! Observer's elevation (m)
+    m  = month                   ! Month (for approximate sun ra)
+    y  = year                    ! Year (for solar cyle...)
+    sn = 1.d0                    ! Snellen ratio quantifies vision
+    z  = 90.d0 - objalt*r2d      ! Zenith angle object (deg)
+    
+    
+    !*** Extinction ************************************************************
+    lt = la*d2r
+    ra = (m-3)*30*d2r  ! Derive rough Sun RA from month
+    sl = la/abs(la)
+    
+    ! Airmass for each component:
+    zz = z*d2r
+    xg = 1.d0/(cos(zz) + 0.0286d0*exp(-10.5d0*cos(zz)))           ! Gas
+    xa = 1.d0/(cos(zz) + 0.0123d0*exp(-24.5d0*cos(zz)))           ! Aerosol
+    xo = 1.d0/sqrt(1.d0 - (sin(zz)/(1.d0 + (20.d0/6378.d0)))**2)  ! Ozone
+    
+    ! UBVRI extinction for each component:
+    do i=1,5
+       kr = 0.1066d0*exp(-al/8200.d0)*(wa(i)/0.55d0)**(-4)
+       ka = 0.1d0*(wa(i)/0.55d0)**(-1.3) * exp(-al/1500.d0)
+       ka = ka * (1.d0-0.32d0/log(rh/100.d0))**1.33d0 * (1.d0 + 0.33d0*sl*sin(ra))
+       ko = oz(i)*(3.d0 + 0.4d0*(lt*cos(ra)-cos(3*lt)))/3.d0
+       kw = wt(i)*0.94d0*(rh/100.d0)*exp(te/15.d0)*exp(-al/8200.d0)
+       k(i) = kr + ka + ko + kw
+       dm(i) = kr*xg + ka*xa + ko*xo + kw*xg
+    end do
+    
+    
+    !*** Sky *******************************************************************
+    x  = 1.d0/(cos(zz) + 0.025d0*exp(-11*cos(zz)))
+    xm = 1.d0/(cos(zm*d2r) + 0.025d0*exp(-11*cos(zm*d2r)))
+    if(zm.gt.90.d0) xm = 40.d0
+    xs = 1.d0/(cos(zs*d2r) + 0.025d0*exp(-11*cos(zs*d2r)))
+    if(zs.gt.90.d0) xs = 40.d0
+    
+    do i=1,5
+       ! Dark night sky brightness:
+       bn = bo(i) * (1.d0 + 0.3d0*cos(6.283d0*dble(y-1992)/11.d0))
+       bn = bn * (0.4d0 + 0.6d0/sqrt(1.d0-0.96d0*sin(zz)**2))
+       bn = bn * 10.d0**(-0.4d0*k(i)*x)
+       
+       ! Moonlight brightness:
+       mm = -12.73d0 + 0.026d0*abs(am) + 4.d-9*am**4  ! Moon magnitude
+       mm = mm + cm(i)
+       c3 = 10.d0**(-0.4d0*k(i)*xm)
+       fm = 6.2d7/(rm*rm) + 10.d0**(6.15d0 - rm/40.d0)
+       fm = fm + 10.d0**5.36d0 * (1.06d0 + cos(rm*d2r)**2)
+       bm = 10.d0**(-0.4d0*(mm-mo(i)+43.27d0))
+       bm = bm * (1.d0 - 10.d0**(-0.4d0*k(i)*x))
+       bm = bm * (fm*c3 + 440000.d0*(1.d0-c3))
+       
+       ! Twilight brightness:
+       hs = 90.d0 - zs
+       bt = 10.d0**(-0.4d0*(ms(i) - mo(i) + 32.5d0 - hs - (z/(360.d0*k(i))) ))
+       bt = bt* (100.d0/rs) * (1.d0 - 10.d0**((-0.4d0*k(i))*x))
+       
+       ! Daylight brightness:
+       c4 =  10.d0**(-0.4d0*k(i)*xs)
+       fs = 6.2d7/(rs*rs) + 10.d0**(6.15d0 - rs/40.d0)
+       fs = fs + 10.d0**5.36d0 * (1.06d0 + cos(rs*d2r)**2)
+       bd = 10.d0**(-0.4d0*(ms(i) -mo(i) + 43.27d0))
+       bd = bd * (1.d0 - 10.d0**(-0.4d0*k(i)*x))
+       bd = bd * (fs*c4 + 440000.d0*(1.d0-c4))
+       
+       ! Total sky brightness:
+       if(bd.lt.bt) then
+          b(i) = bn + bd
+       else
+          b(i) = bn + bt
+       end if
+       
+       if(zm.lt.90.d0) b(i) = b(i) + bm
+       b(i) = b(i)*1.d12  ! Convert from ergs to picoergs
+    end do
+    
+    ! Visual limiting magnitude:
+    bl = b(3)/1.11d-3           ! Sky brightness in V, convert to nanolamberts
+    if(bl.lt.1500.d0) then
+       c1 = 10.d0**(-9.8d0)
+       c2 = 10.d0**(-1.9d0)
+    else
+       c1 = 10.d0**(-8.350001d0)
+       c2 = 10.d0**(-5.9d0)
+    end if
+    th = c1*(1.d0 + sqrt(c2*bl))**2
+    mn = -16.57d0 - 2.5d0*log10(th) - dm(3) + 5*log10(sn)  ! Magnitude
+    
+    limmag_sunmoon = mn
+    
+  end function limmag_sunmoon
+  !*********************************************************************************************************************************
+  
+  
+  
+  !*********************************************************************************************************************************
+  !> \brief Calculate limiting magnitude, based on the altitude of the Sun.  Simplified version of limmag_sunmoon()
+  !!
+  !! \param  sunalt  Altitude of the Sun (rad)
+  !!
+  !! \retval limmag  Limiting magnitude
+  !!
+  !! \note 
+  !! - Mag depends only on sunalt in rad
+  !! - assume object in zenith, no moon (am=180), humidity 50%, T=10degC, lat=45deg, sn=1
+  !! 
+  !! \see http://www.go.ednet.ns.ca/~larry/astro/vislimit.html, 
+  !!      a JavaScript version of a BASIC program by Bradley E. Schaefer, Sky and Telescope, May 1998, p.57
+  
+  
+  function limmag(sunalt)
+    use SUFR_kinds, only: double
+    use SUFR_constants, only: r2d
+    
+    implicit none
+    real(double), intent(in) :: sunalt
+    real(double) :: limmag
+    real(double) :: dm,bn,bt,bd,bl,c1,c2,th,mn
+    
+    dm = 0.285667465769191d0     ! Extinction
+    bn = 7.686577723230466d-14   ! Dark night sky brightness: no solar cycle, star in zenith
+    bt = 10.d0**(-0.4d0*(-26.74d0 + 11.05d0 + 32.5d0 - sunalt*r2d )) * 0.12852345982053d0  ! Twilight brightness
+    bd = 9.456022312552874d-7    ! Daylight brightness
+    bl = 1.d12*(bn + min(bd,bt))/1.11d-3   ! Total sky brightness in V, convert to nanolamberts
+    
+    ! Visual limiting magnitude
+    if(bl.lt.1500.d0) then
+       c1 = 10.d0**(-9.8)
+       c2 = 10.d0**(-1.9)
+    else
+       c1 = 10.d0**(-8.350001)
+       c2 = 10.d0**(-5.9)
+    end if
+    th = c1*(1.d0 + sqrt(c2*bl))**2
+    mn = -16.57d0 - 2.5d0*log10(th) - dm   ! Magnitude
+    
+    limmag = mn
+    
+  end function limmag
+  !*********************************************************************************************************************************
+  
+  
+  
+  
   
 end module TheSky_visibility
 !***********************************************************************************************************************************
