@@ -462,7 +462,7 @@ contains
     
     integer :: i,m,y
     real(double) :: limmag_sunmoon,  b(5),k(5),dm(5),wa(5),mo(5),oz(5),wt(5),bo(5),cm(5),ms(5),  am,zm,rm,zs,rs,rh,te,la,al,sn,z
-    real(double) :: lt,ra,sl,zz,xg,xa,xo,kr,ka,ko,kw,  x,xm,xs,bn,mm,c3,fm,bm,hs,bt,c4,fs,bd,bl,c1,c2,th,mn
+    real(double) :: lt,ra,sl,zz,xg,xa,xo,kr,ka,ko,kw,  x,xm,xs,bn,mm,c3,fm,bm,hs,bt,c4,fs,bd,bl,c1,c2,th
     
     
     b = 0.d0;  k = 0.d0;  dm = 0.d0
@@ -569,9 +569,8 @@ contains
        c2 = 10.d0**(-5.9d0)
     end if
     th = c1*(1.d0 + sqrt(c2*bl))**2
-    mn = -16.57d0 - 2.5d0*log10(th) - dm(3) + 5*log10(sn)  ! Magnitude
     
-    limmag_sunmoon = mn
+    limmag_sunmoon = -16.57d0 - 2.5d0*log10(th) - dm(3) + 5*log10(sn)  ! Limiting magnitude
     
   end function limmag_sunmoon
   !*********************************************************************************************************************************
@@ -599,8 +598,7 @@ contains
     
     implicit none
     real(double), intent(in) :: sunalt
-    real(double) :: limmag
-    real(double) :: dm,bn,bt,bd,bl,c1,c2,th,mn
+    real(double) :: limmag,  dm,bn,bt,bd,bl,c1,c2,th
     
     dm = 0.285667465769191d0     ! Extinction
     bn = 7.686577723230466d-14   ! Dark night sky brightness: no solar cycle, star in zenith
@@ -610,22 +608,73 @@ contains
     
     ! Visual limiting magnitude
     if(bl.lt.1500.d0) then
-       c1 = 10.d0**(-9.8)
-       c2 = 10.d0**(-1.9)
+       c1 = 10.d0**(-9.8d0)
+       c2 = 10.d0**(-1.9d0)
     else
-       c1 = 10.d0**(-8.350001)
-       c2 = 10.d0**(-5.9)
+       c1 = 10.d0**(-8.350001d0)
+       c2 = 10.d0**(-5.9d0)
     end if
     th = c1*(1.d0 + sqrt(c2*bl))**2
-    mn = -16.57d0 - 2.5d0*log10(th) - dm   ! Magnitude
     
-    limmag = mn
+    limmag = -16.57d0 - 2.5d0*log10(th) - dm   ! Limiting magnitude
     
   end function limmag
   !*********************************************************************************************************************************
   
   
   
+  !*********************************************************************************************************************************
+  !> \brief  Compute the excess magnitude for planet pl at JD, considering airmass - cheap
+  !!
+  !! \param jd  Julian day for moment of interest
+  !! \param pl  Planet ID (0-Moon, 1-Mer, 8-Nep, >10-comet
+  !!
+  !! \note
+  !! - The excess magnitude is defined as the limiting magnitude minus the magnitude of an object
+  !!   - m_ex < 0 - object is visible (in theory!) with the naked eye
+  !! - The magnitude is corrected for extinction due to airmass, but for sea level
+  !! - The limiting magnitude here solely depends on the Sun's altitude, simplified expression (especially, no Moon!)
+  
+  function pl_excess_magn(jd, pl)
+    use SUFR_kinds, only: double
+    use TheSky_planets, only: planet_position, planet_position_la
+    use TheSky_planetdata, only: planpos
+    
+    implicit none
+    real(double), intent(in) :: jd
+    integer, intent(in) :: pl
+    real(double) :: pl_excess_magn, airmass_ext, sunAlt
+    
+    call planet_position_la(jd,  3, 4,0)  ! Sun position
+    sunAlt = planpos(10)
+    
+    call planet_position_la(jd, pl, 0,0)  ! Planet position
+    
+    airmass_ext = 0.2811d0  ! Extinction in magnitudes per unit airmass, at sea level
+    pl_excess_magn = (planpos(13) + airmass_ext * airmass(planpos(10))) - limmag(sunAlt)  ! limmag - (m + ext)
+    
+  end function pl_excess_magn
+  !*********************************************************************************************************************************
+  
+  
+  !*********************************************************************************************************************************
+  !> \brief  Compute the negative of th excess magnitude at JD.  Pass pl0 through module planetdata to allow solvers to use it.
+  !!         Calls pl_excess_mag().
+  !!
+  !! \param jd  Julian day for moment of interest
+  
+  function pl_excess_magn_pl(jd)
+    use SUFR_kinds, only: double
+    use TheSky_planetdata, only: pl0
+    
+    implicit none
+    real(double), intent(in) :: jd
+    real(double) :: pl_excess_magn_pl
+    
+    pl_excess_magn_pl = pl_excess_magn(jd,pl0)
+    
+  end function pl_excess_magn_pl
+  !*********************************************************************************************************************************
   
   
 end module TheSky_visibility
