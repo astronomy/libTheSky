@@ -14,4 +14,5 @@ set(SRC_FILES
   src/stars.f90
   src/riset.f90
   src/date_time.f90
+  src/visibility.f90
   )
