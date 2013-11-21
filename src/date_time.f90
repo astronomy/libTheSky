@@ -21,6 +21,7 @@
 !  set_date_and_time_to_jd2000:         Set global date/time variables (year, month, ..., minute, second) to JD2000.0
 
 !  calctime:                            Calculates ut, jd and jde
+!  calc_gmst:                            Calculate Greenwich Mean Siderial Time in RAD!
 !  calc_deltat:                         Calculates deltat from jd: SLOW!
 !  calc_deltat_ymd:                     Calculates deltat from y,m,d, faster
 !  find_deltat_in_range:                Find a precise value for DeltaT through linear interpolation in tabulated values
@@ -142,6 +143,30 @@ contains
     tz = gettz(jd)  ! NEW, good idea?  - perhaps not (when UT is needed!, 2009-03-31)
     
   end subroutine calctime
+  !*********************************************************************************************************************************
+  
+  
+  !*********************************************************************************************************************************
+  !> \brief  Calculate Greenwich Mean Siderial Time in RAD!
+  !!
+  !! \param jd         Julian day of computation
+  !! \retval calc_gmst  Greenwich Mean Siderial Time in RAD!
+  
+  function calc_gmst(jd)
+    use SUFR_kinds, only: double
+    use SUFR_angles, only: rev
+    
+    implicit none
+    real(double), intent(in) :: jd
+    real(double) :: calc_gmst,t,t2,gmst
+    
+    t = (jd-2451545.d0)/36525.d0  ! Julian Centuries after 2000.0 UT
+    t2 = t*t
+    gmst = 4.894961212735793d0 + 6.300388098984957d0*(jd-2451545.d0) + 6.77070812713916d-6*t2 - 4.50872966158d-10*t2*t
+    
+    calc_gmst = rev(gmst)          ! If corrected for equation of the equinoxes: = rev(gmst + dpsi*cos(eps))
+    
+  end function calc_gmst
   !*********************************************************************************************************************************
   
   

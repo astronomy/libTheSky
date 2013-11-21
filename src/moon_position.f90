@@ -182,11 +182,10 @@ contains
     use SUFR_kinds, only: double
     use SUFR_constants, only: au, d2r
     use SUFR_angles, only: rev, rev2
-    use SUFR_astro, only: calcgmst
     
     use TheSky_planetdata, only: planpos, moonla_arg,moonla_lrb
     use TheSky_coordinates, only: ecl_2_eq, eq2horiz
-    use TheSky_datetime, only: calc_deltat
+    use TheSky_datetime, only: calc_deltat, calc_gmst
     
     implicit none
     real(double), intent(in) :: jd
@@ -288,7 +287,7 @@ contains
     
     
     ! Siderial time:
-    gmst = calcgmst(jd)                  ! Greenwich mean siderial time
+    gmst = calc_gmst(jd)                  ! Greenwich mean siderial time
     agst = rev(gmst + dpsi*cos(eps))     ! Correction for equation of the equinoxes -> Gr. apparent sid. time
     planpos(45) = agst                   ! Greenwich APPARENT siderial time (in radians)
     planpos(49) = gmst                   ! Greenwich MEAN siderial time (in radians)

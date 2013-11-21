@@ -39,7 +39,6 @@ contains
     use SUFR_constants, only: pi, au,earthr,pland, enpname
     use SUFR_system, only: warn
     use SUFR_angles, only: rev, rev2
-    use SUFR_astro, only: calcgmst
     use SUFR_dummy, only: dumdbl
     
     use TheSky_vsop, only: vsop_lbr
@@ -52,7 +51,7 @@ contains
     use TheSky_planetdata, only: planpos, pl0
     use TheSky_cometdata, only: cometElems
     use TheSky_asteroids, only: asteroid_magn, asteroid_lbr
-    use TheSky_datetime, only: calc_deltat
+    use TheSky_datetime, only: calc_deltat, calc_gmst
     
     implicit none
     real(double), intent(in) :: jd
@@ -202,7 +201,7 @@ contains
     
     
     ! Siderial time:
-    gmst = calcgmst(jd)                   ! Greenwich mean siderial time
+    gmst = calc_gmst(jd)                   ! Greenwich mean siderial time
     agst = rev(gmst + dpsi*cos(eps))      ! Correction for equation of the equinoxes -> Greenwich apparent siderial time
     lst  = rev(agst + lon0)               ! Local apparent stellar time, lon0 > 0 for E
     
@@ -962,11 +961,10 @@ contains
   subroutine sunpos_la(jd, calc)
     use SUFR_kinds, only: double
     use SUFR_angles, only: rev
-    use SUFR_astro, only: calcgmst
     
     use TheSky_planetdata, only: planpos
     use TheSky_coordinates, only: eq2horiz
-    use TheSky_datetime, only: calc_deltat
+    use TheSky_datetime, only: calc_deltat, calc_gmst
     
     implicit none
     real(double), intent(in) :: jd
@@ -1023,7 +1021,7 @@ contains
     if(calc.eq.2) return
     
     
-    gmst = calcgmst(jd)               ! Greenwich mean siderial time
+    gmst = calc_gmst(jd)               ! Greenwich mean siderial time
     agst = rev(gmst + dpsi*cos(eps))  ! Correction for equation of the equinoxes -> Gr. apparent sid. time
     planpos(45) = rev(agst)           ! Greenwich mean siderial time
     planpos(49) = rev(gmst)           ! Correction for equation of the equinoxes -> Gr. apparent sid. time
