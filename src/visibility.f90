@@ -38,6 +38,47 @@ contains
   
   
   !*********************************************************************************************************************************
+  !> \brief  Find the moment (JD) of best "excess magnitude" for a planet, i.e. the lowest mag - lim.mag
+  !!
+  !! \param  jdin    Julian day to compute best moment for
+  !! \param  plID    Planet to compute visibility for (0-Moon, 1-Mercury, etc.)
+  !!
+  !! \retval jdbest  Moment of best excess magnitude
+  !! \retval xsmag   Excess magnitude at that moment (magnitude - limiting magnitude; <0: ~visible to the naked eye)
+  
+  subroutine best_planet_xsmag(jdin,plID, jdout, xsmag) 
+    use SUFR_kinds, only: double
+    use SUFR_date_and_time, only: jd2cal,cal2jd
+    use SUFR_solvers, only: minimum_solver
+    
+    use TheSky_planetdata, only: pl0
+    use TheSky_datetime, only: gettz
+    
+    implicit none
+    real(double), intent(in) :: jdin
+    integer, intent(in) :: plID
+    real(double), intent(out) :: jdout, xsmag
+    
+    integer :: status
+    real(double) :: tz, jd1,jd2, rts(5), tts(5), sts(5), tas(5), plvis(2)
+    
+    call planet_visibility_tonight(jdin, plID, 0.d0, 0.d0, 11,  rts, tts, sts, tas, plvis)  ! Sun<0d; Planet>0d, comp=11 twl/today
+    
+    tz = gettz(jdin)
+    jd1 = floor(jdin+0.5d0) - 0.5d0 + (plvis(1)-tz)/24.d0
+    jd2 = floor(jdin+0.5d0) - 0.5d0 + (plvis(2)-tz)/24.d0
+    if(plvis(1).gt.12.d0) jd1 = jd1 - 1.d0  ! After noon, use the previous day
+    if(plvis(2).gt.12.d0) jd2 = jd2 - 1.d0
+    
+    pl0 = plID  ! Needed by pl_xsmag_pl()
+    xsmag = minimum_solver(pl_xsmag_pl, jd1, (jd1+jd2)/2.d0, jd2, 1.d-3,  jdout, status=status)  ! Use full routine
+    
+  end subroutine best_planet_xsmag
+  !*********************************************************************************************************************************
+   
+   
+   
+  !*********************************************************************************************************************************
   !> \brief  Find a rough indication for the best moment (JD) to observe a planet on a given day (jd).  Start out by demanding 
   !!           that Sun alt < -6deg, but relax this if problematic.  This often results in the moment where Sun alt is indeed -6deg.
   !!
@@ -709,7 +750,7 @@ contains
   !! - The magnitude is corrected for extinction due to airmass, but for sea level
   !! - The limiting magnitude here solely depends on the Sun's altitude, simplified expression (especially, no Moon!)
   
-  function pl_excsmag(jd, pl)
+  function pl_xsmag(jd, pl)
     use SUFR_kinds, only: double
     
     use TheSky_planets, only: planet_position_la
@@ -718,16 +759,16 @@ contains
     implicit none
     real(double), intent(in) :: jd
     integer, intent(in) :: pl
-    real(double) :: pl_excsmag,  objRA,objDec,objAlt
+    real(double) :: pl_xsmag,  objRA,objDec,objAlt
     
     call planet_position_la(jd, pl, 4,60)  ! Planet position
     objRA  = planpos(5)
     objDec = planpos(6)
     objAlt = planpos(10)
     
-    pl_excsmag = planpos(13) - limmag_jd(jd, objRA,objDec,objAlt)
+    pl_xsmag = planpos(13) - limmag_jd(jd, objRA,objDec,objAlt)
     
-  end function pl_excsmag
+  end function pl_xsmag
   !*********************************************************************************************************************************
   
   
@@ -737,22 +778,22 @@ contains
   !!
   !! \param jd  Julian day for moment of interest
   
-  function pl_excsmag_pl(jd)
+  function pl_xsmag_pl(jd)
     use SUFR_kinds, only: double
     use TheSky_planetdata, only: pl0
     
     implicit none
     real(double), intent(in) :: jd
-    real(double) :: pl_excsmag_pl
+    real(double) :: pl_xsmag_pl
     
-    pl_excsmag_pl = pl_excsmag(jd,pl0)
+    pl_xsmag_pl = pl_xsmag(jd,pl0)
     
-  end function pl_excsmag_pl
+  end function pl_xsmag_pl
   !*********************************************************************************************************************************
   
   
   !*********************************************************************************************************************************
-  !> \brief  Compute the excess magnitude for planet pl at JD, considering airmass - low-accuracy version of pl_excsmag()
+  !> \brief  Compute the excess magnitude for planet pl at JD, considering airmass - low-accuracy version of pl_xsmag()
   !!
   !! \param jd  Julian day for moment of interest
   !! \param pl  Planet ID (0-Moon, 1-Mer, 8-Nep, >10-comet
@@ -763,7 +804,7 @@ contains
   !! - The magnitude is corrected for extinction due to airmass, but for sea level
   !! - The limiting magnitude here solely depends on the Sun's altitude, simplified expression (especially, no Moon!)
   
-  function pl_excsmag_la(jd, pl)
+  function pl_xsmag_la(jd, pl)
     use SUFR_kinds, only: double
     use TheSky_planets, only: planet_position_la
     use TheSky_planetdata, only: planpos
@@ -771,7 +812,7 @@ contains
     implicit none
     real(double), intent(in) :: jd
     integer, intent(in) :: pl
-    real(double) :: pl_excsmag_la, airmass_ext, sunAlt
+    real(double) :: pl_xsmag_la, airmass_ext, sunAlt
     
     call planet_position_la(jd,  3, 4,0)  ! Sun position
     sunAlt = planpos(10)
@@ -779,9 +820,9 @@ contains
     call planet_position_la(jd, pl, 0,0)  ! Planet position
     
     airmass_ext = 0.2811d0  ! Extinction in magnitudes per unit airmass, at sea level
-    pl_excsmag_la = (planpos(13) + airmass_ext * airmass(planpos(10))) - limmag_sun(sunAlt)  ! (m + ext) - limmag
+    pl_xsmag_la = (planpos(13) + airmass_ext * airmass(planpos(10))) - limmag_sun(sunAlt)  ! (m + ext) - limmag
     
-  end function pl_excsmag_la
+  end function pl_xsmag_la
   !*********************************************************************************************************************************
   
   
@@ -791,17 +832,17 @@ contains
   !!
   !! \param jd  Julian day for moment of interest
   
-  function pl_excsmag_la_pl(jd)
+  function pl_xsmag_la_pl(jd)
     use SUFR_kinds, only: double
     use TheSky_planetdata, only: pl0
     
     implicit none
     real(double), intent(in) :: jd
-    real(double) :: pl_excsmag_la_pl
+    real(double) :: pl_xsmag_la_pl
     
-    pl_excsmag_la_pl = pl_excsmag_la(jd,pl0)
+    pl_xsmag_la_pl = pl_xsmag_la(jd,pl0)
     
-  end function pl_excsmag_la_pl
+  end function pl_xsmag_la_pl
   !*********************************************************************************************************************************
   
   
