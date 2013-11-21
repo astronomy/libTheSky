@@ -641,9 +641,9 @@ contains
     real(double) :: limmag_jd_pl,  objRA,objDec,objAlt
     
     call planet_position_la(jd, pl, 0,0)  ! Planet position
-    objRA  = planpos(25)
-    objDec = planpos(26)
-    objAlt = planpos(30)
+    objRA  = planpos(5)
+    objDec = planpos(6)
+    objAlt = planpos(10)
     
     limmag_jd_pl = limmag_jd(jd, objRA,objDec,objAlt)
     
@@ -709,7 +709,61 @@ contains
   !! - The magnitude is corrected for extinction due to airmass, but for sea level
   !! - The limiting magnitude here solely depends on the Sun's altitude, simplified expression (especially, no Moon!)
   
-  function pl_excess_magn(jd, pl)
+  function pl_excsmag(jd, pl)
+    use SUFR_kinds, only: double
+    
+    use TheSky_planets, only: planet_position_la
+    use TheSky_planetdata, only: planpos
+    
+    implicit none
+    real(double), intent(in) :: jd
+    integer, intent(in) :: pl
+    real(double) :: pl_excsmag,  objRA,objDec,objAlt
+    
+    call planet_position_la(jd, pl, 4,60)  ! Planet position
+    objRA  = planpos(5)
+    objDec = planpos(6)
+    objAlt = planpos(10)
+    
+    pl_excsmag = planpos(13) - limmag_jd(jd, objRA,objDec,objAlt)
+    
+  end function pl_excsmag
+  !*********************************************************************************************************************************
+  
+  
+  !*********************************************************************************************************************************
+  !> \brief  Compute the excess magnitude at JD.  Pass pl0 through module planetdata to allow solvers to use it.
+  !!         Calls pl_excess_mag().
+  !!
+  !! \param jd  Julian day for moment of interest
+  
+  function pl_excsmag_pl(jd)
+    use SUFR_kinds, only: double
+    use TheSky_planetdata, only: pl0
+    
+    implicit none
+    real(double), intent(in) :: jd
+    real(double) :: pl_excsmag_pl
+    
+    pl_excsmag_pl = pl_excsmag(jd,pl0)
+    
+  end function pl_excsmag_pl
+  !*********************************************************************************************************************************
+  
+  
+  !*********************************************************************************************************************************
+  !> \brief  Compute the excess magnitude for planet pl at JD, considering airmass - low-accuracy version of pl_excsmag()
+  !!
+  !! \param jd  Julian day for moment of interest
+  !! \param pl  Planet ID (0-Moon, 1-Mer, 8-Nep, >10-comet
+  !!
+  !! \note
+  !! - The excess magnitude is defined as the limiting magnitude minus the magnitude of an object
+  !!   - m_ex < 0 - object is visible (in theory!) with the naked eye
+  !! - The magnitude is corrected for extinction due to airmass, but for sea level
+  !! - The limiting magnitude here solely depends on the Sun's altitude, simplified expression (especially, no Moon!)
+  
+  function pl_excsmag_la(jd, pl)
     use SUFR_kinds, only: double
     use TheSky_planets, only: planet_position_la
     use TheSky_planetdata, only: planpos
@@ -717,7 +771,7 @@ contains
     implicit none
     real(double), intent(in) :: jd
     integer, intent(in) :: pl
-    real(double) :: pl_excess_magn, airmass_ext, sunAlt
+    real(double) :: pl_excsmag_la, airmass_ext, sunAlt
     
     call planet_position_la(jd,  3, 4,0)  ! Sun position
     sunAlt = planpos(10)
@@ -725,29 +779,29 @@ contains
     call planet_position_la(jd, pl, 0,0)  ! Planet position
     
     airmass_ext = 0.2811d0  ! Extinction in magnitudes per unit airmass, at sea level
-    pl_excess_magn = (planpos(13) + airmass_ext * airmass(planpos(10))) - limmag_sun(sunAlt)  ! limmag - (m + ext)
+    pl_excsmag_la = (planpos(13) + airmass_ext * airmass(planpos(10))) - limmag_sun(sunAlt)  ! (m + ext) - limmag
     
-  end function pl_excess_magn
+  end function pl_excsmag_la
   !*********************************************************************************************************************************
   
   
   !*********************************************************************************************************************************
-  !> \brief  Compute the negative of th excess magnitude at JD.  Pass pl0 through module planetdata to allow solvers to use it.
+  !> \brief  Compute the excess magnitude at JD.  Pass pl0 through module planetdata to allow solvers to use it.
   !!         Calls pl_excess_mag().
   !!
   !! \param jd  Julian day for moment of interest
   
-  function pl_excess_magn_pl(jd)
+  function pl_excsmag_la_pl(jd)
     use SUFR_kinds, only: double
     use TheSky_planetdata, only: pl0
     
     implicit none
     real(double), intent(in) :: jd
-    real(double) :: pl_excess_magn_pl
+    real(double) :: pl_excsmag_la_pl
     
-    pl_excess_magn_pl = pl_excess_magn(jd,pl0)
+    pl_excsmag_la_pl = pl_excsmag_la(jd,pl0)
     
-  end function pl_excess_magn_pl
+  end function pl_excsmag_la_pl
   !*********************************************************************************************************************************
   
   
