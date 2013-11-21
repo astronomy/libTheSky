@@ -580,8 +580,8 @@ contains
   !> \brief  Calculate limiting magnitude based on JD and object altitude, wrapper for limmag_full()
   !!
   !! \param  jd         Julian day
-  !! \param  objRA      Right ascension of the observed object, topocentric if possible (rad)
-  !! \param  objDec     Declination of the observed object, topocentric if possible (rad)
+  !! \param  objRA      Right ascension of the observed object (rad)
+  !! \param  objDec     Declination of the observed object (rad)
   !! \param  objAlt     Altitude of the observed object (rad)
   !!
   !! \retval limmag_jd  Limiting magnitude
@@ -593,7 +593,7 @@ contains
     use SUFR_angles, only: asep
     use SUFR_date_and_time, only: jd2cal
     
-    use TheSky_planets, only: planet_position
+    use TheSky_planets, only: planet_position_la
     use TheSky_planetdata, only: planpos
     use TheSky_local, only: lat0, height
     
@@ -604,14 +604,14 @@ contains
     
     call jd2cal(jd, year,month,day)
     
-    call planet_position(jd, 3)  ! Sun position
-    sunalt = planpos(30)
-    sunelon = asep(objRA, planpos(25),  objDec, planpos(26))
+    call planet_position_la(jd, 3, 4, 0)  ! Sun position - 4: need alitude
+    sunalt = planpos(10)
+    sunelon = asep(objRA, planpos(5),  objDec, planpos(6))
     
-    call planet_position(jd, 0)  ! Moon position
+    call planet_position_la(jd, 0, 5, 60)  ! Moon position - 4: need elon+k;  60 terms
     moonphase = planpos(14)
-    moonalt = planpos(30)
-    moonelon = asep(objRA, planpos(25),  objDec, planpos(26))
+    moonalt = planpos(10)
+    moonelon = asep(objRA, planpos(5),  objDec, planpos(6))
     
     limmag_jd = limmag_full(year,month, height,lat0, sunalt,sunelon, moonphase,moonalt,moonelon, objAlt)
     
@@ -632,7 +632,7 @@ contains
   function limmag_jd_pl(jd, pl)
     use SUFR_kinds, only: double
     
-    use TheSky_planets, only: planet_position
+    use TheSky_planets, only: planet_position_la
     use TheSky_planetdata, only: planpos
     
     implicit none
@@ -640,7 +640,7 @@ contains
     integer, intent(in) :: pl
     real(double) :: limmag_jd_pl,  objRA,objDec,objAlt
     
-    call planet_position(jd, pl)  ! Planet position
+    call planet_position_la(jd, pl, 0,0)  ! Planet position
     objRA  = planpos(25)
     objDec = planpos(26)
     objAlt = planpos(30)
@@ -711,7 +711,7 @@ contains
   
   function pl_excess_magn(jd, pl)
     use SUFR_kinds, only: double
-    use TheSky_planets, only: planet_position, planet_position_la
+    use TheSky_planets, only: planet_position_la
     use TheSky_planetdata, only: planpos
     
     implicit none

@@ -884,7 +884,8 @@ contains
   !! 
   !! \param jd    Julian Day of computation
   !! \param pl    Planet number:  0: Moon,  1-2: Mer-Ven,  3: Sun,  4-9: Mar-Plu
-  !! \param calc  Calculate  1: l,b,r, 2: & ra,dec, 3: & gmst,agst, 4: & az,alt (Sun and Moon only)
+  !! \param calc  Calculate  1: l,b,r, 2: & ra,dec, 3: & gmst,agst, 4: & az,alt (Sun and Moon only), 
+  !!                         5: add Moon elon, k, pa, GC LBR
   !! \param nt    Number of terms to use for the calculation (has an effect for Moon only; nt<=60); 
   !!              a smaller nt gives faster, but less accurate results
   
@@ -935,7 +936,7 @@ contains
        
     case(3)  ! Sun
        
-       call sunpos_la(jd,calc)
+       call sunpos_la(jd, calc)
        
     case default  ! Planets
        
