@@ -68,7 +68,7 @@ module TheSky_planetdata
   integer, parameter :: nasteroids=1000    ! Nasteroids is actually much larger; look at the first Nasteroids asteroids only
   
   integer(long) :: moonla_lrb(3,60)
-  integer :: pluc(43,3),plul(43,2),plub(43,2),plur(43,2)
+  integer :: pluc(43,3),plul(43,2),plub(43,2),plur(43,2), pl0
   integer :: moonla_arg(8,60)
   
   real(double) :: vsopdat(4,6827,10), planpos(nplanpos)

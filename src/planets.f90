@@ -49,7 +49,7 @@ contains
     use TheSky_nutation, only: nutation, nutation2000
     use TheSky_moon, only: moon_lbr, moonmagn
     use TheSky_comets, only: cometgc
-    use TheSky_planetdata, only: planpos
+    use TheSky_planetdata, only: planpos, pl0
     use TheSky_cometdata, only: cometElems
     use TheSky_asteroids, only: asteroid_magn, asteroid_lbr
     use TheSky_datetime, only: calc_deltat
@@ -74,6 +74,8 @@ contains
     topdelta = 0.d0;  delta0 = 0.d0
     diam = 0.d0
     magn = 0.d0  ! Make sure magn is always defined
+    
+    pl0 = pl                           ! Remember which planet was computed last
     
     lltime = .true.                    ! Take into account light time by default
     if(present(ltime)) lltime = ltime
