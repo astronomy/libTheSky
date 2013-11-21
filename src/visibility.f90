@@ -22,8 +22,8 @@
 !  transitalt:                          Compute the transit altitude for a given geographic latitude and declination
 !  get_dra_obj:                         Compute the difference between a given right ascension and the RA of the Sun
 !  best_obs_date_ra:                    Compute the best date to observe an object with a given right ascension
-!  limmag_sunmoon                       Calculate limiting magnitude based on Sun and Moon
-!  limmag                               Calculate limiting magnitude, based on the altitude of the Sun.  Simplif'd limmag_sunmoon()
+!  limmag_full                          Calculate limiting magnitude, full function
+!  limmag_sun                           Calculate limiting magnitude, based on the altitude of the Sun.  Simplif'd limmag_full()
 
 
 
@@ -447,12 +447,12 @@ contains
   !!
   !! \param  objalt      Altitude of the observed object (rad)
   !!
-  !! \retval limmag_sunmoon  Limiting magnitude
+  !! \retval limmag_full  Limiting magnitude
   !!
   !! \see http://www.go.ednet.ns.ca/~larry/astro/vislimit.html, 
   !!      a JavaScript version of a BASIC program by Bradley E. Schaefer, Sky and Telescope, May 1998, p.57
   
-  function limmag_sunmoon(year,month, obselev,obslat, sunalt,sunelon, moonphase,moonalt,moonelon, objalt)
+  function limmag_full(year,month, obselev,obslat, sunalt,sunelon, moonphase,moonalt,moonelon, objalt)
     use SUFR_kinds, only: double
     use SUFR_constants, only: d2r,r2d
     
@@ -461,7 +461,7 @@ contains
     real(double), intent(in) :: obselev,obslat, sunalt,sunelon, moonphase,moonalt,moonelon, objalt
     
     integer :: i,m,y
-    real(double) :: limmag_sunmoon,  b(5),k(5),dm(5),wa(5),mo(5),oz(5),wt(5),bo(5),cm(5),ms(5),  am,zm,rm,zs,rs,rh,te,la,al,sn,z
+    real(double) :: limmag_full,  b(5),k(5),dm(5),wa(5),mo(5),oz(5),wt(5),bo(5),cm(5),ms(5),  am,zm,rm,zs,rs,rh,te,la,al,sn,z
     real(double) :: lt,ra,sl,zz,xg,xa,xo,kr,ka,ko,kw,  x,xm,xs,bn,mm,c3,fm,bm,hs,bt,c4,fs,bd,bl,c1,c2,th
     
     
@@ -570,19 +570,93 @@ contains
     end if
     th = c1*(1.d0 + sqrt(c2*bl))**2
     
-    limmag_sunmoon = -16.57d0 - 2.5d0*log10(th) - dm(3) + 5*log10(sn)  ! Limiting magnitude
+    limmag_full = -16.57d0 - 2.5d0*log10(th) - dm(3) + 5*log10(sn)  ! Limiting magnitude
     
-  end function limmag_sunmoon
+  end function limmag_full
   !*********************************************************************************************************************************
   
   
+  !*********************************************************************************************************************************
+  !> \brief  Calculate limiting magnitude based on JD and object altitude, wrapper for limmag_full()
+  !!
+  !! \param  jd         Julian day
+  !! \param  objRA      Right ascension of the observed object, topocentric if possible (rad)
+  !! \param  objDec     Declination of the observed object, topocentric if possible (rad)
+  !! \param  objAlt     Altitude of the observed object (rad)
+  !!
+  !! \retval limmag_jd  Limiting magnitude
+  !!
+  !! \note  Using observer's location from module TheSky_local
+  
+  function limmag_jd(jd, objRA,objDec,objAlt)
+    use SUFR_kinds, only: double
+    use SUFR_angles, only: asep
+    use SUFR_date_and_time, only: jd2cal
+    
+    use TheSky_planets, only: planet_position
+    use TheSky_planetdata, only: planpos
+    use TheSky_local, only: lat0, height
+    
+    implicit none
+    real(double), intent(in) :: jd, objRA,objDec,objAlt
+    integer :: year, month
+    real(double) :: limmag_jd,  day, sunalt,sunelon, moonphase,moonalt,moonelon
+    
+    call jd2cal(jd, year,month,day)
+    
+    call planet_position(jd, 3)  ! Sun position
+    sunalt = planpos(30)
+    sunelon = asep(objRA, planpos(25),  objDec, planpos(26))
+    
+    call planet_position(jd, 0)  ! Moon position
+    moonphase = planpos(14)
+    moonalt = planpos(30)
+    moonelon = asep(objRA, planpos(25),  objDec, planpos(26))
+    
+    limmag_jd = limmag_full(year,month, height,lat0, sunalt,sunelon, moonphase,moonalt,moonelon, objAlt)
+    
+  end function limmag_jd
+  !*********************************************************************************************************************************
+  
   
   !*********************************************************************************************************************************
-  !> \brief Calculate limiting magnitude, based on the altitude of the Sun.  Simplified version of limmag_sunmoon()
+  !> \brief  Calculate limiting magnitude based on JD and planet ID, wrapper for limmag_jd_pl()
+  !!
+  !! \param  jd            Julian day
+  !! \param  pl            Planet ID
+  !!
+  !! \retval limmag_jd_pl  Limiting magnitude
+  !!
+  !! \note  Using observer's location from module TheSky_local
+  
+  function limmag_jd_pl(jd, pl)
+    use SUFR_kinds, only: double
+    
+    use TheSky_planets, only: planet_position
+    use TheSky_planetdata, only: planpos
+    
+    implicit none
+    real(double), intent(in) :: jd
+    integer, intent(in) :: pl
+    real(double) :: limmag_jd_pl,  objRA,objDec,objAlt
+    
+    call planet_position(jd, pl)  ! Planet position
+    objRA  = planpos(25)
+    objDec = planpos(26)
+    objAlt = planpos(30)
+    
+    limmag_jd_pl = limmag_jd(jd, objRA,objDec,objAlt)
+    
+  end function limmag_jd_pl
+  !*********************************************************************************************************************************
+  
+  
+  !*********************************************************************************************************************************
+  !> \brief Calculate limiting magnitude, based on the altitude of the Sun.  Simplified version of limmag_full()
   !!
   !! \param  sunalt  Altitude of the Sun (rad)
   !!
-  !! \retval limmag  Limiting magnitude
+  !! \retval limmag_sun  Limiting magnitude
   !!
   !! \note 
   !! - Mag depends only on sunalt in rad
@@ -592,13 +666,13 @@ contains
   !!      a JavaScript version of a BASIC program by Bradley E. Schaefer, Sky and Telescope, May 1998, p.57
   
   
-  function limmag(sunalt)
+  function limmag_sun(sunalt)
     use SUFR_kinds, only: double
     use SUFR_constants, only: r2d
     
     implicit none
     real(double), intent(in) :: sunalt
-    real(double) :: limmag,  dm,bn,bt,bd,bl,c1,c2,th
+    real(double) :: limmag_sun,  dm,bn,bt,bd,bl,c1,c2,th
     
     dm = 0.285667465769191d0     ! Extinction
     bn = 7.686577723230466d-14   ! Dark night sky brightness: no solar cycle, star in zenith
@@ -616,9 +690,9 @@ contains
     end if
     th = c1*(1.d0 + sqrt(c2*bl))**2
     
-    limmag = -16.57d0 - 2.5d0*log10(th) - dm   ! Limiting magnitude
+    limmag_sun = -16.57d0 - 2.5d0*log10(th) - dm   ! Limiting magnitude
     
-  end function limmag
+  end function limmag_sun
   !*********************************************************************************************************************************
   
   
@@ -651,7 +725,7 @@ contains
     call planet_position_la(jd, pl, 0,0)  ! Planet position
     
     airmass_ext = 0.2811d0  ! Extinction in magnitudes per unit airmass, at sea level
-    pl_excess_magn = (planpos(13) + airmass_ext * airmass(planpos(10))) - limmag(sunAlt)  ! limmag - (m + ext)
+    pl_excess_magn = (planpos(13) + airmass_ext * airmass(planpos(10))) - limmag_sun(sunAlt)  ! limmag - (m + ext)
     
   end function pl_excess_magn
   !*********************************************************************************************************************************
