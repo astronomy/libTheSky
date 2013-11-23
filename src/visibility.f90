@@ -71,10 +71,11 @@ contains
     implicit none
     real(double), intent(in) :: jdin
     integer, intent(in) :: plID
-    real(double), intent(out) :: jdout, xsmag
+    real(double), intent(out) :: jdout
+    real(double), intent(out), optional :: xsmag
     
     integer :: status
-    real(double) :: tz, jd1,jd2, plvis(2)
+    real(double) :: tz, jd1,jd2, plvis(2), lxsmag
     
     call planet_visibility_tonight(jdin, plID, 0.d0, 0.d0, 11,  plvis)  ! Sun<0d; Planet>0d, comp=11 twl/today
     
@@ -85,7 +86,9 @@ contains
     if(plvis(2).gt.12.d0) jd2 = jd2 - 1.d0
     
     pl0 = plID  ! Needed by pl_xsmag_pl()
-    xsmag = minimum_solver(pl_xsmag_pl, jd1, (jd1+jd2)/2.d0, jd2, 1.d-3,  jdout, status=status)  ! Use full routine
+    lxsmag = minimum_solver(pl_xsmag_pl, jd1, (jd1+jd2)/2.d0, jd2, 1.d-3,  jdout, status=status)  ! Use full routine
+    
+    if(present(xsmag)) xsmag = lxsmag
     
   end subroutine best_planet_xsmag
   !*********************************************************************************************************************************
