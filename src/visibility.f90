@@ -52,7 +52,7 @@ contains
   
   
   !*********************************************************************************************************************************
-  !> \brief  Find the moment (JD) of best excess magnitude for a planet, i.e. the lowest mag - lim.mag
+  !> \brief  Find the moment (JD) of optimal excess magnitude for a planet, i.e. the lowest mag - lim.mag
   !!
   !! \param  jdin    Julian day to compute best moment for
   !! \param  plID    Planet to compute visibility for (0-Moon, 1-Mercury, etc.)
@@ -171,20 +171,20 @@ contains
   !!
   !! \param  jd      Julian day for calculation
   !! \param  pl      Planet ID (1-2, 4-8 for Mer-Ven, Mar-Nep)
-  !! \param  sunalt  Sun altitude below which planet is visible (deg; e.g. -6.d0)
+  !! \param  sunAlt  Sun altitude below which planet is visible (deg; e.g. -6.d0)
   !! \param  plalt   Planet altitude above which planet is visible (deg; e.g. 5.d0)
   !! \param  comp    Compute: 1-compute twilight/planet at plalt events only (1,4),  2-include actual rise/set times (2,5)
   !!                 11, 12 = 1, 2 + compute only for today, not tomorrow
   !!
   !! \retval plvis   Planet visibility times (hours):  1-begin, 2-end;  plvis(1)*plvis(2) = 0 when invisible
   !!
-  !! \retval rts     "Rise times":       1-twilight (Sun at sunalt), 2-Sun rise/set, 4-planet at plalt, 5-planet rise/set
+  !! \retval rts     "Rise times":       1-twilight (Sun at sunAlt), 2-Sun rise/set, 4-planet at plalt, 5-planet rise/set
   !! \retval tts     Transit times:      1-2, of Sun,  4-5 of planet
-  !! \retval sts     "Set times":        1-twilight (Sun at sunalt), 2-Sun rise/set, 4-planet at plalt, 5-planet rise/set
+  !! \retval sts     "Set times":        1-twilight (Sun at sunAlt), 2-Sun rise/set, 4-planet at plalt, 5-planet rise/set
   !! \retval tas     Transit altitudes:  1-2, of Sun,  4-5 of planet
   !!
   
-  subroutine planet_visibility_tonight(jd, pl, sunalt, plalt, comp,   plvis,   rts, tts, sts, tas)
+  subroutine planet_visibility_tonight(jd, pl, sunAlt, plalt, comp,   plvis,   rts, tts, sts, tas)
     use SUFR_kinds, only: double
     use SUFR_constants, only: r2d
     use SUFR_angles, only: rv12
@@ -193,7 +193,7 @@ contains
     use TheSky_riset, only: riset
     
     implicit none
-    real(double), intent(in) :: jd, sunalt, plalt
+    real(double), intent(in) :: jd, sunAlt, plalt
     integer, intent(in) :: pl, comp
     real(double), intent(out) :: plvis(2)
     real(double), intent(out), optional :: rts(5), tts(5), sts(5), tas(5)
@@ -209,8 +209,8 @@ contains
     ! Sun:
     maxi = 1                              ! exclude rise/set times
     if(comp.eq.2.or.comp.eq.12) maxi = 2  ! include rise/set times
-    alt = sunalt
-    do irs=1,maxi   ! 1-twilight (sun @sunalt), 2-Sun rise/set
+    alt = sunAlt
+    do irs=1,maxi   ! 1-twilight (sun @sunAlt), 2-Sun rise/set
        if(irs.eq.2) alt = 0.d0
        
        ! Today:    s.set lsts:
@@ -423,8 +423,8 @@ contains
     real(double) :: get_dRA_obj,dRA,RA,sunRA
     common /best_obs_RA/ dRA,RA
     
-    call planet_position(jd,3)
-    sunRA = planpos(5)
+    call planet_position(jd,3)            ! Compute Sun position
+    sunRA = planpos(5)                    ! Sun's right ascension
     get_dRA_obj = rev2(RA - sunRA - dRA)
     
   end function get_dRA_obj
@@ -450,7 +450,7 @@ contains
     
     if(alt.lt.0.d0) then
        airmass = 1000.d0 * (0.15d0 + abs(alt))  ! Very bad (adds at least ~30 magnitudes due to extinction), 
-       !                                          but still worse when farther below the horizon
+       !                                          but still worse when farther below the horizon - for solvers
     else
        z = min(pio2 - alt, pio2)  ! Zenith angle
        zdeg = z*r2d
@@ -469,7 +469,6 @@ contains
   !! \note  The magnitude of an object corrected for airmass should be  m' = m + airmass_ext(ele) * airmass(alt)
   !!
   !! \see  Green, ICQ 14, 55 (1992),  http://www.icq.eps.harvard.edu/ICQExtinct.html
-  !!
   
   function airmass_ext(ele)
     use SUFR_kinds, only: double
@@ -496,12 +495,12 @@ contains
   !! \param  obselev     Elevation of the observer (m)
   !! \param  obslat      Latitude of the observer (rad)
   !!
-  !! \param  sunalt      Altitude of the Sun (rad)
-  !! \param  sunelon     Elongation object-Sun (rad)
+  !! \param  sunAlt      Altitude of the Sun (rad)
+  !! \param  sunElon     Elongation object-Sun (rad)
   !!
-  !! \param  moonphase   Phase of the Moon (fraction?)
-  !! \param  moonalt     Altitude of the Moon (rad)
-  !! \param  moonelon    Elongation object-Moon (rad)
+  !! \param  moonPhase   Phase of the Moon (fraction?)
+  !! \param  moonAlt     Altitude of the Moon (rad)
+  !! \param  moonElon    Elongation object-Moon (rad)
   !!
   !! \param  objalt      Altitude of the observed object (rad)
   !!
@@ -514,13 +513,13 @@ contains
   !! \see http://www.go.ednet.ns.ca/~larry/astro/vislimit.html, 
   !!      a JavaScript version of a BASIC program by Bradley E. Schaefer, Sky and Telescope, May 1998, p.57
   
-  function limmag_full(year,month, obselev,obslat, sunalt,sunelon, moonphase,moonalt,moonelon, objalt, humid,temp,snrat)
+  function limmag_full(year,month, obselev,obslat, sunAlt,sunElon, moonPhase,moonAlt,moonElon, objalt, humid,temp,snrat)
     use SUFR_kinds, only: double
     use SUFR_constants, only: d2r,r2d
     
     implicit none
     integer, intent(in) :: year, month
-    real(double), intent(in) :: obselev,obslat, sunalt,sunelon, moonphase,moonalt,moonelon, objalt
+    real(double), intent(in) :: obselev,obslat, sunAlt,sunElon, moonPhase,moonAlt,moonElon, objalt
     real(double), intent(in), optional :: humid,temp,snrat
     
     integer :: i,m,y
@@ -538,11 +537,11 @@ contains
     ms = (/-25.96d0, -26.09d0, -26.74d0, -27.26d0, -27.55d0/)
     
     ! Arguments:
-    am = (1.d0 - moonphase)*180    ! Phase angle moon (deg)
-    zm = 90.d0 - moonalt*r2d       ! Zenith angle moon (deg)
-    rm = moonelon*r2d              ! Elongation moon-star (deg)
-    zs = 90.d0 - sunalt*r2d        ! Zenith angle sun (deg)
-    rs = sunelon*r2d               ! Elongation sun-star (deg)
+    am = (1.d0 - moonPhase)*180    ! Phase angle moon (deg)
+    zm = 90.d0 - moonAlt*r2d       ! Zenith angle moon (deg)
+    rm = moonElon*r2d              ! Elongation moon-star (deg)
+    zs = 90.d0 - sunAlt*r2d        ! Zenith angle sun (deg)
+    rs = sunElon*r2d               ! Elongation sun-star (deg)
     la = obslat*r2d                ! Observer's latitude (deg)
     al = obselev                   ! Observer's elevation (m)
     m  = month                     ! Month (for approximate sun ra)
@@ -672,20 +671,20 @@ contains
     implicit none
     real(double), intent(in) :: jd, objRA,objDec,objAlt
     integer :: year, month
-    real(double) :: limmag_jd,  day, sunalt,sunelon, moonphase,moonalt,moonelon
+    real(double) :: limmag_jd,  day, sunAlt,sunElon, moonPhase,moonAlt,moonElon
     
     call jd2cal(jd, year,month,day)
     
-    call planet_position_la(jd, 3, 4, 0)  ! Sun position - 4: need alitude
-    sunalt = planpos(10)
-    sunelon = asep(objRA, planpos(5),  objDec, planpos(6))
+    call planet_position_la(jd, 3, 4, 0)                      ! Sun position - 4: need alitude
+    sunAlt = planpos(10)                                      ! Sun altitude
+    sunElon = asep(objRA, planpos(5),  objDec, planpos(6))    ! Sun elongation
     
-    call planet_position_la(jd, 0, 5, 60)  ! Moon position - 4: need elon+k;  60 terms
-    moonphase = planpos(14)
-    moonalt = planpos(10)
-    moonelon = asep(objRA, planpos(5),  objDec, planpos(6))
+    call planet_position_la(jd, 0, 5, 60)                     ! Moon position - 4: need k;  60 terms
+    moonPhase = planpos(14)                                   ! Moon phase (illuminated fraction, k)
+    moonAlt   = planpos(10)                                   ! Moon altitude
+    moonElon  = asep(objRA, planpos(5),  objDec, planpos(6))  ! Moon elongation
     
-    limmag_jd = limmag_full(year,month, height,lat0, sunalt,sunelon, moonphase,moonalt,moonelon, objAlt)
+    limmag_jd = limmag_full(year,month, height,lat0, sunAlt,sunElon, moonPhase,moonAlt,moonElon, objAlt)
     
   end function limmag_jd
   !*********************************************************************************************************************************
@@ -713,9 +712,9 @@ contains
     real(double) :: limmag_jd_pl,  objRA,objDec,objAlt
     
     call planet_position_la(jd, pl, 0,0)  ! Planet position
-    objRA  = planpos(5)
-    objDec = planpos(6)
-    objAlt = planpos(10)
+    objRA  = planpos(5)                   ! Object right ascension
+    objDec = planpos(6)                   ! Object declination
+    objAlt = planpos(10)                  ! Object altitude
     
     limmag_jd_pl = limmag_jd(jd, objRA,objDec,objAlt)
     
@@ -726,29 +725,29 @@ contains
   !*********************************************************************************************************************************
   !> \brief Calculate limiting magnitude, based on the altitude of the Sun.  Simplified version of limmag_full()
   !!
-  !! \param  sunalt  Altitude of the Sun (rad)
+  !! \param  sunAlt  Altitude of the Sun (rad)
   !!
   !! \retval limmag_sun  Limiting magnitude
   !!
   !! \note 
-  !! - Mag depends only on sunalt in rad
+  !! - Mag depends only on sunAlt in rad
   !! - assume object in zenith, no moon (am=180), humidity 50%, T=10degC, lat=45deg, sn=1
   !! 
   !! \see http://www.go.ednet.ns.ca/~larry/astro/vislimit.html, 
   !!      a JavaScript version of a BASIC program by Bradley E. Schaefer, Sky and Telescope, May 1998, p.57
   
   
-  function limmag_sun(sunalt)
+  function limmag_sun(sunAlt)
     use SUFR_kinds, only: double
     use SUFR_constants, only: r2d
     
     implicit none
-    real(double), intent(in) :: sunalt
+    real(double), intent(in) :: sunAlt
     real(double) :: limmag_sun,  dm,bn,bt,bd,bl,c1,c2,th
     
     dm = 0.285667465769191d0     ! Extinction
     bn = 7.686577723230466d-14   ! Dark night sky brightness: no solar cycle, star in zenith
-    bt = 10.d0**(-0.4d0*(-26.74d0 + 11.05d0 + 32.5d0 - sunalt*r2d )) * 0.12852345982053d0  ! Twilight brightness
+    bt = 10.d0**(-0.4d0*(-26.74d0 + 11.05d0 + 32.5d0 - sunAlt*r2d )) * 0.12852345982053d0  ! Twilight brightness
     bd = 9.456022312552874d-7    ! Daylight brightness
     bl = 1.d12*(bn + min(bd,bt))/1.11d-3   ! Total sky brightness in V, convert to nanolamberts
     
@@ -793,12 +792,12 @@ contains
     integer, intent(in) :: pl
     real(double) :: pl_xsmag,  objRA,objDec,objAlt
     
-    call planet_position_la(jd, pl, 4,60)  ! Planet position
-    objRA  = planpos(5)
-    objDec = planpos(6)
-    objAlt = planpos(10)
+    call planet_position_la(jd, pl, 4,60)  ! Compute planet position
+    objRA  = planpos(5)                    ! Object right ascension
+    objDec = planpos(6)                    ! Object declination
+    objAlt = planpos(10)                   ! Object altitude
     
-    pl_xsmag = planpos(13) - limmag_jd(jd, objRA,objDec,objAlt)
+    pl_xsmag = planpos(13) - limmag_jd(jd, objRA,objDec,objAlt)  ! Magnitude - limiting magnitude
     
   end function pl_xsmag
   !*********************************************************************************************************************************
