@@ -43,7 +43,7 @@ contains
   !! \param  jdin    Julian day to compute best moment for
   !! \param  plID    Planet to compute visibility for (0-Moon, 1-Mercury, etc.)
   !!
-  !! \retval jdbest  Moment of best excess magnitude
+  !! \retval jdout   Moment of best excess magnitude
   !! \retval xsmag   Excess magnitude at that moment (magnitude - limiting magnitude; <0: ~visible to the naked eye)
   
   subroutine best_planet_xsmag(jdin,plID, jdout, xsmag) 
@@ -60,9 +60,9 @@ contains
     real(double), intent(out) :: jdout, xsmag
     
     integer :: status
-    real(double) :: tz, jd1,jd2, rts(5), tts(5), sts(5), tas(5), plvis(2)
+    real(double) :: tz, jd1,jd2, plvis(2)
     
-    call planet_visibility_tonight(jdin, plID, 0.d0, 0.d0, 11,  rts, tts, sts, tas, plvis)  ! Sun<0d; Planet>0d, comp=11 twl/today
+    call planet_visibility_tonight(jdin, plID, 0.d0, 0.d0, 11,  plvis)  ! Sun<0d; Planet>0d, comp=11 twl/today
     
     tz = gettz(jdin)
     jd1 = floor(jdin+0.5d0) - 0.5d0 + (plvis(1)-tz)/24.d0
@@ -159,17 +159,18 @@ contains
   !! \param  pl      Planet ID (1-2, 4-8 for Mer-Ven, Mar-Nep)
   !! \param  sunalt  Sun altitude below which planet is visible (deg; e.g. -6.d0)
   !! \param  plalt   Planet altitude above which planet is visible (deg; e.g. 5.d0)
-  !! \param  comp    Compute: 1-compute twilight/planet @plalt events only (1,4),  2-include actual rise/set times (2,5)
+  !! \param  comp    Compute: 1-compute twilight/planet at plalt events only (1,4),  2-include actual rise/set times (2,5)
   !!                 11, 12 = 1, 2 + compute only for today, not tomorrow
   !!
-  !! \retval rts     "Rise times":       1-twilight (Sun @sunalt), 2-Sun rise/set, 4-planet @plalt, 5-planet rise/set
-  !! \retval tts     Transit times:      1-2, of Sun,  4-5 of planet
-  !! \retval sts     "Set times":        1-twilight (Sun @sunalt), 2-Sun rise/set, 4-planet @plalt, 5-planet rise/set
-  !! \retval tas     Transit altitudes:  1-2, of Sun,  4-5 of planet
   !! \retval plvis   Planet visibility times (hours):  1-begin, 2-end;  plvis(1)*plvis(2) = 0 when invisible
   !!
+  !! \retval rts     "Rise times":       1-twilight (Sun at sunalt), 2-Sun rise/set, 4-planet at plalt, 5-planet rise/set
+  !! \retval tts     Transit times:      1-2, of Sun,  4-5 of planet
+  !! \retval sts     "Set times":        1-twilight (Sun at sunalt), 2-Sun rise/set, 4-planet at plalt, 5-planet rise/set
+  !! \retval tas     Transit altitudes:  1-2, of Sun,  4-5 of planet
+  !!
   
-  subroutine planet_visibility_tonight(jd, pl, sunalt, plalt, comp,  rts, tts, sts, tas, plvis)
+  subroutine planet_visibility_tonight(jd, pl, sunalt, plalt, comp,   plvis,   rts, tts, sts, tas)
     use SUFR_kinds, only: double
     use SUFR_constants, only: r2d
     use SUFR_angles, only: rv12
@@ -180,13 +181,14 @@ contains
     implicit none
     real(double), intent(in) :: jd, sunalt, plalt
     integer, intent(in) :: pl, comp
-    real(double), intent(out) :: rts(5), tts(5), sts(5), tas(5), plvis(2)
+    real(double), intent(out) :: plvis(2)
+    real(double), intent(out), optional :: rts(5), tts(5), sts(5), tas(5)
     
     integer :: irs, ix, maxi, ind(4)
-    real(double) :: alt, times(4), st,rh,sh
+    real(double) :: alt, times(4), st,rh,sh,  lrts(5), ltts(5), lsts(5), ltas(5)
     logical :: sup,pup,pvis,pvisold
     
-    rts=0.d0; tts=0.d0; sts=0.d0; tas=0.d0; plvis=0.d0
+    lrts=0.d0; ltts=0.d0; lsts=0.d0; ltas=0.d0; plvis=0.d0
     
     ! On day JD, we want set times for JD and rise times for JD+1:
     
@@ -197,11 +199,11 @@ contains
     do irs=1,maxi   ! 1-twilight (sun @sunalt), 2-Sun rise/set
        if(irs.eq.2) alt = 0.d0
        
-       ! Today:    s.set sts:
-       call riset(jd, 3,  rts(irs), tts(irs), sts(irs), rh, tas(irs), sh,  alt)
+       ! Today:    s.set lsts:
+       call riset(jd, 3,  lrts(irs), ltts(irs), lsts(irs), rh, ltas(irs), sh,  alt)
        
-       ! Tomorrow: s.rise rts(2) / st. twl rts(1):
-       if(comp.lt.10) call riset(jd+1.d0, 3,  rts(irs), tts(irs), st, rh, tas(irs), sh,  alt)
+       ! Tomorrow: s.rise lrts(2) / st. twl lrts(1):
+       if(comp.lt.10) call riset(jd+1.d0, 3,  lrts(irs), ltts(irs), st, rh, ltas(irs), sh,  alt)
     end do  ! irs=1,2
     
     
@@ -212,10 +214,10 @@ contains
        if(irs.eq.5) alt = 0.d0
        
        ! Today: planet set:
-       call riset(jd, pl,  rts(irs), tts(irs), sts(irs), rh, tas(irs), sh,  alt)
+       call riset(jd, pl,  lrts(irs), ltts(irs), lsts(irs), rh, ltas(irs), sh,  alt)
        
        ! Tomorrow: planet rise, transit:
-       if(comp.lt.10) call riset(jd+1.d0, pl,  rts(irs), tts(irs), st, rh, tas(irs), sh,  alt)
+       if(comp.lt.10) call riset(jd+1.d0, pl,  lrts(irs), ltts(irs), st, rh, ltas(irs), sh,  alt)
     end do  ! irs=4,5
     
     
@@ -223,7 +225,7 @@ contains
     ! When is the planet visible?
     !   plvis(1): time planet becomes visible, plvis(2): time planet becomes invisible
     
-    times = (/rv12(rts(1)), rv12(sts(1)),  rv12(rts(4)), rv12(sts(4))/)  ! rv12: -12 - 12h; noon - noon
+    times = (/rv12(lrts(1)), rv12(lsts(1)),  rv12(lrts(4)), rv12(lsts(4))/)  ! rv12: -12 - 12h; noon - noon
     call sorted_index_list(times,ind)
     
     
@@ -231,17 +233,17 @@ contains
     sup = .true.   ! Sun up at noon
     pup = .false.  ! Planet not up at noon?
     
-    if(pl.gt.9.and.abs(rts(4)*sts(4)).lt.1.d-20) then  ! Comet or asteroid doesn't "rise" or "set" (cross plalt)
-       if(tas(4)*r2d.gt.plalt) then  ! Transit alt > plalt: object is always "up"
-          plvis(1) = rv12(sts(1))    ! Planet becomes visible at evening twilight
-          plvis(2) = rv12(rts(1))    ! Planet becomes invisible at morning twilight
+    if(pl.gt.9.and.abs(lrts(4)*lsts(4)).lt.1.d-20) then  ! Comet or asteroid doesn't "rise" or "set" (cross plalt)
+       if(ltas(4)*r2d.gt.plalt) then  ! Transit alt > plalt: object is always "up"
+          plvis(1) = rv12(lsts(1))    ! Planet becomes visible at evening twilight
+          plvis(2) = rv12(lrts(1))    ! Planet becomes invisible at morning twilight
        else
           plvis = 0.d0               ! Planet is never visible
        end if
        return
     end if
     
-    if(rv12(rts(4)).ge.0.d0 .and. rv12(rts(4)).gt.rv12(sts(4))) pup = .true.  ! Planet up at noon
+    if(rv12(lrts(4)).ge.0.d0 .and. rv12(lrts(4)).gt.rv12(lsts(4))) pup = .true.  ! Planet up at noon
     
     pvis = pup.and..not.sup  ! planet visible - should be false
     pvisold = pvis           ! idem
@@ -265,18 +267,19 @@ contains
        pvisold = pvis
     end do
     
+    ! Assign values to optional dummy arguments:
+    if(present(rts)) rts = lrts
+    if(present(tts)) tts = ltts
+    if(present(sts)) sts = lsts
+    if(present(tas)) tas = ltas
+    
   end subroutine planet_visibility_tonight
   !*********************************************************************************************************************************
-
-
-
-
-
-
-
-
-
-
+  
+  
+  
+  
+  
   !*********************************************************************************************************************************
   !> \brief  Cheap function to determine whether a comet is invisible at a given time, based on a magnitude and altitude limit
   !!
