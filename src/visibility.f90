@@ -16,7 +16,7 @@
 !  <http://www.gnu.org/licenses/>.
 
 
-!  best_planet_xsmag:            Find the moment (JD) of best "excess magnitude" for a planet
+!  best_planet_xsmag:            Find the moment (JD) of best excess magnitude (mag-lim.mag) for a planet
 !  best_planet_visibility:       Find the best moment (JD) to observe a planet on a given day (JD)
 !  planet_visibility_tonight:    Compute when a given planet is visible in a given night
 !  comet_invisible:              Determine whether a comet is invisible, given a magnitude and altitude limit
@@ -33,10 +33,12 @@
 !  limmag_jd_pl                  Calculate limiting magnitude based on JD and planet ID, wrapper for limmag_jd_pl()
 !  limmag_sun                    Calculate limiting magnitude, based on the altitude of the Sun only
 !
-!  pl_xsmag:                     Compute the excess magnitude for planet pl at JD, considering Sun, Moon and airmass
+!  pl_xsmag:                     Compute the excess magnitude (mag-lim.mag) for planet pl at JD, considering Sun, Moon and airmass
 !  pl_xsmag_pl:                  Compute the excess magnitude at JD, wrapper for pl_xsmag() for solvers
 !  pl_xsmag_la:                  Compute the excess magnitude, considering airmass and Sun altitude only
 !  pl_xsmag_la_pl:               Compute the excess magnitude, wrapper for pl_xsmag_la() for solvers
+!
+!  aperture:                     Aperture needed to observe an object with given excess magnitude
 
 
 !***********************************************************************************************************************************
@@ -50,7 +52,7 @@ contains
   
   
   !*********************************************************************************************************************************
-  !> \brief  Find the moment (JD) of best "excess magnitude" for a planet, i.e. the lowest mag - lim.mag
+  !> \brief  Find the moment (JD) of best excess magnitude for a planet, i.e. the lowest mag - lim.mag
   !!
   !! \param  jdin    Julian day to compute best moment for
   !! \param  plID    Planet to compute visibility for (0-Moon, 1-Mercury, etc.)
@@ -760,10 +762,11 @@ contains
   !! \param pl  Planet ID (0-Moon, 1-Mer, 8-Nep, >10-comet
   !!
   !! \note
-  !! - The excess magnitude is defined as the limiting magnitude minus the magnitude of an object
-  !!   - m_ex < 0 - object is visible (in theory!) with the naked eye
+  !! - The excess magnitude is defined as  the magnitude of an object  MINUS  the limiting magnitude
+  !!   - xsmag < 0 - object is visible (in theory!) with the naked eye
   !! - The magnitude is corrected for extinction due to airmass, but for sea level
   !! - The limiting magnitude here solely depends on the Sun's altitude, simplified expression (especially, no Moon!)
+  !! - This routine should be used as an indication only - no hard facts...
   
   function pl_xsmag(jd, pl)
     use SUFR_kinds, only: double
@@ -814,8 +817,8 @@ contains
   !! \param pl  Planet ID (0-Moon, 1-Mer, 8-Nep, >10-comet
   !!
   !! \note
-  !! - The excess magnitude is defined as the limiting magnitude minus the magnitude of an object
-  !!   - m_ex < 0 - object is visible (in theory!) with the naked eye
+  !! - The excess magnitude is defined as  the magnitude of an object  MINUS  the limiting magnitude
+  !!   - xsmag < 0 - object is visible (in theory!) with the naked eye
   !! - The magnitude is corrected for extinction due to airmass, but for sea level
   !! - The limiting magnitude here solely depends on the Sun's altitude, simplified expression (especially, no Moon!)
   
@@ -844,7 +847,6 @@ contains
   !*********************************************************************************************************************************
   !> \brief  Compute the excess magnitude at JD, wrapper for pl_xsmag_la() for solvers.
   !!         The planet ID pl0 is passed through module planetdata.
-  !!         
   !!
   !! \param jd  Julian day for moment of interest
   
@@ -861,6 +863,36 @@ contains
   end function pl_xsmag_la_pl
   !*********************************************************************************************************************************
   
+
+  !*********************************************************************************************************************************
+  !> \brief  Aperture in centimetres needed to observe an object with given excess magnitude (0: not needed)
+  !!
+  !! \param xsmag  Excess magnitude:  magnitude of an object  MINUS  limiting magnitude  (>0: too weak for naked eye)
+  !! \param pupil  Pupil size (mm, default: 7)
+  !!
+  !! \note  This routine should be used as an indication only - no hard facts...
+  
+  function aperture(xsmag, pupil)
+    use SUFR_kinds, only: double
+    
+    implicit none
+    real(double), intent(in) :: xsmag
+    real(double), intent(in), optional :: pupil
+    real(double) :: aperture, lpupil
+    
+    lpupil = 7  ! Default pupil size: 7mm
+    if(present(pupil)) lpupil = pupil
+    
+    if(xsmag.le.0.d0) then
+       aperture = 0.d0
+    else
+       aperture = lpupil * sqrt(10.d0**(xsmag/2.5d0)) / 10.d0  ! Aperture in cm
+    end if
+    
+  end function aperture
+  !*********************************************************************************************************************************
+  
+
   
 end module TheSky_visibility
 !***********************************************************************************************************************************
