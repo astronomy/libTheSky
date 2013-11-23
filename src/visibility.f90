@@ -16,15 +16,27 @@
 !  <http://www.gnu.org/licenses/>.
 
 
-!  best_planet_visibility:              Find the best moment (JD) to observe a planet on a given day (JD)
-!  planet_visibility_tonight:           Compute when a given planet is visible in a given night
-!  comet_invisible:                     Determine whether a comet is invisible, given a magnitude and altitude limit
-!  transitalt:                          Compute the transit altitude for a given geographic latitude and declination
-!  get_dra_obj:                         Compute the difference between a given right ascension and the RA of the Sun
-!  best_obs_date_ra:                    Compute the best date to observe an object with a given right ascension
-!  limmag_full                          Calculate limiting magnitude, full function
-!  limmag_sun                           Calculate limiting magnitude, based on the altitude of the Sun.  Simplif'd limmag_full()
-
+!  best_planet_xsmag:            Find the moment (JD) of best "excess magnitude" for a planet
+!  best_planet_visibility:       Find the best moment (JD) to observe a planet on a given day (JD)
+!  planet_visibility_tonight:    Compute when a given planet is visible in a given night
+!  comet_invisible:              Determine whether a comet is invisible, given a magnitude and altitude limit
+!
+!  transitalt:                   Compute the transit altitude for a given geographic latitude and declination
+!  best_obs_date_ra:             Compute the best date to observe an object with a given right ascension
+!  get_dra_obj:                  Compute the difference between a given right ascension and the RA of the Sun
+!
+!  airmass:                      Compute the airmass for a celestial object with a given altitude
+!  airmass_ext:                  Compute the extinction in magnitdes per unit airmass for an observer with given elevation
+!
+!  limmag_full                   Calculate limiting magnitude, full function
+!  limmag_jd                     Calculate limiting magnitude based on JD and object altitude, wrapper for limmag_full()
+!  limmag_jd_pl                  Calculate limiting magnitude based on JD and planet ID, wrapper for limmag_jd_pl()
+!  limmag_sun                    Calculate limiting magnitude, based on the altitude of the Sun only
+!
+!  pl_xsmag:                     Compute the excess magnitude for planet pl at JD, considering Sun, Moon and airmass
+!  pl_xsmag_pl:                  Compute the excess magnitude at JD, wrapper for pl_xsmag() for solvers
+!  pl_xsmag_la:                  Compute the excess magnitude, considering airmass and Sun altitude only
+!  pl_xsmag_la_pl:               Compute the excess magnitude, wrapper for pl_xsmag_la() for solvers
 
 
 !***********************************************************************************************************************************
@@ -418,7 +430,7 @@ contains
   
   
   !*********************************************************************************************************************************
-  !> \brief Compute the airmass for a celestial object with a given altitude
+  !> \brief  Compute the airmass for a celestial object with a given altitude
   !!
   !! \param alt  Altitude of object (radians)
   !!
@@ -742,7 +754,7 @@ contains
   
   
   !*********************************************************************************************************************************
-  !> \brief  Compute the excess magnitude for planet pl at JD, considering airmass - cheap
+  !> \brief  Compute the excess magnitude for planet pl at JD, considering Sun, Moon and airmass
   !!
   !! \param jd  Julian day for moment of interest
   !! \param pl  Planet ID (0-Moon, 1-Mer, 8-Nep, >10-comet
@@ -776,8 +788,8 @@ contains
   
   
   !*********************************************************************************************************************************
-  !> \brief  Compute the excess magnitude at JD.  Pass pl0 through module planetdata to allow solvers to use it.
-  !!         Calls pl_excess_mag().
+  !> \brief  Compute the excess magnitude at JD, wrapper for pl_xsmag() for solvers.
+  !!         The planet ID pl0 is passed through module planetdata.
   !!
   !! \param jd  Julian day for moment of interest
   
@@ -796,7 +808,7 @@ contains
   
   
   !*********************************************************************************************************************************
-  !> \brief  Compute the excess magnitude for planet pl at JD, considering airmass - low-accuracy version of pl_xsmag()
+  !> \brief  Compute the excess magnitude for planet pl at JD, considering airmass and Sun alt - low-accuracy version of pl_xsmag()
   !!
   !! \param jd  Julian day for moment of interest
   !! \param pl  Planet ID (0-Moon, 1-Mer, 8-Nep, >10-comet
@@ -830,8 +842,9 @@ contains
   
   
   !*********************************************************************************************************************************
-  !> \brief  Compute the excess magnitude at JD.  Pass pl0 through module planetdata to allow solvers to use it.
-  !!         Calls pl_excess_mag().
+  !> \brief  Compute the excess magnitude at JD, wrapper for pl_xsmag_la() for solvers.
+  !!         The planet ID pl0 is passed through module planetdata.
+  !!         
   !!
   !! \param jd  Julian day for moment of interest
   
