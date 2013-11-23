@@ -505,7 +505,7 @@ contains
   !!
   !! \param  objalt      Altitude of the observed object (rad)
   !!
-  !! \param  humid       Relative humidity  (%, default: 50)
+  !! \param  humid       Relative humidity  (%, default: 70)
   !! \param  temp        Air temperature  (degrees Celcius, default: 10)
   !! \param  snrat       Snellen ratio for vision  (default: 1)
   !!
@@ -538,25 +538,25 @@ contains
     ms = (/-25.96d0, -26.09d0, -26.74d0, -27.26d0, -27.55d0/)
     
     ! Arguments:
-    am = (1.d0 - moonphase)*180  ! Phase angle moon (deg)
-    zm = 90.d0 - moonalt*r2d     ! Zenith angle moon (deg)
-    rm = moonelon*r2d            ! Elongation moon-star (deg)
-    zs = 90.d0 - sunalt*r2d      ! Zenith angle sun (deg)
-    rs = sunelon*r2d             ! Elongation sun-star (deg)
-    la = obslat*r2d              ! Observer's latitude (deg)
-    al = obselev                 ! Observer's elevation (m)
-    m  = month                   ! Month (for approximate sun ra)
-    y  = year                    ! Year (for solar cyle...)
-    z  = 90.d0 - objalt*r2d      ! Zenith angle object (deg)
+    am = (1.d0 - moonphase)*180    ! Phase angle moon (deg)
+    zm = 90.d0 - moonalt*r2d       ! Zenith angle moon (deg)
+    rm = moonelon*r2d              ! Elongation moon-star (deg)
+    zs = 90.d0 - sunalt*r2d        ! Zenith angle sun (deg)
+    rs = sunelon*r2d               ! Elongation sun-star (deg)
+    la = obslat*r2d                ! Observer's latitude (deg)
+    al = obselev                   ! Observer's elevation (m)
+    m  = month                     ! Month (for approximate sun ra)
+    y  = year                      ! Year (for solar cyle...)
+    z  = 90.d0 - objalt*r2d        ! Zenith angle object (deg)
     
     ! Optional arguments:
-    rh = 50.d0                   ! Relative humidity (%)
-    if(present(humid)) rh = humid
+    rh = 70.d0                     ! Relative humidity (%), is higher at night than during the day, annual average at 7am 
+    if(present(humid)) rh = humid  ! in S-E USA ~83%, see http://www.sercc.com/climateinfo/historical/avgrh.html
     
-    te = 10.d0                   ! Temperature (deg.C)
+    te = 10.d0                     ! Temperature (deg.C)
     if(present(temp))  te = temp
     
-    sn = 1.d0                    ! Snellen ratio quantifies vision
+    sn = 1.d0                      ! Snellen ratio quantifies vision
     if(present(snrat)) sn = snrat
     
     
