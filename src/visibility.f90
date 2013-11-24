@@ -668,15 +668,17 @@ contains
     use SUFR_date_and_time, only: jd2cal
     
     use TheSky_planets, only: planet_position_la
-    use TheSky_planetdata, only: planpos
+    use TheSky_planetdata, only: planpos, nplanpos
     use TheSky_local, only: lat0, height
     
     implicit none
     real(double), intent(in) :: jd, objRA,objDec,objAlt
     integer :: year, month
-    real(double) :: limmag_jd,  day, sunAlt,sunElon, moonPhase,moonAlt,moonElon
+    real(double) :: limmag_jd,  day, sunAlt,sunElon, moonPhase,moonAlt,moonElon, planpos0(nplanpos)
     
     call jd2cal(jd, year,month,day)
+    
+    planpos0 = planpos                                        ! Save current contents
     
     call planet_position_la(jd, 3, 4, 0)                      ! Sun position - 4: need alitude
     sunAlt = planpos(10)                                      ! Sun altitude
@@ -689,12 +691,14 @@ contains
     
     limmag_jd = limmag_full(year,month, height,lat0, sunAlt,sunElon, moonPhase,moonAlt,moonElon, objAlt)
     
+    planpos = planpos0                                        ! Restore original contents
+    
   end function limmag_jd
   !*********************************************************************************************************************************
   
   
   !*********************************************************************************************************************************
-  !> \brief  Calculate limiting magnitude based on JD and planet ID, wrapper for limmag_jd_pl()
+  !> \brief  Calculate limiting magnitude based on JD and planet ID, wrapper for limmag_jd()
   !!
   !! \param  jd            Julian day
   !! \param  pl            Planet ID
@@ -707,19 +711,22 @@ contains
     use SUFR_kinds, only: double
     
     use TheSky_planets, only: planet_position_la
-    use TheSky_planetdata, only: planpos
+    use TheSky_planetdata, only: planpos, nplanpos
     
     implicit none
     real(double), intent(in) :: jd
     integer, intent(in) :: pl
-    real(double) :: limmag_jd_pl,  objRA,objDec,objAlt
+    real(double) :: limmag_jd_pl,  objRA,objDec,objAlt, planpos0(nplanpos)
     
     call planet_position_la(jd, pl, 0,0)  ! Planet position
-    objRA  = planpos(5)                   ! Object right ascension
-    objDec = planpos(6)                   ! Object declination
-    objAlt = planpos(10)                  ! Object altitude
+    objRA    = planpos(5)                 ! Object right ascension
+    objDec   = planpos(6)                 ! Object declination
+    objAlt   = planpos(10)                ! Object altitude
+    planpos0 = planpos                    ! Save
     
     limmag_jd_pl = limmag_jd(jd, objRA,objDec,objAlt)
+    
+    planpos = planpos0                    ! Restore
     
   end function limmag_jd_pl
   !*********************************************************************************************************************************
@@ -768,6 +775,8 @@ contains
     
   end function limmag_sun
   !*********************************************************************************************************************************
+  
+  
   
   
   

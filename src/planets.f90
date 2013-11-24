@@ -903,6 +903,8 @@ contains
     real(double) :: moondat(nplanpos)
     real(double) :: hcl0,hcb0,hcr0, gcl,gcb,delta, elon,pa,illfr
     
+    planpos(39) = dble(pl)
+    
     select case(pl)
     case(0)  ! Moon
        call moonpos_la(jd,calc,nt)  !nt<=60

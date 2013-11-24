@@ -1,11 +1,11 @@
 !> \file libTheSky.f90  Used for documentation purposes
 !!  
 !!  \mainpage libTheSky documentation
-!!  libTheSky is a LIBrary to compute the positions of Sun, Moon and planets in The Sky.  libTheSky is available for free
+!!  libTheSky is a LIBrary to compute the positions of Sun, Moon, planets and more in The Sky.  libTheSky is available for free
 !!  under the conditions of the GPL v.3.
 !!  
 !!  \par
-!!  Copyright &copy; 2002-2013  Marc van der Sluys - marc.vandersluys.nl
+!!  Copyright &copy; 2002-2013  Marc van der Sluys - <a href="http://marc.vandersluys.nl">marc.vandersluys.nl</a>
 !!
 !!  \see
 !!  These pages contain the documentation for libTheSky, created by Doxygen.  
