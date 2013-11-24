@@ -885,24 +885,30 @@ contains
   !!
   !! \param xsmag  Excess magnitude:  magnitude of an object  MINUS  limiting magnitude  (>0: too weak for naked eye)
   !! \param pupil  Pupil size (mm, default: 7)
+  !! \param tc     Transmission coefficient of the instrument (default: 0.8 = 80%)
   !!
   !! \note  This routine should be used as an indication only - no hard facts...
   
-  function aperture(xsmag, pupil)
+  function aperture(xsmag, pupil, tc)
     use SUFR_kinds, only: double
     
     implicit none
     real(double), intent(in) :: xsmag
-    real(double), intent(in), optional :: pupil
-    real(double) :: aperture, lpupil
+    real(double), intent(in), optional :: pupil, tc
+    real(double) :: aperture, lpupil, ltc
     
-    lpupil = 7  ! Default pupil size: 7mm
+    ! Pupil size:
+    lpupil = 7.d0  ! Default pupil size: 7mm
     if(present(pupil)) lpupil = pupil
+    
+    ! Light-transmission coefficient:
+    ltc = 0.8d0  ! Default tc for amateur telescopes ~80% (http://www.telescope-optics.net/functions.htm)
+    if(present(tc)) ltc = tc
     
     if(xsmag.le.0.d0) then
        aperture = 0.d0
     else
-       aperture = lpupil * sqrt(10.d0**(xsmag/2.5d0)) / 10.d0  ! Aperture in cm
+       aperture = lpupil * sqrt(10.d0**(xsmag/2.5d0) / ltc) / 10.d0  ! Aperture in cm
     end if
     
   end function aperture
