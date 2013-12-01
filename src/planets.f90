@@ -36,7 +36,7 @@ contains
   
   subroutine planet_position(jd,pl, ltime)
     use SUFR_kinds, only: double
-    use SUFR_constants, only: pi, au,earthr,pland, enpname
+    use SUFR_constants, only: pi, au,earthr,pland, enpname, jd2000
     use SUFR_system, only: warn
     use SUFR_angles, only: rev, rev2
     use SUFR_dummy, only: dumdbl
@@ -83,7 +83,7 @@ contains
     ! Calc JDE & t:
     deltat = calc_deltat(jd)
     jde    = jd + deltat/86400.d0
-    tjm    = (jde-2451545.d0)/365250.d0                                ! Julian Millennia after 2000.0 in dyn. time, tau in Meeus
+    tjm    = (jde-jd2000)/365250.d0                                    ! Julian Millennia after 2000.0 in dyn. time, tau in Meeus
     tjm0   = tjm
     
     call vsop_lbr(tjm,3, hcl0,hcb0,hcr0)                               ! Calculate the Earth's true heliocentric l,b,r
@@ -118,12 +118,12 @@ contains
           
           ! For Neptune's birthday:
           !print*,'TESTING!!!'
-          !call precess_ecl(jde,2451545.d0,hcl,hcb)                     ! from JoD to J2000.0
+          !call precess_ecl(jde,jd2000,hcl,hcb)                        ! from JoD to J2000.0
           
           call hc_spher_2_gc_rect(hcl,hcb,hcr, hcl0,hcb0,hcr0, gcx,gcy,gcz)  ! Convert heliocentric l,b,r to geocentric x,y,z
           call rect_2_spher(gcx,gcy,gcz, gcl,gcb,delta)                      ! Convert geocentric x,y,z to geocentric l,b,r
           if(pl.eq.3) delta = hcr
-          if(pl.eq.9) call precess_ecl(2451545.d0,jde,gcl,gcb)         ! Pluto:  from J2000.0 to JoD
+          if(pl.eq.9) call precess_ecl(jd2000,jde,gcl,gcb)             ! Pluto:  from J2000.0 to JoD
        end if
        
        if(pl.gt.10.and.pl.lt.10000) &
@@ -217,7 +217,7 @@ contains
     ! Comets:
     if(pl.gt.10) then
        diam = 0.d0
-       magn = cometElems(pl,8) + 5*log10(delta) + 2.5d0*cometElems(pl,9)*log10(hcr)
+       magn = cometElems(pl,8) + 5*log10(delta) + 2.5d0*cometElems(pl,9)*log10(hcr)     ! m = H + 5log(d) + 2.5*G*log(r)
        topdelta = delta
     end if
     
@@ -425,7 +425,7 @@ contains
   
   subroutine planetelements(jd)
     use SUFR_kinds, only: double
-    use SUFR_constants, only: d2r
+    use SUFR_constants, only: d2r, jd2000
     use SUFR_system, only: quit_program_error
     use SUFR_angles, only: rev
     use SUFR_numerics, only: deq
@@ -443,7 +443,7 @@ contains
     
     deltat = calc_deltat(jd)
     jde = jd + deltat/86400.d0
-    tm = (jde-2451545.d0)/36525.d0                 ! Julian Centuries after 2000.0 in dynamical time
+    tm = (jde-jd2000)/36525.d0  ! Julian Centuries after 2000.0 in dynamical time
     
     
     ! Powers of tm:
@@ -963,6 +963,7 @@ contains
   
   subroutine sunpos_la(jd, calc)
     use SUFR_kinds, only: double
+    use SUFR_constants, only: jd2000
     use SUFR_angles, only: rev
     
     use TheSky_planetdata, only: planpos
@@ -977,7 +978,7 @@ contains
     
     deltat = calc_deltat(jd)
     jde = jd + deltat/86400.d0
-    t = (jde-2451545.d0)/36525.d0                 ! Julian Centuries after 2000.0 in dynamical time, the T in Meeus, p.163, Eq. 25.1
+    t = (jde-jd2000)/36525.d0    ! Julian Centuries after 2000.0 in dynamical time, the T in Meeus, p.163, Eq. 25.1
     t2 = t*t
     
     l0 = 4.895063168d0 + 628.331966786d0 *t + 5.291838d-6    *t2  ! Mean longitude, Eq. 25.2

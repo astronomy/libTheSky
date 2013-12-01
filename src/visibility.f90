@@ -309,7 +309,7 @@ contains
   
   function comet_invisible(jd, cometID, mlim, minalt)
     use SUFR_kinds, only: double
-    use SUFR_constants, only: r2d
+    use SUFR_constants, only: r2d, jd2000
     use TheSky_planetdata, only: planpos
     use TheSky_comets, only: cometgc
     use TheSky_cometdata, only: cometElems
@@ -324,7 +324,7 @@ contains
     
     comet_invisible = .false.
     
-    tjm = (jd-2451545.d0)/365250.d0                    ! Julian Millennia after 2000.0 (not dyn. time - approx)
+    tjm = (jd-jd2000)/365250.d0   ! Julian Millennia after 2000.0 (not dyn. time - approx)
     call cometgc(tjm,tjm, cometID, hcr,gcl,gcb,delta)
     
     ! Typical difference with full method: ~10^-4 mag:

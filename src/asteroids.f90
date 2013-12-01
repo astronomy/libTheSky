@@ -78,7 +78,7 @@ contains
     !m0 = 0.d0
     
     mem = 0.01720209895d0 * sma**(-1.5d0)   ! Mean motion (rad/day)
-    jd  = 2451545.d0 + 365250.d0 * tjm
+    jd  = jd2000 + 365250.d0 * tjm
     djd = jd - jd0                          ! Time since epoch in days
     mea = m0 + mem*djd                      ! Mean anomaly at time t
     
@@ -180,7 +180,7 @@ contains
     call asteroid_elements(t,as, r, om1, nu, cosi,sini, coso,sino)
     
     ! To calculate *equatorial* coordinates:
-    !jd  = 2451545.d0 + 365250.d0 * t
+    !jd  = jd2000 + 365250.d0 * t
     !call nutation(t, dpsi,eps0,deps)
     !call nutation2000(jd,dpsi,deps)  ! IAU 2000 Nutation model - doesn't provide eps0
     !eps = eps0 + deps

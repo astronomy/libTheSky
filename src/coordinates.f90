@@ -124,7 +124,7 @@ contains
     y = r * (cos(b) * sin(l) * cos(eps)  -  sin(b) * sin(eps))
     z = r * (cos(b) * sin(l) * sin(eps)  +  sin(b) * cos(eps))
     
-    !jd1 = t1*365250.d0 + 2451545.d0      !From equinox of date...
+    !jd1 = t1*365250.d0 + jd2000      !From equinox of date...
     !jd2 = comepoche                      ! ... to equinox of elements
     !call precess_xyz(jd1,jd2,x,y,z)
     
@@ -146,6 +146,7 @@ contains
   
   subroutine precess_xyz(jd1,jd2, x,y,z)
     use SUFR_kinds, only: double
+    use SUFR_constants, only: jd2000
     
     implicit none
     real(double), intent(in) :: jd1,jd2
@@ -154,7 +155,7 @@ contains
     real(double) :: dz,ze,th,sd,cd,sz,cz,st,ct
     real(double) :: xx,xy,xz,yx,yy,yz,zx,zy,zz
     
-    t1 = (jd1 - 2451545.d0)/36525.d0  !  t since 2000.0 in Julian centuries
+    t1 = (jd1 - jd2000)/36525.d0  !  t since 2000.0 in Julian centuries
     t2 = (jd2 - jd1)/36525.d0         ! dt in Julian centuries
     t22 = t2*t2   ! t2^2
     t23 = t22*t2  ! t2^3
@@ -206,13 +207,14 @@ contains
   
   subroutine precess_eq(jd1,jd2,a1,d1)
     use SUFR_kinds, only: double
+    use SUFR_constants, only: jd2000
     
     implicit none
     real(double), intent(in) :: jd1,jd2
     real(double), intent(inout) :: a1,d1
     real(double) :: t1,t2,t22,t23, dz,ze,th,a,b,c
     
-    t1 = (jd1 - 2451545.d0)/36525.d0  !  t since 2000.0 in Julian centuries
+    t1 = (jd1 - jd2000)/36525.d0      !  t since 2000.0 in Julian centuries
     t2 = (jd2 - jd1)/36525.d0         ! dt in Julian centuries
     t22 = t2*t2   ! t2^2
     t23 = t22*t2  ! t2^3
@@ -288,13 +290,14 @@ contains
   
   subroutine precess_ecl(jd1,jd2, l,b)
     use SUFR_kinds, only: double
+    use SUFR_constants, only: jd2000
     
     implicit none
     real(double), intent(in) :: jd1,jd2
     real(double), intent(inout) :: l,b
     real(double) :: t1,t2,t22,t23, eta,pii,p,aa,bb,cc
     
-    t1  = (jd1 - 2451545.d0)/36525.d0  !  t since 2000.0 in Julian centuries
+    t1  = (jd1 - jd2000)/36525.d0      !  t since 2000.0 in Julian centuries
     t2  = (jd2 - jd1)/36525.d0         ! dt in Julian centuries
     t22 = t2*t2   ! t2^2
     t23 = t22*t2  ! t2^3
@@ -332,13 +335,14 @@ contains
   
   subroutine precess_orb(jd1,jd2,i,o1,o2)
     use SUFR_kinds, only: double
+    use SUFR_constants, only: jd2000
     
     implicit none
     real(double), intent(in) :: jd1,jd2
     real(double), intent(inout) :: i,o1,o2
     real(double) :: t1,t2,t22,t23,  eta,pii,p,psi,aa,bb,cc,dd
     
-    t1  = (jd1 - 2451545.d0)/36525.d0  !  t since 2000.0 in Julian centuries
+    t1  = (jd1 - jd2000)/36525.d0      !  t since 2000.0 in Julian centuries
     t2  = (jd2 - jd1)/36525.d0         ! dt in Julian centuries
     t22 = t2*t2   ! t2^2
     t23 = t22*t2  ! t2^3
@@ -459,6 +463,7 @@ contains
   
   subroutine aberration_eq(jd, ra,dec, dra, ddec, eps0)
     use SUFR_kinds, only: double
+    use SUFR_constants, only: jd2000
     use SUFR_angles, only: rev
     use SUFR_dummy, only: dumdbl
     use SUFR_numerics, only: dne
@@ -476,7 +481,7 @@ contains
     if(dne(jd,jdold)) then
        
        ! Meeus, Ch. 25:
-       tjc   =  (jd-2451545.d0)/36525.0d0  ! Julian centuries since 2000.0, Meeus Eq. 25.1
+       tjc   =  (jd-jd2000)/36525.0d0  ! Julian centuries since 2000.0, Meeus Eq. 25.1
        tjc2  =  tjc**2
        l0    =  4.8950631684d0 + 628.331966786d0 * tjc + 5.291838d-6  ! Mean longitude of the Sun, Meeus Eq. 25.2
        

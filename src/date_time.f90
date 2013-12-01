@@ -154,15 +154,16 @@ contains
   
   function calc_gmst(jd)
     use SUFR_kinds, only: double
+    use SUFR_constants, only: jd2000
     use SUFR_angles, only: rev
     
     implicit none
     real(double), intent(in) :: jd
     real(double) :: calc_gmst,t,t2,gmst
     
-    t = (jd-2451545.d0)/36525.d0  ! Julian Centuries after 2000.0 UT
+    t = (jd-jd2000)/36525.d0  ! Julian Centuries after 2000.0 UT
     t2 = t*t
-    gmst = 4.894961212735793d0 + 6.300388098984957d0*(jd-2451545.d0) + 6.77070812713916d-6*t2 - 4.50872966158d-10*t2*t
+    gmst = 4.894961212735793d0 + 6.300388098984957d0*(jd-jd2000) + 6.77070812713916d-6*t2 - 4.50872966158d-10*t2*t
     
     calc_gmst = rev(gmst)          ! If corrected for equation of the equinoxes: = rev(gmst + dpsi*cos(eps))
     

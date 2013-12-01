@@ -728,7 +728,9 @@ contains
 
   !*********************************************************************************************************************************
   !> \brief  Read orbital-element data for the asteroids
-  !! 
+  !!
+  !! \note 
+  !! - data are passed via the module comet_data, in cometElems(*,1:9):
   !! - Epoch (JD), a, e, i, omega, Omega, M, H, G, for J2000.0
   !!
   !! \see
@@ -783,8 +785,8 @@ contains
   !> \brief  Read orbital-element data for the comets
   !!
   !! \note
-  !! - data are passed via the module comet_data, in cometElems(*,1:7)
-  !! - colums:  1: Epoch (JD),  2: q,  3: e,  4: i,  5: omega,  6: Omega,  7: Tp, for J2000.0
+  !! - data are passed via the module comet_data, in cometElems(*,1:9)
+  !! - colums:  1: Epoch (JD),  2: q,  3: e,  4: i,  5: omega,  6: Omega,  7: Tp, for J2000.0, 8: H, 9: G
   !!
   !! \see
   !! - comets.dat: http://ssd.jpl.nasa.gov/dat/ELEMENTS.COMET

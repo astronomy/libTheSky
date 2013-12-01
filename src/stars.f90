@@ -33,7 +33,7 @@ contains
   
   subroutine calcstars(jd)  
     use SUFR_kinds, only: double
-    use SUFR_constants, only: pi, ras2r
+    use SUFR_constants, only: pi, ras2r, jd2000
     
     use TheSky_nutation, only: nutation
     use TheSky_coordinates, only: precess_eq, aberration_eq, eq_2_ecl
@@ -77,20 +77,20 @@ contains
     
     
     ! PM = change of epoch:
-    t = (jd-2451545.d0)/365.250d0  ! Julian years since 2000.0
+    t = (jd-jd2000)/365.250d0  ! Julian years since 2000.0
     ra  = ra  + pma*t
     dec = dec + pmd*t
     
     
     ! Precession = change of equinox:
-    jd1 = 2451545.d0  !from J2000.0    
+    jd1 = jd2000  !from J2000.0    
     do i=1,nstars
        call precess_eq(jd1,jd,ra(i),dec(i))
     end do
     
     
     ! Nutation, 1st order, Meeus Eq.23.1:
-    t = (jd-2451545.d0)/365250.d0  ! Julian millennia since 2000.0
+    t = (jd-jd2000)/365250.d0  ! Julian millennia since 2000.0
     call nutation(t, dpsi,eps0,deps)
     eps = eps0 + deps
     

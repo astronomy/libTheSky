@@ -41,7 +41,7 @@ contains
   
   subroutine cometxyz(t1,com,x,y,z)
     use SUFR_kinds, only: double
-    use SUFR_constants, only: nlpname,enpname
+    use SUFR_constants, only: nlpname,enpname, jd2000
     use SUFR_numerics, only: deq
     
     use TheSky_nutation, only: nutation
@@ -56,7 +56,7 @@ contains
     real(double) :: k,jj,del,  tp,q,a,e,o1,o2,in,nu,r,t,jde,te,  m,n,ee,ee1,de,  qq,g,s,s0,s1,w,q2,q3,dq3
     real(double) :: eps,dpsi,eps0,deps,  ff,gg,hh,pp,qqq,rr,a1,a2,b1,b2,c1,c2
     
-    jde = t1*365250.d0 + 2451545.d0       ! t1 in Julian Millennia after 2000.0 in dynamical time
+    jde = t1*365250.d0 + jd2000  ! t1 is in Julian Millennia after 2000.0 in dynamical time
     
     k   = 0.01720209895d0  ! Gaussian gravitational constant
     j1  = 0
@@ -78,7 +78,7 @@ contains
     
     
     
-    te = (comepoche - 2451545.d0)/365250.d0
+    te = (comepoche - jd2000)/365250.d0
     t = jde - tp  ! In days since perihelion
     nu = 0.d0     ! Avoid 'may be used uninitialized' warnings
     
@@ -246,7 +246,7 @@ contains
   
   subroutine cometgc(t,t0, com, r,l,b,d)
     use SUFR_kinds, only: double
-    use SUFR_constants, only: pi
+    use SUFR_constants, only: pi, jd2000
     use SUFR_angles, only: rev
     
     use TheSky_coordinates, only: ecl_spher_2_eq_rect, fk5, precess_xyz, eq_2_ecl
@@ -271,7 +271,7 @@ contains
     call cometxyz(t,com, x,y,z)                                  ! Heliocentric equatorial rectangular coordinates
     call ecl_spher_2_eq_rect(rev(l0+pi),-b0,r0, eps0, x0,y0,z0)  ! l0+pi,-b0,r0 is geocentric SPHERICAL ECLIPTICAL pos. of Sun,
     !                                                              convert to geocentric RECTANGULAR EQUATORIAL position of Sun
-    jd1 = t*365250.d0 + 2451545.d0                               ! From equinox of date...
+    jd1 = t*365250.d0 + jd2000                                   ! From equinox of date...
     jd2 = comepoche                                              !  ... to equinox of elements
     call precess_xyz(jd1,jd2, x0,y0,z0)                          ! Precess geocentric position of the Sun
     

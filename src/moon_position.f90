@@ -180,7 +180,7 @@ contains
   
   subroutine moonpos_la(jd,calc,nt)
     use SUFR_kinds, only: double
-    use SUFR_constants, only: au, d2r
+    use SUFR_constants, only: au, d2r, jd2000
     use SUFR_angles, only: rev, rev2
     
     use TheSky_planetdata, only: planpos, moonla_arg,moonla_lrb
@@ -198,7 +198,7 @@ contains
     
     deltat = calc_deltat(jd)
     jde = jd + deltat/86400.d0
-    t   = (jde-2451545.d0)/36525.d0               ! Julian Centuries after 2000.0 in dynamical time, the T in Meeus, p.163
+    t   = (jde-jd2000)/36525.d0  ! Julian Centuries after 2000.0 in dynamical time, the T in Meeus, p.163
     t2  = t*t
     t3  = t*t2
     
