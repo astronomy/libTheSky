@@ -39,7 +39,7 @@ contains
   !!
   !! \todo  Use "hyperbolic method" for 0.98 < e < 1 as well? - see CHECK
   
-  subroutine cometxyz(t1,com,x,y,z)
+  subroutine cometxyz(t1,com, x,y,z)
     use SUFR_kinds, only: double
     use SUFR_constants, only: nlpname,enpname, jd2000
     use SUFR_numerics, only: deq

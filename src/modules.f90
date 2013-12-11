@@ -118,7 +118,7 @@ module TheSky_cometdata
   private :: double
   
   integer, parameter :: nCometsMax=10000   ! Max. number of comets
-  integer :: nComets, cometDatFile
+  integer :: nComets, cometDatFile, cometDiedAtP(nCometsMax)
   real(double) :: cometelems(nCometsMax,9), comepoche
   character :: cometnames(nCometsMax)*(60)
   

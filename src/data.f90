@@ -730,7 +730,7 @@ contains
   !> \brief  Read orbital-element data for the asteroids
   !!
   !! \note 
-  !! - data are passed via the module comet_data, in cometElems(*,1:9):
+  !! - data are passed via the module planetdata, in asterElems(*,1:9):
   !! - Epoch (JD), a, e, i, omega, Omega, M, H, G, for J2000.0
   !!
   !! \see
@@ -800,7 +800,7 @@ contains
     use SUFR_dummy, only: dumstr9
     
     use TheSky_constants, only: TheSkydir
-    use TheSky_cometdata, only: cometNames, cometElems, nCometsMax,nComets, cometDatFile
+    use TheSky_cometdata, only: cometNames, cometElems, nCometsMax,nComets, cometDatFile, cometDiedAtP
     
     implicit none
     integer :: ci,epoch, yr,mnt,idy, status, ip
@@ -810,6 +810,7 @@ contains
     cometDatFile = 2  ! 1: comets.dat (MANY comets, no magnitude info), 2: comets_mpc.dat (currently visible comets + magn. info)
     
     cometElems = 0.d0
+    cometDiedAtP = 0   ! By default, comets do not die at perihelion - set to 1 for a given comet to change this
     nComets = 0
     
     call find_free_io_unit(ip)

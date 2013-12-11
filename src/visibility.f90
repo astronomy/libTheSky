@@ -312,7 +312,7 @@ contains
     use SUFR_constants, only: r2d, jd2000
     use TheSky_planetdata, only: planpos
     use TheSky_comets, only: cometgc
-    use TheSky_cometdata, only: cometElems
+    use TheSky_cometdata, only: cometElems, cometDiedAtP
     use TheSky_local, only: lat0
     use TheSky_coordinates, only: ecl_2_eq
     
@@ -328,7 +328,11 @@ contains
     call cometgc(tjm,tjm, cometID, hcr,gcl,gcb,delta)
     
     ! Typical difference with full method: ~10^-4 mag:
-    magn = cometElems(cometID,8) + 5*log10(delta) + 2.5d0*cometElems(cometID,9)*log10(hcr)
+    if(cometDiedAtP(cometID).ne.0 .and. jd.gt.cometElems(cometID,7)) then
+       magn = 99.9d0                                                                           ! Comet died at perihelion
+    else
+       magn = cometElems(cometID,8) + 5*log10(delta) + 2.5d0*cometElems(cometID,9)*log10(hcr)  ! m = H + 5log(d) + 2.5*G*log(r)
+    end if
     if(magn.gt.mlim) then
        comet_invisible = .true.
        return

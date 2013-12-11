@@ -49,7 +49,7 @@ contains
     use TheSky_moon, only: moon_lbr, moonmagn
     use TheSky_comets, only: cometgc
     use TheSky_planetdata, only: planpos, pl0
-    use TheSky_cometdata, only: cometElems
+    use TheSky_cometdata, only: cometElems, cometDiedAtP
     use TheSky_asteroids, only: asteroid_magn, asteroid_lbr
     use TheSky_datetime, only: calc_deltat, calc_gmst
     
@@ -217,7 +217,11 @@ contains
     ! Comets:
     if(pl.gt.10) then
        diam = 0.d0
-       magn = cometElems(pl,8) + 5*log10(delta) + 2.5d0*cometElems(pl,9)*log10(hcr)     ! m = H + 5log(d) + 2.5*G*log(r)
+       if(cometDiedAtP(pl).ne.0 .and. jd.gt.cometElems(pl,7)) then
+          magn = 99.9d0                                                                 ! Comet died at perihelion
+       else
+          magn = cometElems(pl,8) + 5*log10(delta) + 2.5d0*cometElems(pl,9)*log10(hcr)  ! m = H + 5log(d) + 2.5*G*log(r)
+       end if
        topdelta = delta
     end if
     
