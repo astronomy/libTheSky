@@ -2677,7 +2677,7 @@ contains
     
     parameter ( pi            = 3.1415926535897932D0 )
     parameter ( DJ2000        = 2451545.d0           )
-    parameter ( solar_to_sidereal = 1.002737909d0 )
+    parameter ( solar_to_sidereal = 1.00273790935d0 )
     parameter ( num_fcn       = 11 )
     
     ! PASSED VARIABLES

@@ -114,7 +114,7 @@ contains
     mmax = 3                   ! Maximum m: transit only: mmax=1, +rise/set: mmax=3
     if(sa0.gt.90.d0) mmax = 1  ! Compute only transit
     
-    call jd2cal(jd,yr,mnt,dy)
+    call jd2cal(jd, yr,mnt,dy)
     
     day0 = dble(int(dy))-tz/24.d0
     jd0  = cal2jd(yr,mnt,day0)
@@ -444,8 +444,8 @@ contains
   !> \brief Rise, transit and set times routine for an object with fixed ra & dec
   !!
   !! \param jd    Julian day number
-  !! \param ra    Right ascension
-  !! \param dec   Declination
+  !! \param ra    Right ascension (rad)
+  !! \param dec   Declination (rad)
   !! \param sa0   Altitude to return rise/set data for (degrees; 0. is actual rise/set).  sa0>90: compute transit only
   !!
   !! \retval rt   Rise time (hours)

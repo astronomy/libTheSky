@@ -606,7 +606,7 @@ contains
   !!
   !! \param  ra    Right ascension
   !! \param  dec   Declination
-  !! \param  agst  Greenwich stellar time
+  !! \param  agst  Greenwich siderial time
   !!
   !! \retval hh    Local hour angle
   !! \retval az    Azimuth

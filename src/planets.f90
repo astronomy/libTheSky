@@ -80,7 +80,7 @@ contains
     if(present(ltime)) lltime = ltime
     
     
-    ! Calc JDE & t:
+    ! Calc JDE and tjm:
     deltat = calc_deltat(jd)
     jde    = jd + deltat/86400.d0
     tjm    = (jde-jd2000)/365250.d0                                    ! Julian Millennia after 2000.0 in dyn. time, tau in Meeus
@@ -201,9 +201,9 @@ contains
     
     
     ! Siderial time:
-    gmst = calc_gmst(jd)                   ! Greenwich mean siderial time
+    gmst = calc_gmst(jd)                  ! Greenwich mean siderial time
     agst = rev(gmst + dpsi*cos(eps))      ! Correction for equation of the equinoxes -> Greenwich apparent siderial time
-    lst  = rev(agst + lon0)               ! Local apparent stellar time, lon0 > 0 for E
+    lst  = rev(agst + lon0)               ! Local apparent siderial time, lon0 > 0 for E
     
     
     ! Apparent diameter:
@@ -333,7 +333,7 @@ contains
     planpos(41) = rev(hcl0+pi+dpsi) ! Geocentric, true L,B,R for the Sun, in FK5, corrected for nutation
     planpos(42) = rev2(-hcb0)
     planpos(43) = hcr0
-    planpos(44) = lst               ! Local APPARENT stellar time
+    planpos(44) = lst               ! Local APPARENT siderial time
     planpos(45) = rev(agst)         ! Greenwich APPARENT siderial time (in radians)
     planpos(46) = tjm0 * 10.d0      ! Apparent dynamical time in Julian Centuries since 2000.0
     planpos(47) = dpsi              ! Nutation in longitude

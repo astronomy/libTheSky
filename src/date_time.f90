@@ -147,10 +147,12 @@ contains
   
   
   !*********************************************************************************************************************************
-  !> \brief  Calculate Greenwich Mean Siderial Time in RAD!
+  !> \brief  Calculate Greenwich Mean Siderial Time for any instant, in radians
   !!
-  !! \param jd         Julian day of computation
-  !! \retval calc_gmst  Greenwich Mean Siderial Time in RAD!
+  !! \param  jd         Julian day of computation
+  !! \retval calc_gmst  Greenwich Mean Siderial Time in radians
+  !!
+  !! \see Meeus, Sect. 11: Siderial time at Greenwich
   
   function calc_gmst(jd)
     use SUFR_kinds, only: double
@@ -159,13 +161,15 @@ contains
     
     implicit none
     real(double), intent(in) :: jd
-    real(double) :: calc_gmst,t,t2,gmst
+    real(double) :: calc_gmst, djd, tjc,tjc2, gmst
     
-    t = (jd-jd2000)/36525.d0  ! Julian Centuries after 2000.0 UT
-    t2 = t*t
-    gmst = 4.894961212735793d0 + 6.300388098984957d0*(jd-jd2000) + 6.77070812713916d-6*t2 - 4.50872966158d-10*t2*t
+    djd  = jd-jd2000
+    tjc  = djd/36525.d0             ! Julian Centuries after 2000.0 UT
+    tjc2 = tjc**2
     
-    calc_gmst = rev(gmst)          ! If corrected for equation of the equinoxes: = rev(gmst + dpsi*cos(eps))
+    gmst = 4.894961212735793d0 + 6.300388098984957d0*djd + 6.77070812713916d-6*tjc2 - 4.50872966158d-10*tjc2*tjc  ! Eq. 11.4
+    
+    calc_gmst = rev(gmst)          ! If corrected for equation of the equinoxes: agst = rev(gmst + dpsi*cos(eps))
     
   end function calc_gmst
   !*********************************************************************************************************************************
