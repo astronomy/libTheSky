@@ -497,15 +497,15 @@ contains
   !*********************************************************************************************************************************
   !> \brief  Calculate limiting magnitude based on Sun altitude and Moon phase
   !!
-  !! \param  year        Year of observation
-  !! \param  month       Month of observation
+  !! \param  year        Year of observation (for solar cycle)
+  !! \param  month       Month of observation (for approximate Sun RA)
   !! \param  obselev     Elevation of the observer (m)
   !! \param  obslat      Latitude of the observer (rad)
   !!
   !! \param  sunAlt      Altitude of the Sun (rad)
   !! \param  sunElon     Elongation object-Sun (rad)
   !!
-  !! \param  moonPhase   Phase of the Moon (fraction?)
+  !! \param  moonPhase   Phase of the Moon (fraction)
   !! \param  moonAlt     Altitude of the Moon (rad)
   !! \param  moonElon    Elongation object-Moon (rad)
   !!
@@ -518,7 +518,8 @@ contains
   !! \retval limmag_full  Limiting magnitude
   !!
   !! \see http://www.go.ednet.ns.ca/~larry/astro/vislimit.html, 
-  !!      a JavaScript version of a BASIC program by Bradley E. Schaefer, Sky and Telescope, May 1998, p.57
+  !!      a JavaScript version of a BASIC program by Bradley E. Schaefer, Sky and Telescope, May 1998, p.57,
+  !!      in turn based on Schaefer Sky&Tel 78, 522 (1989).
   
   function limmag_full(year,month, obselev,obslat, sunAlt,sunElon, moonPhase,moonAlt,moonElon, objalt, humid,temp,snrat)
     use SUFR_kinds, only: double
@@ -546,7 +547,7 @@ contains
     ! Arguments:
     am = (1.d0 - moonPhase)*180    ! Phase angle moon (deg)
     zm = 90.d0 - moonAlt*r2d       ! Zenith angle moon (deg)
-    rm = moonElon*r2d              ! Elongation moon-star (deg)
+    rm = max(moonElon*r2d,0.2d0)   ! Elongation moon-star (deg) - singularity at 0; can't be <~0.25d
     zs = 90.d0 - sunAlt*r2d        ! Zenith angle sun (deg)
     rs = sunElon*r2d               ! Elongation sun-star (deg)
     la = obslat*r2d                ! Observer's latitude (deg)
@@ -556,7 +557,7 @@ contains
     z  = 90.d0 - objalt*r2d        ! Zenith angle object (deg)
     
     ! Optional arguments:
-    rh = 70.d0                     ! Relative humidity (%), is higher at night than during the day, annual average at 7am 
+    rh = 70.d0                     ! Relative humidity (%), is higher at night than during the day, annual average at 7:00
     if(present(humid)) rh = humid  ! in S-E USA ~83%, see http://www.sercc.com/climateinfo/historical/avgrh.html
     
     te = 10.d0                     ! Temperature (deg.C)
@@ -591,10 +592,10 @@ contains
     
     
     ! *** Sky *******************************************************************
-    x  = 1.d0/(cos(zz) + 0.025d0*exp(-11*cos(zz)))
-    xm = 1.d0/(cos(zm*d2r) + 0.025d0*exp(-11*cos(zm*d2r)))
+    x  = 1.d0/(cos(zz) + 0.025d0*exp(-11.d0*cos(zz)))
+    xm = 1.d0/(cos(zm*d2r) + 0.025d0*exp(-11.d0*cos(zm*d2r)))
     if(zm.gt.90.d0) xm = 40.d0
-    xs = 1.d0/(cos(zs*d2r) + 0.025d0*exp(-11*cos(zs*d2r)))
+    xs = 1.d0/(cos(zs*d2r) + 0.025d0*exp(-11.d0*cos(zs*d2r)))
     if(zs.gt.90.d0) xs = 40.d0
     
     do i=1,5
