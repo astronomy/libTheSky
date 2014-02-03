@@ -367,17 +367,54 @@ contains
     ! Moon age:
     djd = jd - jd2000 - 0.5d0
     
-    ! Just to make sure you don't miss a month, age.gt.29.530589d0 doesn't work, since this is the MEAN month:
+    ! Overshoot by a month, to make sure you don't miss one.  Age.gt.29.530589d0 doesn't work, since this is the MEAN month:
     k0 = floor(djd/365.25*12.3685d0) + 1.d0
     age = -1.d0
     
     do while(age.lt.0.d0)
        jd0 = moonphase(k0)
        age = jd-jd0
-       k0 = k0 - 1.d0
+       k0 = k0 - 1.d0  ! Previous New Moon
     end do
     
   end subroutine moon_age
+  !*********************************************************************************************************************************
+  
+  
+  !*********************************************************************************************************************************
+  !> \brief  Compute the next lunar phase after a given JD
+  !!
+  !! \param  JD      Julian day for computation
+  !! \retval phase   Next lunar phase: 0-NM ... 3-LQ
+  !! \retval JDnext  Julian day of next lunar phase
+  
+  subroutine moon_phase_next(JD, phase, JDnext)
+    use SUFR_kinds, only: double
+    use SUFR_constants, only: jd2000
+  use TheSky_datetime, only: printdate1
+    
+    implicit none
+    real(double), intent(in) :: JD
+    integer, intent(out) :: phase
+    real(double), intent(out) :: JDnext
+    real(double) :: dJD, k0
+    
+    
+    ! Undershoot by half a month, to make sure you don't miss anything:
+    dJD = JD - jd2000 - 0.5d0
+    k0 = floor(dJD/365.25*12.3685d0) - 0.5d0
+    JDnext = JD - 30.d0
+    
+    do while(JDnext.lt.JD)
+       k0 = k0 + 0.25d0  ! Next phase
+       JDnext = moonphase(k0)
+       !call printdate1(JDnext)
+       !print*,JDnext,JDnext-JD,k0, nint( (k0 - floor(k0))*4.d0 )
+    end do
+    
+    phase = nint( (k0 - floor(k0))*4.d0 )  ! 0-3 for NM - LQ
+    
+  end subroutine moon_phase_next
   !*********************************************************************************************************************************
   
   
