@@ -408,8 +408,6 @@ contains
     do while(JDnext.lt.JD)
        k0 = k0 + 0.25d0  ! Next phase
        JDnext = moonphase(k0)
-       !call printdate1(JDnext)
-       !print*,JDnext,JDnext-JD,k0, nint( (k0 - floor(k0))*4.d0 )
     end do
     
     phase = nint( (k0 - floor(k0))*4.d0 )  ! 0-3 for NM - LQ
