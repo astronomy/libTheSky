@@ -179,15 +179,19 @@ contains
   !! \param  comp    Compute: 1-compute twilight/planet at plalt events only (1,4),  2-include actual rise/set times (2,5)
   !!                 11, 12 = 1, 2 + compute only for today, not tomorrow
   !!
-  !! \retval plvis   Planet visibility times (hours):  1-begin, 2-end;  plvis(1)*plvis(2) = 0 when invisible
+  !! \retval plvis   Planet visibility times (hours):    1-begin, 2-end;  plvis(1)*plvis(2) = 0 when invisible
+  !! \retval plazs   Planet visibility azimuths (rad):   1-begin of visibility,  2-end of visibility
   !!
   !! \retval rts     "Rise times":       1-twilight (Sun at sunAlt), 2-Sun rise/set, 4-planet at plalt, 5-planet rise/set
   !! \retval tts     Transit times:      1-2, of Sun,  4-5 of planet
   !! \retval sts     "Set times":        1-twilight (Sun at sunAlt), 2-Sun rise/set, 4-planet at plalt, 5-planet rise/set
+  !!
+  !! \retval ras     Rise azimuths:      1-2, of Sun,  4-5 of planet
   !! \retval tas     Transit altitudes:  1-2, of Sun,  4-5 of planet
+  !! \retval sas     Set azimuths:       1-2, of Sun,  4-5 of planet
   !!
   
-  subroutine planet_visibility_tonight(jd, pl, sunAlt, plalt, comp,   plvis,   rts, tts, sts, tas)
+  subroutine planet_visibility_tonight(jd, pl, sunAlt, plalt, comp,   plvis, plazs,   rts, tts, sts,  ras, tas, sas)
     use SUFR_kinds, only: double
     use SUFR_constants, only: r2d
     use SUFR_angles, only: rv12
@@ -199,13 +203,14 @@ contains
     real(double), intent(in) :: jd, sunAlt, plalt
     integer, intent(in) :: pl, comp
     real(double), intent(out) :: plvis(2)
-    real(double), intent(out), optional :: rts(5), tts(5), sts(5), tas(5)
+    real(double), intent(out), optional :: plazs(2),  rts(5), tts(5), sts(5),  ras(5), tas(5), sas(5)
     
     integer :: irs, ix, maxi, ind(4)
-    real(double) :: alt, times(4), st,rh,sh,  lrts(5), ltts(5), lsts(5), ltas(5)
+    real(double) :: alt, times(4),azs(4), st,sh,  lrts(5), ltts(5), lsts(5), lras(5),ltas(5),lsas(5)
     logical :: sup,pup,pvis,pvisold
     
-    lrts=0.d0; ltts=0.d0; lsts=0.d0; ltas=0.d0; plvis=0.d0
+    lrts=0.d0; ltts=0.d0; lsts=0.d0; lras=0.d0;ltas=0.d0;lsas=0.d0; plvis=0.d0
+    if(present(plazs)) plazs=0.d0
     
     ! On day JD, we want set times for JD and rise times for JD+1:
     
@@ -217,10 +222,10 @@ contains
        if(irs.eq.2) alt = 0.d0
        
        ! Today:    s.set lsts:
-       call riset(jd, 3,  lrts(irs), ltts(irs), lsts(irs), rh, ltas(irs), sh,  alt)
+       call riset(jd, 3,   lrts(irs), ltts(irs), lsts(irs),   lras(irs), ltas(irs), lsas(irs),   alt)
        
        ! Tomorrow: s.rise lrts(2) / st. twl lrts(1):
-       if(comp.lt.10) call riset(jd+1.d0, 3,  lrts(irs), ltts(irs), st, rh, ltas(irs), sh,  alt)
+       if(comp.lt.10) call riset(jd+1.d0, 3,   lrts(irs), ltts(irs), st,   lras(irs), ltas(irs), sh,   alt)
     end do  ! irs=1,2
     
     
@@ -231,10 +236,10 @@ contains
        if(irs.eq.5) alt = 0.d0
        
        ! Today: planet set:
-       call riset(jd, pl,  lrts(irs), ltts(irs), lsts(irs), rh, ltas(irs), sh,  alt)
+       call riset(jd, pl,   lrts(irs), ltts(irs), lsts(irs),   lras(irs), ltas(irs), lsas(irs),   alt)
        
        ! Tomorrow: planet rise, transit:
-       if(comp.lt.10) call riset(jd+1.d0, pl,  lrts(irs), ltts(irs), st, rh, ltas(irs), sh,  alt)
+       if(comp.lt.10) call riset(jd+1.d0, pl,   lrts(irs), ltts(irs), st,   lras(irs), ltas(irs), sh,   alt)
     end do  ! irs=4,5
     
     
@@ -243,6 +248,7 @@ contains
     !   plvis(1): time planet becomes visible, plvis(2): time planet becomes invisible
     
     times = (/rv12(lrts(1)), rv12(lsts(1)),  rv12(lrts(4)), rv12(lsts(4))/)  ! rv12: -12 - 12h; noon - noon
+    azs   = (/lras(1), lsas(1),  lras(4), lsas(4)/)
     call sorted_index_list(times,ind)
     
     
@@ -254,8 +260,14 @@ contains
        if(ltas(4)*r2d.gt.plalt) then  ! Transit alt > plalt: object is always "up"
           plvis(1) = rv12(lsts(1))    ! Planet becomes visible at evening twilight
           plvis(2) = rv12(lrts(1))    ! Planet becomes invisible at morning twilight
+          
+          if(present(plazs)) then
+             plazs(1) = lsas(1)       ! Azimuth where planet becomes visible at evening twilight
+             plazs(2) = lras(1)       ! Azimuth where planet becomes invisible at morning twilight
+          end if
        else
           plvis = 0.d0               ! Planet is never visible
+          if(present(plazs)) plazs = 0.d0
        end if
        return
     end if
@@ -278,8 +290,14 @@ contains
        end select
        pvis = pup.and..not.sup  ! Planet visible?
        
-       if(pvis.and..not.pvisold) plvis(1) = times(ind(ix))  ! Planet becomes visible
-       if(.not.pvis.and.pvisold) plvis(2) = times(ind(ix))  ! Planet becomes invisible
+       if(pvis.and..not.pvisold) then  ! Planet becomes visible
+          plvis(1) = times(ind(ix))
+          if(present(plazs)) plazs(1) = azs(ind(ix))
+       end if
+       if(.not.pvis.and.pvisold) then  ! Planet becomes invisible
+          plvis(2) = times(ind(ix))
+          if(present(plazs)) plazs(2) = azs(ind(ix))
+       end if
        
        pvisold = pvis
     end do
@@ -288,7 +306,10 @@ contains
     if(present(rts)) rts = lrts
     if(present(tts)) tts = ltts
     if(present(sts)) sts = lsts
-    if(present(tas)) tas = ltas
+    
+    if(present(ras)) ras = lsas  ! Rise azimuths
+    if(present(tas)) tas = ltas  ! Tranist altitudes
+    if(present(sas)) sas = lras  ! Set azimuths
     
   end subroutine planet_visibility_tonight
   !*********************************************************************************************************************************
