@@ -780,6 +780,39 @@ contains
   !*********************************************************************************************************************************
   
   
+  !*********************************************************************************************************************************
+  !> \brief  Compute the atmospheric refraction for a given altitude
+  !!
+  !! \param   alt      Altitude (rad)
+  !! \param   press    Air pressure (hPa; optional)
+  !! \param   temp     Air temperature (degrees Celcius; optional)
+  !!
+  !! \retval  refract  Refraction in altitude (rad)
+  !!
+  !! \see Meeus (1991!), Eq. 15.4 ff, based on Samundsson, Sky & Telescope vol.72, p.90 (1986)
+  
+  
+  function refract(alt, press,temp)
+    use SUFR_kinds, only: double
+    use SUFR_constants, only: pio2, r2d,d2r,am2r
+    
+    implicit none
+    real(double), intent(in) :: alt
+    real(double), intent(in), optional :: press,temp
+    real(double) :: refract, alt1
+    
+    if(alt.lt.0.d0 .or. alt.ge.pio2) then  ! alt < 0  or  >= 90 deg; refraction is meaningless
+       refract = 0.d0
+    else
+       alt1 = alt*r2d                                                    ! -> degrees
+       refract = 1.02d0*am2r / tan((alt1 + 10.3d0/(alt1 + 5.11d0))*d2r)
+       if(present(press)) refract = refract * press/1010.d0              ! Adjust for pressure
+       if(present(temp))  refract = refract * 283.d0/(273.d0 + temp)     ! Adjust for temperature
+    end if
+    
+  end function refract
+  !*********************************************************************************************************************************
+  
   
   
 end module TheSky_coordinates
