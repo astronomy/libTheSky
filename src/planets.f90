@@ -39,7 +39,7 @@ contains
     use SUFR_constants, only: pi, au,earthr,pland, enpname, jd2000
     use SUFR_system, only: warn
     use SUFR_angles, only: rev, rev2
-    use SUFR_dummy, only: dumdbl
+    use SUFR_dummy, only: dumdbl1,dumdbl2
     
     use TheSky_vsop, only: vsop_lbr
     use TheSky_local, only: lon0, lat0, deltat
@@ -107,7 +107,7 @@ contains
        if(pl.gt.10000) call asteroid_lbr(tjm,pl-10000,hcl,hcb,hcr)     ! Heliocentric lbr for asteroids
        if(pl.eq.-1) then                                               ! Centre of Earth's shadow
           call vsop_lbr(tjm,3,hcl,hcb,hcr)                             ! = heliocentric coordinates ...
-          call moon_lbr(tjm, dumdbl,dumdbl,dhcr)                       ! only want dhcr
+          call moon_lbr(tjm, dumdbl1,dumdbl2,dhcr)                     ! only want dhcr
           hcr = hcr + dhcr                                             ! + distance Earth-Moon
        end if
        
@@ -161,7 +161,7 @@ contains
     tau = tau1
     tjm = tjm0                                                  ! Still Julian Millennia since 2000.0 in dynamical time
     
-    if(pl.eq.-1) call moon_lbr(tjm, dumdbl,dumdbl,delta)        ! Geocentric distance of the Moon for Earth shadow; only need delta
+    if(pl.eq.-1) call moon_lbr(tjm, dumdbl1,dumdbl2,delta)      ! Geocentric distance of the Moon for Earth shadow; only need delta
     
     if(pl.eq.3) then                                            ! This seems true, but appears to be apparent?!?!?
        gcl   = rev(hcl0+pi)

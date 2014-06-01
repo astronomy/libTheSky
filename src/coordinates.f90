@@ -465,7 +465,7 @@ contains
     use SUFR_kinds, only: double
     use SUFR_constants, only: jd2000
     use SUFR_angles, only: rev
-    use SUFR_dummy, only: dumdbl
+    use SUFR_dummy, only: dumdbl1,dumdbl2
     use SUFR_numerics, only: dne
     use TheSky_nutation, only: nutation
     
@@ -503,7 +503,7 @@ contains
        if(present(eps0)) then
           eps = eps0
        else
-          call nutation(tjc/10.d0, dumdbl, eps, dumdbl)  ! Note: eps is actually eps0
+          call nutation(tjc/10.d0, dumdbl1, eps, dumdbl2)  ! Note: eps is actually eps0
        end if
        
     end if
