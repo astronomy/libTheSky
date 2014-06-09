@@ -532,9 +532,9 @@ contains
   !!
   !! \param  objalt      Altitude of the observed object (rad)
   !!
-  !! \param  humid       Relative humidity  (%, default: 70)
-  !! \param  temp        Air temperature  (degrees Celcius, default: 10)
-  !! \param  snrat       Snellen ratio for vision  (default: 1)
+  !! \param  humid       Relative humidity  (%; optional, default: 70)
+  !! \param  temp        Air temperature  (degrees Celcius; optional, default: 10)
+  !! \param  snrat       Snellen ratio for vision  (optional, default: 1)
   !!
   !! \retval limmag_full  Limiting magnitude
   !!

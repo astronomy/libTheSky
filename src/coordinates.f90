@@ -630,6 +630,34 @@ contains
   
   
   !*********************************************************************************************************************************
+  !> \brief  Convert spherical horizontal coordinates (az, alt, agst) to spherical equatorial coordinates (hh, RA, dec)
+  !!
+  !! \param  az    Azimuth
+  !! \param  alt   Altitude
+  !! \param  agst  Greenwich siderial time
+  !!
+  !! \retval hh    Local hour angle
+  !! \retval ra    Right ascension
+  !! \retval dec   Declination
+  
+  subroutine horiz2eq(az,alt,agst, hh,ra,dec)
+    use SUFR_kinds, only: double
+    use SUFR_angles, only: rev,rev2
+    use TheSky_local, only: lat0,lon0
+    
+    implicit none
+    real(double), intent(in) :: az,alt,agst
+    real(double), intent(out) :: ra,dec,hh
+    
+    hh  = rev(  atan2( sin(az),    cos(az)  * sin(lat0) + tan(alt) * cos(lat0) ))   ! Local Hour Angle
+    dec = rev2( asin(  sin(lat0) * sin(alt) - cos(lat0) * cos(alt) * cos(az)   ))   ! Declination
+    ra  = rev( agst + lon0 - hh )                                                   ! Right ascension
+    
+  end subroutine horiz2eq
+  !*********************************************************************************************************************************
+  
+  
+  !*********************************************************************************************************************************
   !> \brief  Convert spherical equatorial coordinates (RA, dec) to spherical galactic coordinates (l,b), for J2000.0!!!
   !!
   !! \param  ra    Right ascension
