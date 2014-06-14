@@ -817,7 +817,7 @@ contains
   !!
   !! \retval  refract  Refraction in altitude (rad)
   !!
-  !! \see Meeus (1991!), Eq. 15.4 ff, based on Samundsson, Sky & Telescope vol.72, p.90 (1986)
+  !! \see Meeus (1998), Eq. 16.4 ff, based on Samundsson, Sky & Telescope vol.72, p.70 (1986)
   
   
   function refract(alt, press,temp)
