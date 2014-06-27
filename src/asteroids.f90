@@ -1,7 +1,7 @@
 !> \file asteroids.f90  Procedures to compute asteroid positions and more for libTheSky
 
 
-!  Copyright (c) 2002-2013  Marc van der Sluys - marc.vandersluys.nl
+!  Copyright (c) 2002-2014  Marc van der Sluys - marc.vandersluys.nl
 !   
 !  This file is part of the libTheSky package, 
 !  see: http://libthesky.sf.net/

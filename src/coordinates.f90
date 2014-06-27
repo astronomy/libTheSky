@@ -1,7 +1,7 @@
 !> \file coordinates.f90  Procedures to perform coordinate transformations, apply precession, and more for libTheSky
 
 
-!  Copyright (c) 2002-2013  Marc van der Sluys - marc.vandersluys.nl
+!  Copyright (c) 2002-2014  Marc van der Sluys - marc.vandersluys.nl
 !   
 !  This file is part of the libTheSky package, 
 !  see: http://libthesky.sf.net/
@@ -809,13 +809,13 @@ contains
   
   
   !*********************************************************************************************************************************
-  !> \brief  Compute the atmospheric refraction for a given altitude.  Add this number to the uncorrected altitude.
+  !> \brief  Compute the atmospheric refraction for a given altitude.  You should add the result to the uncorrected altitude.
   !!
   !! \param   alt      Altitude (rad)
   !! \param   press    Air pressure (hPa; optional)
   !! \param   temp     Air temperature (degrees Celcius; optional)
   !!
-  !! \retval  refract  Refraction in altitude (rad).  Add this number to the uncorrected altitude.
+  !! \retval  refract  Refraction in altitude (rad).  You should add the result to the uncorrected altitude.
   !!
   !! \see Meeus (1998), Eq. 16.4 ff, based on Samundsson, Sky & Telescope vol.72, p.70 (1986)
   
@@ -833,9 +833,9 @@ contains
        refract = 0.d0
     else
        alt1 = alt*r2d                                                    ! -> degrees
-       refract = 1.02d0*am2r / tan((alt1 + 10.3d0/(alt1 + 5.11d0))*d2r)
-       if(present(press)) refract = refract * press/1010.d0              ! Adjust for pressure
-       if(present(temp))  refract = refract * 283.d0/(273.d0 + temp)     ! Adjust for temperature
+       refract = 1.02d0*am2r / tan((alt1 + 10.3d0/(alt1 + 5.11d0))*d2r)  ! -> rad
+       if(present(press)) refract = refract * press/1010.d0              ! Correct for pressure
+       if(present(temp))  refract = refract * 283.d0/(273.d0 + temp)     ! Correct for temperature
     end if
     
   end function refract
