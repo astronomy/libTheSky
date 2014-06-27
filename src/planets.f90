@@ -904,8 +904,8 @@ contains
     implicit none
     real(double), intent(in) :: jd
     integer, intent(in) :: pl,calc,nt
-    real(double) :: moondat(nplanpos)
-    real(double) :: hcl0,hcb0,hcr0, gcl,gcb,delta, elon,pa,illfr
+    integer :: ind
+    real(double) :: moondat(nplanpos), hcl0,hcb0,hcr0, gcl,gcb,delta, elon,pa,illfr
     
     planpos(39) = dble(pl)
     
@@ -949,6 +949,14 @@ contains
        call planet_position(jd,pl, ltime=.false.)  ! Do not take into account light-time correction
        
     end select
+    
+    
+    ! Fill topocentric planpos elements with geocentric values for Moon and Sun:
+    if(pl.eq.0 .or. pl.eq.3) then
+       do ind = 1,12
+          planpos(ind+20) = planpos(ind)
+       end do
+    end if
     
   end subroutine planet_position_la
   !*********************************************************************************************************************************
