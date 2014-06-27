@@ -809,13 +809,13 @@ contains
   
   
   !*********************************************************************************************************************************
-  !> \brief  Compute the atmospheric refraction for a given altitude
+  !> \brief  Compute the atmospheric refraction for a given altitude.  Add this number to the uncorrected altitude.
   !!
   !! \param   alt      Altitude (rad)
   !! \param   press    Air pressure (hPa; optional)
   !! \param   temp     Air temperature (degrees Celcius; optional)
   !!
-  !! \retval  refract  Refraction in altitude (rad)
+  !! \retval  refract  Refraction in altitude (rad).  Add this number to the uncorrected altitude.
   !!
   !! \see Meeus (1998), Eq. 16.4 ff, based on Samundsson, Sky & Telescope vol.72, p.70 (1986)
   
