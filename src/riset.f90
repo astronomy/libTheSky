@@ -167,7 +167,7 @@ contains
           end if
           
           if(use_vsop) then
-             call planet_position(jd1,pl, ltime=lltime)           ! Uses full VSOP
+             call planet_position(jd1,pl, ltime=lltime)           ! Uses full VSOP (except perhaps light time)
           else
              call planet_position_la(jd1,pl, 2,60)  ! Computes low-accuracy positions - calc=2 computes ra,dec - use 60 terms
           end if

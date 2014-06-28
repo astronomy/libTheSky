@@ -37,27 +37,33 @@ contains
   
   
   !*********************************************************************************************************************************
-  !> \brief  Calculate true heliocentric ecliptic coordinates l,b,r for planet pl using VSOP87
+  !> \brief  Calculate true heliocentric ecliptic coordinates l,b,r for planet pl and the mean ecliptic and equinox of date 
+  !!         using VSOP87D
   !!
-  !! \param  tm   Dynamical time in Julian Millennia after 2000.0, the tau in Meeus
+  !! \param  tm   Dynamical time in Julian Millennia after J2000.0, (tau in Meeus)
   !! \param  pl   Planet to compute position for
   !!
   !! \retval lon  Heliocentric longitude (rad)
   !! \retval lat  Heliocentric latitude (rad)
   !! \retval rad  Heliocentric distance (AU)
+  !!
+  !! \see http://esoads.eso.org/abs/1988A%26A...202..309B
   
   subroutine vsop_lbr(tm,pl, lon,lat,rad)
     use SUFR_kinds, only: double
     use SUFR_angles, only: rev
-    use TheSky_planetdata, only: VSOPnls, VSOPdat
+    use TheSky_planetdata, only: VSOPnls, VSOPdat, vsopNblk, VSOPtrunks
     
     implicit none
     real(double), intent(in) :: tm
     integer, intent(in) :: pl
     real(double), intent(out) :: lon,lat,rad
     
-    integer :: li, pow, Nli,Nle, var
-    real(double) :: fac, lbr(3)
+    integer :: li, pow, Nli,Nle, var, nTerm, skip
+    real(double) :: fac, lbr(3), accur, desired_accuracy(3)
+    
+    desired_accuracy = VSOPtrunks(1:3, pl)  ! Set accuracy equal to VSOP87 truncation
+    !desired_accuracy = 1.d-9  ! 5e-9 rad = 1 mas = VSOP87 accuracy for Mercury in 1900-2100
     
     lbr = 0.d0
     Nle = 0
@@ -65,12 +71,24 @@ contains
        Nli = Nle
        Nle = Nle + VSOPnls(var,pl)
        
+       skip = -1  ! Switch to skip terms if sufficient accuracy is reached
        do li=Nli+1,Nle
           pow = nint(VSOPdat(1,li,pl))
-          fac = tm**pow * VSOPdat(2,li,pl)
-          lbr(var) = lbr(var) + fac * cos( VSOPdat(3,li,pl) + VSOPdat(4,li,pl)*tm )
-       end do
-    end do
+          
+          if(pow.ne.skip) then
+             fac = tm**pow * VSOPdat(2,li,pl)
+             lbr(var) = lbr(var) + fac * cos( VSOPdat(3,li,pl) + VSOPdat(4,li,pl)*tm )
+             
+             ! Determine current accuracy (A*T^n):
+             if(mod(li,3).eq.0) then  ! Reduce overhead, experimentally optimised to 3
+                nTerm = li-vsopNblk(pow,1,pl)+1
+                accur = 2*sqrt(dble(nTerm)) * abs(fac)
+                if(accur.lt.desired_accuracy(var)) skip = pow  ! Skip the remaining terms for this power
+             end if
+          end if
+          
+       end do  ! li
+    end do  ! var
     
     lon = lbr(1)
     lat = lbr(2)

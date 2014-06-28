@@ -69,9 +69,9 @@ module TheSky_planetdata
   
   integer(long) :: moonla_lrb(3,60)
   integer :: pluc(43,3),plul(43,2),plub(43,2),plur(43,2), pl0
-  integer :: moonla_arg(8,60), VSOPnls(3,8)
+  integer :: moonla_arg(8,60), VSOPnls(3,8), vsopNblk(0:5,3,8)
   
-  real(double) :: VSOPdat(4,6827,10), planpos(nplanpos)
+  real(double) :: VSOPdat(4,6827,10), planpos(nplanpos), VSOPtrunks(3,8)
   real(double) :: plelems(8,6),plelems2000(8,6),plelemdata(2,8,6,0:3)
   real(double) :: asterelems(nasteroids,9)
   

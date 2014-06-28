@@ -267,11 +267,12 @@ contains
   
   subroutine readplanetdata()
     use SUFR_system, only: find_free_io_unit, file_open_error_quit, file_read_end_error
+    use SUFR_constants, only: plana,au
     use TheSky_constants, only: TheSkydir
-    use TheSky_planetdata, only: VSOPnls, VSOPdat
+    use TheSky_planetdata, only: VSOPnls, VSOPdat, vsopNblk, VSOPtrunks
     
     implicit none
-    integer :: pl, li, ip, status,  powr, TOTnls(8)
+    integer :: pl, li, ip, status,  powr,opowr, var, TOTnls(8)
     character :: infile*(199)
     
     VSOPnls = reshape( (/ 2808,1620,2399, 671,426,585, 1080,349,997,  &    ! Number of lines in VSOP input files (l,b,r x 8 pl)
@@ -279,6 +280,10 @@ contains
     
     TOTnls(1:8) = sum(VSOPnls(:,1:8), 1)  ! Total number of lines per planet; sum along dimension 1
     
+    ! VSOP87 terms are trunkated at these accuracies:
+    VSOPtrunks(1,:) = (/0.05d0, 0.5d0, 0.5d0, 0.5d0, 1.d0, 1.d0, 1.6d0, 1.d0/) * 1.d-9  ! L (rad)
+    VSOPtrunks(2,:) = VSOPtrunks(1,:)                                                   ! B (rad)
+    VSOPtrunks(3,:) = VSOPtrunks(1,:) * plana(1:8)/au                                   ! R (AU)
     
     ! Read planets.dat file:
     call find_free_io_unit(ip)
@@ -287,11 +292,19 @@ contains
     if(status.ne.0) call file_open_error_quit(trim(infile), 1, 1)  ! 1-input file, 1-exit status
     
     VSOPdat = 0.d0
+    opowr = -1
     do pl=1,8  ! Planet
+       var = 0  ! L,B,R
        do li=1,TOTnls(pl)
           read(ip,'(I1,F18.11,F14.11,F20.11)', iostat=status) powr, VSOPdat(2:4,li,pl)
           if(status.ne.0) call file_read_end_error(trim(infile), li, status, 1, 1)      ! stopcode=1, exitstatus=1
           VSOPdat(1,li,pl) = dble(powr)
+          
+          if(powr.ne.opowr) then  ! Save the line number where the next block of (Planet, Variable (LBR), Power) starts
+             if(powr.lt.opowr) var = var+1  ! L,B,R
+             vsopNblk(powr,var,pl) = li
+          end if
+          opowr = powr
        end do  ! li
     end do  ! pl
     
