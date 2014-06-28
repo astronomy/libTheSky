@@ -267,7 +267,6 @@ contains
   
   subroutine readplanetdata()
     use SUFR_system, only: find_free_io_unit, file_open_error_quit, file_read_end_error
-    use SUFR_kinds, only: double
     use TheSky_constants, only: TheSkydir
     use TheSky_planetdata, only: vsopdat
     
@@ -275,11 +274,7 @@ contains
     ! Total number of lines for each planet = sum(nls(:,pl)) in vsop_lbr():
     integer, parameter :: tots(8) = (/6827, 1682, 2426, 5483, 3483, 5759, 3991, 1930/)
     
-    real(double) :: tmparr1(4,tots(1)),tmparr2(4,tots(2)),tmparr3(4,tots(3)),tmparr4(4,tots(4))
-    real(double) :: tmparr5(4,tots(5)),tmparr6(4,tots(6)),tmparr7(4,tots(7)),tmparr8(4,tots(8))
-    integer :: i, ip, status
-    integer :: int1(tots(1)),int2(tots(2)),int3(tots(3)),int4(tots(4))
-    integer :: int5(tots(5)),int6(tots(6)),int7(tots(7)),int8(tots(8))
+    integer :: pl, i, ip, status, tmpi
     character :: infile*(199)
     
     
@@ -289,58 +284,16 @@ contains
     open(ip, form='formatted', status='old', action='read', file=trim(infile), iostat=status)
     if(status.ne.0) call file_open_error_quit(trim(infile), 1, 1)  ! 1-input file, 1-exit status
     
-    do i=1,tots(1)
-       read(ip,'(I1,F18.11,F14.11,F20.11)', iostat=status) int1(i), tmparr1(2:4,i)
-       if(status.ne.0) call file_read_end_error(trim(infile), i, status, 1, 1)  ! stopcode=1, exitstatus=1
-       tmparr1(1,i) = dble(int1(i))
-    end do
-    do i=1,tots(2)
-       read(ip,'(I1,F18.11,F14.11,F20.11)', iostat=status) int2(i), tmparr2(2:4,i)
-       if(status.ne.0) call file_read_end_error(trim(infile), tots(1)+i, status, 1, 1)  ! stopcode=1, exitstatus=1
-       tmparr2(1,i) = dble(int2(i))
-    end do
-    do i=1,tots(3)
-       read(ip,'(I1,F18.11,F14.11,F20.11)', iostat=status) int3(i), tmparr3(2:4,i)
-       if(status.ne.0) call file_read_end_error(trim(infile), tots(2)+i, status, 1, 1)  ! stopcode=1, exitstatus=1
-       tmparr3(1,i) = dble(int3(i))
-    end do
-    do i=1,tots(4)
-       read(ip,'(I1,F18.11,F14.11,F20.11)', iostat=status) int4(i), tmparr4(2:4,i)
-       if(status.ne.0) call file_read_end_error(trim(infile), tots(3)+i, status, 1, 1)  ! stopcode=1, exitstatus=1
-       tmparr4(1,i) = dble(int4(i))
-    end do
-    do i=1,tots(5)
-       read(ip,'(I1,F18.11,F14.11,F20.11)', iostat=status) int5(i), tmparr5(2:4,i)
-       if(status.ne.0) call file_read_end_error(trim(infile), tots(4)+i, status, 1, 1)  ! stopcode=1, exitstatus=1
-       tmparr5(1,i) = dble(int5(i))
-    end do
-    do i=1,tots(6)
-       read(ip,'(I1,F18.11,F14.11,F20.11)', iostat=status) int6(i), tmparr6(2:4,i)
-       if(status.ne.0) call file_read_end_error(trim(infile), tots(5)+i, status, 1, 1)  ! stopcode=1, exitstatus=1
-       tmparr6(1,i) = dble(int6(i))
-    end do
-    do i=1,tots(7)
-       read(ip,'(I1,F18.11,F14.11,F20.11)', iostat=status) int7(i), tmparr7(2:4,i)
-       if(status.ne.0) call file_read_end_error(trim(infile), tots(6)+i, status, 1, 1)  ! stopcode=1, exitstatus=1
-       tmparr7(1,i) = dble(int7(i))
-    end do
-    do i=1,tots(8)
-       read(ip,'(I1,F18.11,F14.11,F20.11)', iostat=status) int8(i), tmparr8(2:4,i)
-       if(status.ne.0) call file_read_end_error(trim(infile), tots(7)+i, status, 1, 1)  ! stopcode=1, exitstatus=1
-       tmparr8(1,i) = dble(int8(i))
-    end do
-    close(ip)
-    
-    
     vsopdat = 0.d0
-    vsopdat(1:4,1:tots(1),1) = tmparr1
-    vsopdat(1:4,1:tots(2),2) = tmparr2
-    vsopdat(1:4,1:tots(3),3) = tmparr3
-    vsopdat(1:4,1:tots(4),4) = tmparr4
-    vsopdat(1:4,1:tots(5),5) = tmparr5
-    vsopdat(1:4,1:tots(6),6) = tmparr6
-    vsopdat(1:4,1:tots(7),7) = tmparr7
-    vsopdat(1:4,1:tots(8),8) = tmparr8
+    do pl=1,8
+       do i=1,tots(pl)
+          read(ip,'(I1,F18.11,F14.11,F20.11)', iostat=status) tmpi, vsopdat(2:4,i,pl)
+          if(status.ne.0) call file_read_end_error(trim(infile), i, status, 1, 1)      ! stopcode=1, exitstatus=1
+          vsopdat(1,i,pl) = dble(tmpi)
+       end do
+    end do
+    
+    close(ip)
     
   end subroutine readplanetdata
   !*********************************************************************************************************************************
