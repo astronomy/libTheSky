@@ -103,10 +103,10 @@ contains
        
        ! Compute l,b,r for planet, Pluto, asteroid, Earth's shadow:
        if(pl.gt.0.and.pl.lt.9) call vsop_lbr(tjm,pl, hcl,hcb,hcr)      ! Heliocentric l,b,r
-       if(pl.eq.9) call plutolbr(tjm*10.d0,hcl,hcb,hcr)                ! This is for 2000.0, precess 10 lines below
-       if(pl.gt.10000) call asteroid_lbr(tjm,pl-10000,hcl,hcb,hcr)     ! Heliocentric lbr for asteroids
+       if(pl.eq.9) call plutolbr(tjm*10.d0, hcl,hcb,hcr)               ! This is for 2000.0, precess 10 lines below
+       if(pl.gt.10000) call asteroid_lbr(tjm,pl-10000, hcl,hcb,hcr)    ! Heliocentric lbr for asteroids
        if(pl.eq.-1) then                                               ! Centre of Earth's shadow
-          call vsop_lbr(tjm,3,hcl,hcb,hcr)                             ! = heliocentric coordinates ...
+          call vsop_lbr(tjm,3, hcl,hcb,hcr)                            ! = heliocentric coordinates ...
           call moon_lbr(tjm, dumdbl1,dumdbl2,dhcr)                     ! only want dhcr
           hcr = hcr + dhcr                                             ! + distance Earth-Moon
        end if

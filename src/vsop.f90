@@ -56,38 +56,46 @@ contains
     integer, intent(in) :: pl
     real(double), intent(out) :: lon,lat,rad
     
-    integer :: nls(3,8), nl(3), li  !, omp_get_thread_num
+    integer :: nls(3,8), nl(3), li, Nli,Nle  !, omp_get_thread_num
     real(double) :: dat(4,6827)
     
-    nls = reshape( (/ 2808,1620,2399, 671,426,585, 1080,349,997, 2393,915, &    ! Number of lines in VSOP input files (l,b,r x 8 pl)
-         2175,1484,530,1469,2358,966,2435,1578,516,1897,681,290,959/), &
-         (/3,8/))
+    nls = reshape( (/ 2808,1620,2399, 671,426,585, 1080,349,997,  &    ! Number of lines in VSOP input files (l,b,r x 8 pl)
+         2393,915,2175, 1484,530,1469, 2358,966,2435, 1578,516,1897, 681,290,959/),  (/3,8/))
     
     dat = vsopdat(:,:,pl)
     nl  = nls(:,pl)
     
-    lon = 0.d0
-    lat = 0.d0
-    rad = 0.d0
-    
     !call omp_set_num_threads(3)
     ! $omp parallel shared(pl,dat,nl,tm,vsopdat,nls,lon,lat,rad) private(i)
     ! $omp sections
+    
+    ! Heliocentric ecliptic longitude:
     ! $omp section
-    do li=1,nl(1)
+    lon = 0.d0
+    Nli = 1
+    Nle = nl(1)
+    do li=Nli,Nle
        !write(91,'(I6,I4)') i!,omp_get_thread_num()
        lon = lon + tm**nint(dat(1,li)) * dat(2,li) * cos( dat(3,li) + dat(4,li)*tm )
     end do
     lon = rev(lon)
     
+    ! Heliocentric ecliptic latitude:
     ! $omp section
-    do li=nl(1),nl(1)+nl(2)
+    lat = 0.d0
+    Nli = nl(1)
+    Nle = nl(1)+nl(2)
+    do li=Nli,Nle
        !write(92,'(I6,I4)') i!,omp_get_thread_num()
        lat = lat + tm**nint(dat(1,li)) * dat(2,li) * cos( dat(3,li) + dat(4,li)*tm )
     end do
     
+    ! Heliocentric ecliptic radius vector:
     ! $omp section
-    do li=nl(1)+nl(2),nl(1)+nl(2)+nl(3)
+    rad = 0.d0
+    Nli = nl(1)+nl(2)
+    Nle = nl(1)+nl(2)+nl(3)
+    do li=Nli,Nle
        !write(93,'(I6,I4)') i!,omp_get_thread_num()
        rad = rad + tm**nint(dat(1,li)) * dat(2,li) * cos( dat(3,li) + dat(4,li)*tm )
     end do
