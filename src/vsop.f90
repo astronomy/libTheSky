@@ -37,72 +37,45 @@ contains
   
   
   !*********************************************************************************************************************************
-  !> \brief  Calculate l,b,r for planet pl using VSOP87  (true/apparent???)
+  !> \brief  Calculate true heliocentric ecliptic coordinates l,b,r for planet pl using VSOP87
   !!
   !! \param  tm   Dynamical time in Julian Millennia after 2000.0, the tau in Meeus
   !! \param  pl   Planet to compute position for
   !!
   !! \retval lon  Heliocentric longitude (rad)
   !! \retval lat  Heliocentric latitude (rad)
-  !! \retval rad  Heliocentric distance (AU?)
+  !! \retval rad  Heliocentric distance (AU)
   
   subroutine vsop_lbr(tm,pl, lon,lat,rad)
     use SUFR_kinds, only: double
     use SUFR_angles, only: rev
-    use TheSky_planetdata, only: vsopdat
+    use TheSky_planetdata, only: VSOPnls, VSOPdat
     
     implicit none
     real(double), intent(in) :: tm
     integer, intent(in) :: pl
     real(double), intent(out) :: lon,lat,rad
     
-    integer :: nls(3,8), nl(3), li, Nli,Nle  !, omp_get_thread_num
-    real(double) :: dat(4,6827)
+    integer :: li, pow, Nli,Nle, var
+    real(double) :: fac, lbr(3)
     
-    nls = reshape( (/ 2808,1620,2399, 671,426,585, 1080,349,997,  &    ! Number of lines in VSOP input files (l,b,r x 8 pl)
-         2393,915,2175, 1484,530,1469, 2358,966,2435, 1578,516,1897, 681,290,959/),  (/3,8/))
-    
-    dat = vsopdat(:,:,pl)
-    nl  = nls(:,pl)
-    
-    !call omp_set_num_threads(3)
-    ! $omp parallel shared(pl,dat,nl,tm,vsopdat,nls,lon,lat,rad) private(i)
-    ! $omp sections
-    
-    ! Heliocentric ecliptic longitude:
-    ! $omp section
-    lon = 0.d0
-    Nli = 1
-    Nle = nl(1)
-    do li=Nli,Nle
-       !write(91,'(I6,I4)') i!,omp_get_thread_num()
-       lon = lon + tm**nint(dat(1,li)) * dat(2,li) * cos( dat(3,li) + dat(4,li)*tm )
-    end do
-    lon = rev(lon)
-    
-    ! Heliocentric ecliptic latitude:
-    ! $omp section
-    lat = 0.d0
-    Nli = nl(1)
-    Nle = nl(1)+nl(2)
-    do li=Nli,Nle
-       !write(92,'(I6,I4)') i!,omp_get_thread_num()
-       lat = lat + tm**nint(dat(1,li)) * dat(2,li) * cos( dat(3,li) + dat(4,li)*tm )
+    lbr = 0.d0
+    Nle = 0
+    do var=1,3  ! L,B,R
+       Nli = Nle
+       Nle = Nle + VSOPnls(var,pl)
+       
+       do li=Nli+1,Nle
+          pow = nint(VSOPdat(1,li,pl))
+          fac = tm**pow * VSOPdat(2,li,pl)
+          lbr(var) = lbr(var) + fac * cos( VSOPdat(3,li,pl) + VSOPdat(4,li,pl)*tm )
+       end do
     end do
     
-    ! Heliocentric ecliptic radius vector:
-    ! $omp section
-    rad = 0.d0
-    Nli = nl(1)+nl(2)
-    Nle = nl(1)+nl(2)+nl(3)
-    do li=Nli,Nle
-       !write(93,'(I6,I4)') i!,omp_get_thread_num()
-       rad = rad + tm**nint(dat(1,li)) * dat(2,li) * cos( dat(3,li) + dat(4,li)*tm )
-    end do
-    ! $omp end sections nowait
-    ! $omp end parallel
+    lon = lbr(1)
+    lat = lbr(2)
+    rad = lbr(3)
     
-    !print*,n
   end subroutine vsop_lbr
   !*********************************************************************************************************************************
   
