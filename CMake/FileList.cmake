@@ -6,6 +6,7 @@ set(SRC_FILES
   src/functions.f90
   src/coordinates.f90
   src/nutation.f90
+  src/sun.f90
   src/planets.f90
   src/moon_position.f90
   src/moon_routines.f90

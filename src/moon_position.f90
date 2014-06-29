@@ -1,4 +1,4 @@
-!> \file moon_position.f90  Core procedures that calculate the position and magnitud of the Moon for libTheSky
+!> \file moon_position.f90  Core procedures that calculate the position and magnitude of the Moon for libTheSky
 
 
 !  Copyright (c) 2002-2014  Marc van der Sluys - marc.vandersluys.nl
@@ -156,15 +156,6 @@ contains
   
   
   
-  
-  
-  
-  
-  
-  
-  
-  
-  
   !*********************************************************************************************************************************
   !> \brief  Quick, lower-accuracy lunar coordinates; ~600x faster than ELP
   !!
@@ -180,12 +171,14 @@ contains
   
   subroutine moonpos_la(jd, calc,nt)
     use SUFR_kinds, only: double
-    use SUFR_constants, only: au, d2r, jd2000, pland
+    use SUFR_constants, only: au, pi,d2r, jd2000, pland,earthr
     use SUFR_angles, only: rev, rev2
     
-    use TheSky_planetdata, only: planpos, moonla_arg,moonla_lrb
+    use TheSky_sun, only: sunpos_la
+    use TheSky_planetdata, only: planpos, nPlanpos, moonla_arg,moonla_lrb
     use TheSky_coordinates, only: ecl_2_eq, eq2horiz
     use TheSky_datetime, only: calc_deltat, calc_gmst
+    use TheSky_local, only: lat0
     
     implicit none
     real(double), intent(in) :: jd
@@ -194,6 +187,7 @@ contains
     integer :: i,j,mal(4,60),mab(4,60)
     real(double) :: jde,deltat,t,t2,t3,l,b,r,  lm,d,ms,mm,f,e,esl(60),esb(60),a1,a2,a3
     real(double) :: ls,omg,ra,dec,eps,eps0,deps,gmst,agst,dpsi,az,alt,hh, args(4),argl,argb
+    real(double) :: moondat(nPlanpos), hcl0,hcb0,hcr0, gcl,gcb,delta, elon,pa,illfr
     
     deltat = calc_deltat(jd)
     jde = jd + deltat/86400.d0
@@ -297,9 +291,45 @@ contains
     planpos(9)  = az   ! Geocentric azimuth
     planpos(10) = alt  ! Geocentric altitude
     
+    if(calc.eq.4) return
+    
+    
+    moondat = planpos  ! Store Moon data
+    
+    ! Get some Sun data:
+    call sunpos_la(jd,1)
+    hcl0 =  rev(planpos(1)+pi) ! Heliocentric longitude of the Earth - want geocentric lon of Sun?
+    hcb0 = -planpos(2)         ! Heliocentric latitude of the Earth  - want geocentric lat of Sun?
+    hcr0 =  planpos(3)
+    
+    planpos = moondat   ! Restore Moon data:
+    gcl   = planpos(1)  ! l
+    gcb   = planpos(2)  ! b
+    delta = planpos(4)  ! r
+    
+    
+    elon = acos(cos(gcb)*cos(hcb0)*cos(gcl-rev(hcl0+pi)))
+    pa = atan2( hcr0*sin(elon) , delta - hcr0*cos(elon) )            ! Phase angle
+    illfr = 0.5d0*(1.d0 + cos(pa))                                   ! Illuminated fraction of the disc
+    
+    planpos(11) = rev(elon)           ! Elongation
+    planpos(13) = moonmagn(pa,delta)  ! Magnitude
+    planpos(14) = illfr               ! Illuminated fraction
+    planpos(15) = rev(pa)             ! Phase angle
+    planpos(16) = atan2(sin(planpos(8)),tan(lat0)*cos(planpos(6)) - sin(planpos(6))*cos(planpos(8)))  ! Parallactic angle
+    planpos(17) = asin(earthr/(planpos(4)*au))                                                        ! Horizontal parallax
+    
+    planpos(41) = rev(hcl0+pi)        ! Geocentric, true L,B,R for the Sun
+    planpos(42) = rev2(-hcb0)
+    planpos(43) = hcr0
     
   end subroutine moonpos_la
   !*********************************************************************************************************************************
+    
+  
+  
+  
+  
   
   
   !*********************************************************************************************************************************
