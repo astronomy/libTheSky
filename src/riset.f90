@@ -167,7 +167,8 @@ contains
           end if
           
           if(use_vsop) then
-             call planet_position(jd1,pl, ltime=lltime)           ! Uses full VSOP (except perhaps light time)
+             ! Accuracy of 1 min = 0.25 deg = 4e-3 rad.  1.d-6,1.d-2 saves ~43% CPU time for the Sun, <1 round-off errors/year
+             call planet_position(jd1,pl, LBaccur=1.d-6,Raccur=1.d-2, ltime=lltime)  ! Uses truncated VSOP87
           else
              call planet_position_la(jd1,pl, 2,60)  ! Computes low-accuracy positions - calc=2 computes ra,dec - use 60 terms
           end if
