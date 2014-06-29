@@ -70,6 +70,7 @@ contains
     !desired_accuracy = 1.d-9  ! 5e-9 rad = 1 mas = VSOP87 accuracy for Mercury in 1900-2100
     if(present(LBaccur)) desired_accuracy(1:2) = (/LBaccur,LBaccur/)
     if(present(Raccur))  desired_accuracy(3)   = Raccur
+    !desired_accuracy = 0.d-9  ! 5e-9 rad = 1 mas = VSOP87 accuracy for Mercury in 1900-2100
     
     lbr = 0.d0
     Nle = 0

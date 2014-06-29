@@ -310,11 +310,11 @@ contains
     jd1  = cal2jd(yr,mnt,day0)
     jd2  = cal2jd(yr,mnt,day0+1.d0)
     
-    call planet_position(jd0,pl, ltime=ltime)
+    call planet_position(jd0,pl, LBaccur=1.d-6,Raccur=1.d-2, ltime=ltime)
     ra0  = planpos(5+tc*20)
     dec0 = planpos(6+tc*20)
     
-    call planet_position(jd1,pl, ltime=ltime)
+    call planet_position(jd1,pl, LBaccur=1.d-6,Raccur=1.d-2, ltime=ltime)
     ! Exact altitude for moon, ~0.1-0.2deg, for geocentric coordinates:
     if(tc.eq.0.and.pl.eq.0) sa = asin(4.26345d-5/planpos(4))*0.7275d0-0.5667d0*d2r
     
@@ -324,7 +324,7 @@ contains
     dec1 = planpos(6+tc*20)
     agst = planpos(45)
     
-    call planet_position(jd2,pl, ltime=ltime)
+    call planet_position(jd2,pl, LBaccur=1.d-6,Raccur=1.d-2, ltime=ltime)
     ra2  = planpos(5+tc*20)
     dec2 = planpos(6+tc*20)
     
