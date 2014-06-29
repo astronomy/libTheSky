@@ -30,11 +30,15 @@ contains
   !*********************************************************************************************************************************
   !> \brief  Compute the position, distance, etc of a planet
   !!
-  !! \param jd     Julian date of computation
-  !! \param pl     Planet number: Moon=0, Merc=1,Nep=8,Plu=9 3=Sun, 0=Moon, >10 for other objects
-  !! \param ltime  Set to .false. to disable light-time correction, and save ~50% in CPU time at the cost of some accuracy
+  !! \param jd       Julian date of computation
+  !! \param pl       Planet number: Moon=0, Merc=1,Nep=8,Plu=9 3=Sun, 0=Moon, >10 for other objects
+  !!
+  !! \param LBaccur  Desired accuracy of the heliocentric L,B in VSOP87 (rad, optional)
+  !! \param Raccur   Desired accuracy of the heliocentric R in VSOP87 (AU, optional)
+  !!
+  !! \param ltime    Set to .false. to disable light-time correction, and save ~50% in CPU time at the cost of some accuracy
   
-  subroutine planet_position(jd,pl, ltime)
+  subroutine planet_position(jd,pl, LBaccur,Raccur, ltime)
     use SUFR_kinds, only: double
     use SUFR_constants, only: pi, au,earthr,pland, enpname, jd2000
     use SUFR_system, only: warn
@@ -48,7 +52,7 @@ contains
     use TheSky_nutation, only: nutation, nutation2000
     use TheSky_moon, only: moon_lbr, moonmagn
     use TheSky_comets, only: cometgc
-    use TheSky_planetdata, only: planpos, pl0
+    use TheSky_planetdata, only: planpos, pl0, VSOPtruncs
     use TheSky_cometdata, only: cometElems, cometDiedAtP
     use TheSky_asteroids, only: asteroid_magn, asteroid_lbr
     use TheSky_datetime, only: calc_deltat, calc_gmst
@@ -56,10 +60,11 @@ contains
     implicit none
     real(double), intent(in) :: jd
     integer, intent(in) :: pl
+    real(double), intent(in), optional :: LBaccur,Raccur
     logical, intent(in), optional :: ltime
     
     integer :: j
-    real(double) :: tjm,jde,tjm0,  dpsi,eps0,deps,eps,tau,tau1
+    real(double) :: tjm,jde,tjm0,  dpsi,eps0,deps,eps,tau,tau1,  lLBaccur,lRaccur
     real(double) :: hcl0,hcb0,hcr0, hcl,hcb,hcr, hcl00,hcb00,hcr00, sun_gcl,sun_gcb, gcx,gcy,gcz, gcx0,gcy0,gcz0, dhcr
     real(double) :: gcl,gcb,delta,gcl0,gcb0,delta0
     real(double) :: ra,dec,gmst,agst,lst,hh,az,alt,elon,  topra,topdec,topl,topb,topdiam,topdelta,tophh,topaz,topalt
@@ -76,6 +81,12 @@ contains
     
     pl0 = pl                           ! Remember which planet was computed last
     
+    
+    lLBaccur = VSOPtruncs(1, pl)  ! Set L,B accuracy equal to VSOP87 truncation
+    lRaccur  = VSOPtruncs(3, pl)  ! Set R accuracy equal to VSOP87 truncation
+    if(present(LBaccur)) lLBaccur = LBaccur
+    if(present(Raccur))  lRaccur  = Raccur
+    
     lltime = .true.                    ! Take into account light time by default
     if(present(ltime)) lltime = ltime
     
@@ -86,7 +97,7 @@ contains
     tjm    = (jde-jd2000)/365250.d0                                    ! Julian Millennia after 2000.0 in dyn. time, tau in Meeus
     tjm0   = tjm
     
-    call vsop_lbr(tjm,3, hcl0,hcb0,hcr0)                               ! Calculate the Earth's true heliocentric l,b,r
+    call vsop_lbr(tjm,3, hcl0,hcb0,hcr0, lLBaccur,lRaccur)             ! Calculate the Earth's true heliocentric l,b,r
     
     
     
@@ -102,11 +113,11 @@ contains
        
        
        ! Compute l,b,r for planet, Pluto, asteroid, Earth's shadow:
-       if(pl.gt.0.and.pl.lt.9) call vsop_lbr(tjm,pl, hcl,hcb,hcr)      ! Heliocentric l,b,r
+       if(pl.gt.0.and.pl.lt.9) call vsop_lbr(tjm,pl, hcl,hcb,hcr, lLBaccur,lRaccur)  ! Heliocentric l,b,r
        if(pl.eq.9) call plutolbr(tjm*10.d0, hcl,hcb,hcr)               ! This is for 2000.0, precess 10 lines below
        if(pl.gt.10000) call asteroid_lbr(tjm,pl-10000, hcl,hcb,hcr)    ! Heliocentric lbr for asteroids
        if(pl.eq.-1) then                                               ! Centre of Earth's shadow
-          call vsop_lbr(tjm,3, hcl,hcb,hcr)                            ! = heliocentric coordinates ...
+          call vsop_lbr(tjm,3, hcl,hcb,hcr, lLBaccur,lRaccur)          ! = heliocentric coordinates ...
           call moon_lbr(tjm, dumdbl1,dumdbl2,dhcr)                     ! only want dhcr
           hcr = hcr + dhcr                                             ! + distance Earth-Moon
        end if
