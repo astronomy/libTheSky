@@ -178,9 +178,9 @@ contains
   !! - Improve some parts (search for 'improve' below)
   !! - Check the last term (omg) in eps0
   
-  subroutine moonpos_la(jd,calc,nt)
+  subroutine moonpos_la(jd, calc,nt)
     use SUFR_kinds, only: double
-    use SUFR_constants, only: au, d2r, jd2000
+    use SUFR_constants, only: au, d2r, jd2000, pland
     use SUFR_angles, only: rev, rev2
     
     use TheSky_planetdata, only: planpos, moonla_arg,moonla_lrb
@@ -190,11 +190,10 @@ contains
     implicit none
     real(double), intent(in) :: jd
     integer, intent(in) :: calc,nt
-    real(double) :: jde,deltat,t,t2,t3,l,b,r
-    real(double) :: lm,d,ms,mm,f,e,esl(60),esb(60),a1,a2,a3
-    real(double) :: ls,omg,ra,dec,eps,eps0,deps,gmst,agst,dpsi,az,alt,hh
-    real(double) :: args(4),argl,argb
+    
     integer :: i,j,mal(4,60),mab(4,60)
+    real(double) :: jde,deltat,t,t2,t3,l,b,r,  lm,d,ms,mm,f,e,esl(60),esb(60),a1,a2,a3
+    real(double) :: ls,omg,ra,dec,eps,eps0,deps,gmst,agst,dpsi,az,alt,hh, args(4),argl,argb
     
     deltat = calc_deltat(jd)
     jde = jd + deltat/86400.d0
@@ -238,7 +237,7 @@ contains
        b = b + sin(argb) * moonla_lrb(3,i) * esb(i)
     end do
     
-    ! Meeus, p.342
+    ! Meeus, p.342:
     l = l + 3958*sin(a1) + 1962*sin(lm-f) + 318*sin(a2)
     b = b - 2235*sin(lm) + 382*sin(a3) + 175*sin(a1-f) + 175*sin(a1+f) + 127*sin(lm-mm) - 115*sin(lm+mm)
     
@@ -256,6 +255,9 @@ contains
     planpos(2)   = b  ! Geocentric ecliptic latitude
     planpos(4)   = r  ! Geocentric distance
     
+    planpos(7)   = 5.77551830441d-3 * r  ! Light time in days
+    planpos(12)  = pland(0)/(r*au)       ! Apparent diameter of the Moon
+       
     planpos(40)  = jde   ! JDE
     planpos(46)  = t     ! App. dyn. time in Julian Centuries since 2000.0
     planpos(47)  = dpsi  ! Nutation in longitude
@@ -294,6 +296,7 @@ contains
     planpos(8)  = hh   ! Geocentric hour angle
     planpos(9)  = az   ! Geocentric azimuth
     planpos(10) = alt  ! Geocentric altitude
+    
     
   end subroutine moonpos_la
   !*********************************************************************************************************************************

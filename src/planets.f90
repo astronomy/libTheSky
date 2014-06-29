@@ -249,7 +249,6 @@ contains
     
     ! Elongation:
     elon = acos(cos(gcb)*cos(hcb0)*cos(gcl-rev(hcl0+pi)))
-    if(pl.eq.3) elon = 0.d0
     if(pl.gt.10) elon = acos((hcr0**2 + delta**2 - hcr**2)/(2.d0*hcr0*delta))        ! For comets (only?)
     
     ! Convert topocentric coordinates: ecliptical -> equatorial -> horizontal:
@@ -263,7 +262,6 @@ contains
        pa = atan2( hcr0*sin(elon) , delta - hcr0*cos(elon) )         ! Moon
     else if(pl.gt.0) then
        pa = acos( (hcr**2 + delta**2 - hcr0**2) / (2*hcr*delta) )    ! Planets
-       if(pl.eq.3) pa = 0.d0                                         ! Sun
     end if
     illfr = 0.5d0*(1.d0 + cos(pa))                                   ! Illuminated fraction of the disc
     
@@ -285,10 +283,12 @@ contains
     
     
     ! Overrule some values:
-    if(pl.eq.0) hcr    = 0.d0
-    if(pl.eq.3) then
-       magn  = sunmagn(delta)                                                   ! Changes ~0.05 over half a year...
-       illfr = 1.                                                               ! Illuminated fraction
+    if(pl.eq.0) hcr    = 0.d0                                                   ! No heliocentric distance for the Moon
+    if(pl.eq.3) then  ! Sun:
+       elon  = 0.d0                                                             ! Elongation
+       pa    = 0.d0                                                             ! Phase angle
+       magn  = sunmagn(delta)                                                   ! Magnitude; changes ~0.05 over half a year...
+       illfr = 1.d0                                                             ! Illuminated fraction
     end if
     
     
@@ -899,18 +899,19 @@ contains
   !! 
   !! \param jd    Julian Day of computation
   !! \param pl    Planet number:  0: Moon,  1-2: Mer-Ven,  3: Sun,  4-9: Mar-Plu
-  !! \param calc  Calculate  1: l,b,r, 2: & ra,dec, 3: & gmst,agst, 4: & az,alt (Sun and Moon only), 
-  !!                         5: add Moon elon, k, pa, GC LBR
+  !! \param calc  Calculate  1: l,b,r,diam, 2: + ra,dec, 3: + gmst,agst, 4: + az,alt, 5: + elon, mag, k, pa, parang, hp, GC LBR
+  !!                         (Sun and Moon only)
   !! \param nt    Number of terms to use for the calculation (has an effect for Moon only; nt<=60); 
   !!              a smaller nt gives faster, but less accurate results
   
   subroutine planet_position_la(jd, pl,calc,nt)
     use SUFR_kinds, only: double
-    use SUFR_constants, only: pi, pland,rsun, au
+    use SUFR_constants, only: pi, earthr, au
     use SUFR_angles, only: rev,rev2
     
     use TheSky_planetdata, only: planpos, nplanpos
-    use TheSky_moon, only: moonpos_la
+    use TheSky_moon, only: moonpos_la, moonmagn
+    use TheSky_local, only: lat0
     
     implicit none
     real(double), intent(in) :: jd
@@ -925,29 +926,31 @@ contains
     case(0)  ! Moon
        call moonpos_la(jd,calc,nt)  !nt<=60
        
-       planpos(12) = pland(0)/(planpos(4)*au)  ! Apparent diameter of the Moon
-       
        if(calc.ge.5) then    ! Compute additional planpos members
           moondat = planpos  ! Store Moon data
           
           ! Get some Sun data:
           call sunpos_la(jd,1)
-          hcl0 = rev(planpos(1)+pi)  ! Heliocentric longitude of the Earth - want geocentric lon of Sun?
+          hcl0 =  rev(planpos(1)+pi) ! Heliocentric longitude of the Earth - want geocentric lon of Sun?
           hcb0 = -planpos(2)         ! Heliocentric latitude of the Earth  - want geocentric lat of Sun?
-          hcr0 = planpos(3)
+          hcr0 =  planpos(3)
           
           planpos = moondat   ! Restore Moon data:
           gcl   = planpos(1)  ! l
           gcb   = planpos(2)  ! b
           delta = planpos(4)  ! r
           
+          
           elon = acos(cos(gcb)*cos(hcb0)*cos(gcl-rev(hcl0+pi)))
           pa = atan2( hcr0*sin(elon) , delta - hcr0*cos(elon) )            ! Phase angle
           illfr = 0.5d0*(1.d0 + cos(pa))                                   ! Illuminated fraction of the disc
           
           planpos(11) = rev(elon)           ! Elongation
+          planpos(13) = moonmagn(pa,delta)  ! Magnitude
           planpos(14) = illfr               ! Illuminated fraction
           planpos(15) = rev(pa)             ! Phase angle
+          planpos(16) = atan2(sin(planpos(8)),tan(lat0)*cos(planpos(6)) - sin(planpos(6))*cos(planpos(8)))  ! Parallactic angle
+          planpos(17) = asin(earthr/(planpos(4)*au))                                                        ! Horizontal parallax
           
           planpos(41) = rev(hcl0+pi)        ! Geocentric, true L,B,R for the Sun
           planpos(42) = rev2(-hcb0)
@@ -957,8 +960,6 @@ contains
     case(3)  ! Sun
        
        call sunpos_la(jd, calc)
-       
-       planpos(12) = 2*rsun/(planpos(4)*au)  ! Apparent diameter of the Sun
        
     case default  ! Planets
        
@@ -991,12 +992,13 @@ contains
   
   subroutine sunpos_la(jd, calc)
     use SUFR_kinds, only: double
-    use SUFR_constants, only: jd2000
+    use SUFR_constants, only: jd2000, au, earthr,rsun
     use SUFR_angles, only: rev
     
     use TheSky_planetdata, only: planpos
     use TheSky_coordinates, only: eq2horiz
     use TheSky_datetime, only: calc_deltat, calc_gmst
+    use TheSky_local, only: lat0
     
     implicit none
     real(double), intent(in) :: jd
@@ -1028,10 +1030,22 @@ contains
     planpos(2)  = b    ! Geocentric latitude
     planpos(3)  = r    ! Geocentric distance
     planpos(4)  = r    ! Geocentric distance
-    planpos(40) = jde  ! JD
-    planpos(46) = t    ! App. dyn. time in Julian Centuries since 2000.0
+    
+    ! Secondary variables, (almost) for free:
+    planpos(7)  = 5.77551830441d-3 * r    ! Light time in days
+    planpos(11) = 0.d0                    ! Elongation
+    planpos(12) = 2*rsun/(r*au)           ! Apparent diameter
+    planpos(13) = -26.73d0                ! Apparent magnitude
+    planpos(14) = 1.d0                    ! Illuminated fraction
+    planpos(15) = 0.d0                    ! Phase angle
+    planpos(17) = asin(earthr/(r*au))     ! Horizontal parallax
+    
+    planpos(40) = jde                     ! JD
+    planpos(41:43) = planpos(1:3)         ! Geocentric, "true" L,B,R of the Sun
+    planpos(46) = t                       ! App. dyn. time in Julian Centuries since 2000.0
     
     if(calc.eq.1) return
+    
     
     
     ! CHECK - what about the last term?
@@ -1053,7 +1067,8 @@ contains
     if(calc.eq.2) return
     
     
-    gmst = calc_gmst(jd)               ! Greenwich mean siderial time
+    
+    gmst = calc_gmst(jd)              ! Greenwich mean siderial time
     agst = rev(gmst + dpsi*cos(eps))  ! Correction for equation of the equinoxes -> Gr. apparent sid. time
     planpos(45) = rev(agst)           ! Greenwich mean siderial time
     planpos(49) = rev(gmst)           ! Correction for equation of the equinoxes -> Gr. apparent sid. time
@@ -1061,10 +1076,17 @@ contains
     if(calc.eq.3) return
     
     
+    
     call eq2horiz(ra,dec,agst, hh,az,alt)
     planpos(8)  = rev(hh)  ! Geocentric hour angle
     planpos(9)  = rev(az)  ! Geocentric azimuth
     planpos(10) = alt      ! Geocentric altitude
+    
+    if(calc.eq.4) return
+    
+    
+    planpos(13) = sunmagn(r)                                            ! Apparent magnitude
+    planpos(16) = atan2(sin(hh),tan(lat0)*cos(dec) - sin(dec)*cos(hh))  ! Parallactic angle
     
   end subroutine sunpos_la
   !*********************************************************************************************************************************
