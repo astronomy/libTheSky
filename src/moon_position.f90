@@ -256,10 +256,6 @@ contains
     planpos(2)   = b  ! Geocentric ecliptic latitude
     planpos(4)   = r  ! Geocentric distance
     
-    planpos(21)  = l  ! Use as "topocentric" as well
-    planpos(22)  = b  ! Use as "topocentric" as well
-    planpos(24)  = r  ! Use as "topocentric" as well
-    
     planpos(40)  = jde   ! JDE
     planpos(46)  = t     ! App. dyn. time in Julian Centuries since 2000.0
     planpos(47)  = dpsi  ! Nutation in longitude
@@ -277,8 +273,6 @@ contains
     ! Store results:
     planpos(5)  = ra    ! Geocentric right ascension
     planpos(6)  = dec   ! Geocentric declination
-    planpos(25) = ra    ! Use as "topocentric" as well
-    planpos(26) = dec   ! Use as "topocentric" as well
     
     planpos(48) = eps   ! True obliquity of the ecliptic; corrected for nutation
     planpos(50) = eps0  ! Mean obliquity of the ecliptic; without nutation
@@ -300,10 +294,6 @@ contains
     planpos(8)  = hh   ! Geocentric hour angle
     planpos(9)  = az   ! Geocentric azimuth
     planpos(10) = alt  ! Geocentric altitude
-    
-    planpos(29) = hh   ! Use as "topocentric" as well
-    planpos(29) = az   ! Use as "topocentric" as well
-    planpos(30) = alt  ! Use as "topocentric" as well
     
   end subroutine moonpos_la
   !*********************************************************************************************************************************

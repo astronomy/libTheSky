@@ -906,7 +906,7 @@ contains
   
   subroutine planet_position_la(jd, pl,calc,nt)
     use SUFR_kinds, only: double
-    use SUFR_constants, only: pi
+    use SUFR_constants, only: pi, pland,rsun, au
     use SUFR_angles, only: rev,rev2
     
     use TheSky_planetdata, only: planpos, nplanpos
@@ -918,11 +918,14 @@ contains
     integer :: ind
     real(double) :: moondat(nplanpos), hcl0,hcb0,hcr0, gcl,gcb,delta, elon,pa,illfr
     
+    planpos = 0.d0
     planpos(39) = dble(pl)
     
     select case(pl)
     case(0)  ! Moon
        call moonpos_la(jd,calc,nt)  !nt<=60
+       
+       planpos(12) = pland(0)/(planpos(4)*au)  ! Apparent diameter of the Moon
        
        if(calc.ge.5) then    ! Compute additional planpos members
           moondat = planpos  ! Store Moon data
@@ -955,6 +958,8 @@ contains
        
        call sunpos_la(jd, calc)
        
+       planpos(12) = 2*rsun/(planpos(4)*au)  ! Apparent diameter of the Sun
+       
     case default  ! Planets
        
        call planet_position(jd,pl, LBaccur=1.d-6,Raccur=1.d-4, ltime=.false.)  ! Truncated VSOP87, no light-time correction
@@ -962,7 +967,7 @@ contains
     end select
     
     
-    ! Fill topocentric planpos elements with geocentric values for Moon and Sun:
+    ! Fill topocentric planpos elements (21-32) with geocentric values (1-12) for Moon and Sun:
     if(pl.eq.0 .or. pl.eq.3) then
        do ind = 1,12
           planpos(ind+20) = planpos(ind)
