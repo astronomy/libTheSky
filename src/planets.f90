@@ -895,7 +895,7 @@ contains
   
   
   !*********************************************************************************************************************************
-  !> \brief  Compute low-accuracy planet positions.  Sun and Moon have dedicated routines, for planets the light time is ignored
+  !> \brief  Compute low-accuracy planet positions.  Sun and Moon have dedicated routines, for planets abridged VSOP87 is used.
   !! 
   !! \param jd    Julian Day of computation
   !! \param pl    Planet number:  0: Moon,  1-2: Mer-Ven,  3: Sun,  4-9: Mar-Plu
@@ -957,7 +957,7 @@ contains
        
     case default  ! Planets
        
-       call planet_position(jd,pl, ltime=.false.)  ! Do not take into account light-time correction
+       call planet_position(jd,pl, LBaccur=1.d-6,Raccur=1.d-4, ltime=.false.)  ! Truncated VSOP87, no light-time correction
        
     end select
     
