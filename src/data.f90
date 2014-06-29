@@ -269,7 +269,7 @@ contains
     use SUFR_system, only: find_free_io_unit, file_open_error_quit, file_read_end_error
     use SUFR_constants, only: plana,au
     use TheSky_constants, only: TheSkydir
-    use TheSky_planetdata, only: VSOPnls, VSOPdat, vsopNblk, VSOPtrunks
+    use TheSky_planetdata, only: VSOPnls, VSOPdat, vsopNblk, VSOPtruncs
     
     implicit none
     integer :: pl, li, ip, status,  powr,opowr, var, TOTnls(8)
@@ -280,10 +280,10 @@ contains
     
     TOTnls(1:8) = sum(VSOPnls(:,1:8), 1)  ! Total number of lines per planet; sum along dimension 1
     
-    ! VSOP87 terms are trunkated at these accuracies:
-    VSOPtrunks(1,:) = (/0.05d0, 0.5d0, 0.5d0, 0.5d0, 1.d0, 1.d0, 1.6d0, 1.d0/) * 1.d-9  ! L (rad)
-    VSOPtrunks(2,:) = VSOPtrunks(1,:)                                                   ! B (rad)
-    VSOPtrunks(3,:) = VSOPtrunks(1,:) * plana(1:8)/au                                   ! R (AU)
+    ! VSOP87 terms are truncated at these accuracies:
+    VSOPtruncs(1,:) = (/0.05d0, 0.5d0, 0.5d0, 0.5d0, 1.d0, 1.d0, 1.6d0, 1.d0/) * 1.d-9  ! L (rad)
+    VSOPtruncs(2,:) = VSOPtruncs(1,:)                                                   ! B (rad)
+    VSOPtruncs(3,:) = VSOPtruncs(1,:) * plana(1:8)/au                                   ! R (AU)
     
     ! Read planets.dat file:
     call find_free_io_unit(ip)
@@ -292,7 +292,7 @@ contains
     if(status.ne.0) call file_open_error_quit(trim(infile), 1, 1)  ! 1-input file, 1-exit status
     
     VSOPdat = 0.d0
-    opowr = -1
+    opowr = 9  ! should be > powr = 0-5
     do pl=1,8  ! Planet
        var = 0  ! L,B,R
        do li=1,TOTnls(pl)

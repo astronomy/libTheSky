@@ -47,23 +47,29 @@ contains
   !! \retval lat  Heliocentric latitude (rad)
   !! \retval rad  Heliocentric distance (AU)
   !!
+  !! \param  LBaccur  Desired accuracy of L,B (rad, optional)
+  !! \param  Raccur   Desired accuracy of R (AU, optional)
+  !!
   !! \see http://esoads.eso.org/abs/1988A%26A...202..309B
   
-  subroutine vsop_lbr(tm,pl, lon,lat,rad)
+  subroutine vsop_lbr(tm,pl, lon,lat,rad, LBaccur,Raccur)
     use SUFR_kinds, only: double
     use SUFR_angles, only: rev
-    use TheSky_planetdata, only: VSOPnls, VSOPdat, vsopNblk, VSOPtrunks
+    use TheSky_planetdata, only: VSOPnls, VSOPdat, vsopNblk, VSOPtruncs
     
     implicit none
     real(double), intent(in) :: tm
     integer, intent(in) :: pl
     real(double), intent(out) :: lon,lat,rad
+    real(double), intent(in), optional :: LBaccur,Raccur
     
     integer :: li, pow, Nli,Nle, var, nTerm, skip
     real(double) :: fac, lbr(3), accur, desired_accuracy(3)
     
-    desired_accuracy = VSOPtrunks(1:3, pl)  ! Set accuracy equal to VSOP87 truncation
+    desired_accuracy = VSOPtruncs(1:3, pl)  ! Set accuracy equal to VSOP87 truncation
     !desired_accuracy = 1.d-9  ! 5e-9 rad = 1 mas = VSOP87 accuracy for Mercury in 1900-2100
+    if(present(LBaccur)) desired_accuracy(1:2) = (/LBaccur,LBaccur/)
+    if(present(Raccur))  desired_accuracy(3)   = Raccur
     
     lbr = 0.d0
     Nle = 0
