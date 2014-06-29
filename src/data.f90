@@ -95,7 +95,7 @@ contains
     call readPlanetData()
     call readPluto()
     
-    call readmoonpos_la()
+    call readmoondata_la()
     
     call readplanetelements()
     
@@ -657,7 +657,7 @@ contains
   !*********************************************************************************************************************************
   !> \brief  Read low-accuracy moon-position data from Meeus (moon_la.dat)
   
-  subroutine readmoonpos_la()
+  subroutine readmoondata_la()
     use SUFR_system, only: find_free_io_unit, file_open_error_quit, file_read_end_error
     use SUFR_dummy, only: dumstr
     use TheSky_constants, only: TheSkydir
@@ -688,7 +688,7 @@ contains
     end do
     close(ip)
     
-  end subroutine readmoonpos_la
+  end subroutine readmoondata_la
   !*********************************************************************************************************************************
   
   

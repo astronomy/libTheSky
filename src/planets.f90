@@ -881,11 +881,11 @@ contains
   !! \param jd    Julian Day of computation
   !! \param pl    Planet number:  0: Moon,  1-2: Mer-Ven,  3: Sun,  4-9: Mar-Plu
   !! \param calc  Calculate  1: l,b,r,diam, 2: + ra,dec, 3: + gmst,agst, 4: + az,alt, 5: + elon, mag, k, pa, parang, hp, GC LBR
-  !!                         (Sun and Moon only)
+  !!                         (Sun and Moon only, optional - default = 5)
   !! \param nt    Number of terms to use for the calculation (has an effect for Moon only; nt<=60); 
-  !!              a smaller nt gives faster, but less accurate results
+  !!              a smaller nt gives faster, but less accurate results (optional, default=60)
   
-  subroutine planet_position_la(jd, pl,calc,nt)
+  subroutine planet_position_la(jd, pl, calc,nt)
     use SUFR_kinds, only: double
     use SUFR_angles, only: rev,rev2
     
@@ -895,8 +895,13 @@ contains
     
     implicit none
     real(double), intent(in) :: jd
-    integer, intent(in) :: pl,calc,nt
-    integer :: ind
+    integer, intent(in) :: pl
+    integer, intent(in), optional :: calc,nt
+    
+    integer :: ind, lcalc,lnt
+    
+    lcalc = 5
+    if(present(calc)) lcalc = max(min(calc,5),1)
     
     planpos = 0.d0
     planpos(39) = dble(pl)
@@ -904,11 +909,13 @@ contains
     select case(pl)
     case(0)  ! Moon
        
-       call moonpos_la(jd,calc,nt)  !nt<=60
+       lnt = 60
+       if(present(nt)) lnt = max(min(nt,60),1)
+       call moonpos_la(jd, lcalc,lnt)
               
     case(3)  ! Sun
        
-       call sunpos_la(jd, calc)
+       call sunpos_la(jd, lcalc)
        
     case default  ! Planets
        
