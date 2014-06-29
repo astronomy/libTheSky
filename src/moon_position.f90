@@ -173,6 +173,7 @@ contains
     use SUFR_kinds, only: double
     use SUFR_constants, only: au, pi,d2r, jd2000, pland,earthr
     use SUFR_angles, only: rev, rev2
+    use SUFR_system, only: quit_program_warning
     
     use TheSky_sun, only: sunpos_la
     use TheSky_planetdata, only: planpos, nPlanpos, moonla_arg,moonla_lrb
@@ -188,6 +189,8 @@ contains
     real(double) :: jde,deltat,t,t2,t3,l,b,r,  lm,d,ms,mm,f,e,esl(60),esb(60),a1,a2,a3
     real(double) :: ls,omg,ra,dec,eps,eps0,deps,gmst,agst,dpsi,az,alt,hh, args(4),argl,argb
     real(double) :: moondat(nPlanpos), hcl0,hcb0,hcr0, gcl,gcb,delta, elon,pa,illfr
+    
+    if(sum(moonla_lrb(1:2,1)) .ne. -14616581) call quit_program_warning('moonpos_la(): moon_la.dat not read', 0)
     
     deltat = calc_deltat(jd)
     jde = jd + deltat/86400.d0
