@@ -166,8 +166,7 @@ contains
   !! \see  Meeus, Astronomical Algorithms, 1998, Ch. 22 and 47
   !!
   !! \todo
-  !! - Improve some parts (search for 'improve' below)
-  !! - Check the last term (omg) in eps0
+  !! - Improve some parts (search for 'improve' below): use Meeus Ch.47/p.338 rather than Ch.22/p.144
   
   subroutine moonpos_la(jd, calc,nt)
     use SUFR_kinds, only: double
@@ -262,10 +261,10 @@ contains
     if(calc.eq.1) return
     
     
-    ! CHECK the last term - it seems to be the first term in deps...
-    eps0 = 0.409092804222d0 - 2.26965525d-4*t - 2.86d-9*t2 + 8.78967d-9*t2*t !+ 4.468d-5*cos(omg)   ! Mean obliquity of the ecliptic
-    deps = 4.46d-5*cos(omg) + 2.76d-6*cos(2*ls) + 4.848d-7*cos(2*lm) - 4.36d-7*cos(2*omg)           ! Nutation in obliquity
-    eps  = eps0 + deps                                                                              ! True obliquity of the ecliptic
+    ! Obliquity of the ecliptic:
+    eps0 = 0.409092804222d0 - 2.26965525d-4*t - 2.86d-9*t2 + 8.78967d-9*t2*t                ! Mean obliquity of the ecliptic
+    deps = 4.468d-5*cos(omg) + 2.76d-6*cos(2*ls) + 4.848d-7*cos(2*lm) - 4.36d-7*cos(2*omg)  ! Nutation in obliquity
+    eps  = eps0 + deps                                                                      ! True obliquity of the ecliptic
     
     call ecl_2_eq(l,b,eps, ra,dec)  ! Ecliptical -> equatorial coordinates
     
