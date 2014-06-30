@@ -34,7 +34,7 @@ contains
   !!
   !! \see Meeus, Astronomical Algorithms, 1998, Ch.25
   !!
-  !! \todo  Check the last term (omg) in eps0
+  !! \todo  odot is off by ~10" in Meeus, Example 25a.  Would need better L0 or C (or M?)
   
   subroutine sunpos_la(jd, calc)
     use SUFR_kinds, only: double
@@ -49,8 +49,8 @@ contains
     implicit none
     real(double), intent(in) :: jd
     integer, intent(in) :: calc
-    real(double) :: jde,deltat,t,t2,l0,m,e,c,odot,nu,r,omg,lam,b
-    real(double) :: ra,dec,ls,lm,eps,eps0,deps,gmst,agst,lst,dpsi,az,alt,hh
+    real(double) :: jde,deltat,t,t2,l0,m,e,c,odot,nu,r,omg,aber,lam,b
+    real(double) :: ra,dec,lm,eps,eps0,deps,gmst,agst,lst,dpsi,az,alt,hh
     
     deltat = calc_deltat(jd)
     jde = jd + deltat/86400.d0
@@ -59,6 +59,8 @@ contains
     
     l0 = 4.895063168d0 + 628.331966786d0 *t + 5.291838d-6    *t2  ! Mean longitude, Eq. 25.2
     m  = 6.240060141d0 + 628.301955152d0 *t - 2.682571d-6    *t2  ! Mean anomaly, Eq. 25.3
+    !m  = 6.24003588115d0 + 628.301956024d0*t - 2.79776d-6*t2  - 5.8177641733d-8*t2*t  ! Mean anomaly, Meeus p.144
+    !m  = 6.24006012726d0 + 628.301955167d0*t - 2.680826d-6*t2  - 7.1267d-10*t2*t      ! Mean anomaly, Meeus Eq.47.3
     e  = 0.016708634d0 - 0.000042037d0   *t - 0.0000001267d0 *t2  ! Eccentricity of the Earth's orbit, Eq. 25.4
     
     ! Sun's equation of the centre:
@@ -68,9 +70,15 @@ contains
     r = 1.000001018d0*(1.d0-e*e)/(1.d0 + e*cos(nu))  ! Heliocentric distance of the Earth / geocentric dist. of the Sun, Eq. 25.5
     
     ! Nutation, aberration:
-    omg = 2.18236d0 - 33.75704138d0 * t
-    lam = rev(odot - 9.9309d-5 - 8.34267d-5 * sin(omg))  ! Apparent geocentric longitude, referred to the true equinox of date
+    !omg = 2.18236d0 - 33.75704138d0 * t  ! Meeus, p.164
+    !dpsi = -8.34267d-5 * sin(omg)        ! Meeus, p.164
+    omg = 2.1824390725d0 - 33.7570464271d0 * t  + 3.622256d-5 * t2 + 3.7337958d-8 * t2*t - 2.879321d-10 * t2*t2  ! Meeus, Eq.47.7
+    lm   = 3.8103417d0 + 8399.709113d0*t      ! Mean long. Moon, Meeus, p.144
+    dpsi = -8.338795d-5*sin(omg) - 6.39954d-6*sin(2*l0) - 1.115d-6*sin(2*lm) + 1.018d-6*sin(2*omg)  ! Nutation in lon, Meeus, p.144
+    aber = -9.93087d-5/r
+    lam = rev(odot + aber + dpsi)  ! Apparent geocentric longitude, referred to the true equinox of date
     b   = 0.d0
+    
     
     planpos(1)  = lam  ! Geocentric longitude
     planpos(2)  = b    ! Geocentric latitude
@@ -94,15 +102,14 @@ contains
     
     
     
-    ! CHECK - what about the last term? - it seems to be the first term in deps...
-    eps0 = 0.409092804222d0 - 2.26965525d-4*t - 2.86d-9*t2 + 8.78967d-9*t2*t !+ 4.468d-5*cos(omg)   ! Mean obliquity of the ecliptic
-    ls   = 4.89506386655d0 + 62.84528862d0*t  ! Mean long. Sun
-    lm   = 3.8103417d0 + 8399.709113d0*t      ! Mean long. Moon
-    dpsi = -8.338795d-5*sin(omg) - 6.39954d-6*sin(2*ls) - 1.115d-6*sin(2*lm) + 1.018d-6*sin(2*omg)  ! Nutation in longitude
-    deps = 4.46d-5*cos(omg) + 2.76d-6*cos(2*ls) + 4.848d-7*cos(2*lm) - 4.36d-7*cos(2*omg)           ! Nutation in obliquity
-    eps  = eps0 + deps                                                                              ! True obliquity of the ecliptic
+    ! Obliquity of the ecliptic and nutation:
+    eps0 = 0.409092804222d0 - 2.26965525d-4*t - 2.86d-9*t2 + 8.78967d-9*t2*t               ! Mean obliq. o.t. eclip, Meeus, Eq.22.2
+    deps = 4.46d-5*cos(omg) + 2.76d-6*cos(2*l0) + 4.848d-7*cos(2*lm) - 4.36d-7*cos(2*omg)  ! Nutation in obliquity, Meeus, p.144
+    eps  = eps0 + deps                                                                     ! True obliquity of the ecliptic
+    
     ra   = atan2(cos(eps)*sin(lam),cos(lam))  ! Geocentric right ascension, Eq. 25.6
     dec  = asin(sin(eps)*sin(lam))            ! Geocentric declination,     Eq. 25.7
+    
     
     planpos(5)  = ra    ! Geocentric right ascension
     planpos(6)  = dec   ! Geocentric declination
