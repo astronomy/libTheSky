@@ -483,7 +483,7 @@ contains
        ! Meeus, Ch. 25:
        tjc   =  (jd-jd2000)/36525.0d0  ! Julian centuries since 2000.0, Meeus Eq. 25.1
        tjc2  =  tjc**2
-       l0    =  4.8950631684d0 + 628.331966786d0 * tjc + 5.291838d-6  ! Mean longitude of the Sun, Meeus Eq. 25.2
+       l0    =  4.8950631684d0 + 628.331966786d0 * tjc + 5.291838d-6 *tjc2  ! Mean longitude of the Sun, Meeus Eq. 25.2
        
        ! Mean anomaly of the Sun, Meeus Eq. 25.3 -> p.144 (nutation):
        mas   =  6.240035881d0 + 628.301956024d0 * tjc - 2.79776d-6 * tjc2 - 5.817764d-8 * tjc**3
