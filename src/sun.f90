@@ -54,8 +54,8 @@ contains
     
     deltat = calc_deltat(jd)
     jde = jd + deltat/86400.d0
-    t = (jde-jd2000)/36525.d0    ! Julian Centuries after 2000.0 in dynamical time, the T in Meeus, p.163, Eq. 25.1
-    t2 = t*t
+    t   = (jde-jd2000)/36525.d0    ! Julian Centuries after 2000.0 in dynamical time, the T in Meeus, p.163, Eq. 25.1
+    t2  = t*t
     
     l0 = 4.895063168d0 + 628.331966786d0 *t + 5.291838d-6    *t2  ! Mean longitude, Eq. 25.2
     m  = 6.240060141d0 + 628.301955152d0 *t - 2.682571d-6    *t2  ! Mean anomaly, Eq. 25.3
@@ -94,7 +94,7 @@ contains
     
     
     
-    ! CHECK - what about the last term?
+    ! CHECK - what about the last term? - it seems to be the first term in deps...
     eps0 = 0.409092804222d0 - 2.26965525d-4*t - 2.86d-9*t2 + 8.78967d-9*t2*t !+ 4.468d-5*cos(omg)   ! Mean obliquity of the ecliptic
     ls   = 4.89506386655d0 + 62.84528862d0*t  ! Mean long. Sun
     lm   = 3.8103417d0 + 8399.709113d0*t      ! Mean long. Moon
@@ -102,7 +102,7 @@ contains
     deps = 4.46d-5*cos(omg) + 2.76d-6*cos(2*ls) + 4.848d-7*cos(2*lm) - 4.36d-7*cos(2*omg)           ! Nutation in obliquity
     eps  = eps0 + deps                                                                              ! True obliquity of the ecliptic
     ra   = atan2(cos(eps)*sin(lam),cos(lam))  ! Geocentric right ascension, Eq. 25.6
-    dec  = asin(sin(eps*sin(lam)))            ! Geocentric declination,     Eq. 25.7
+    dec  = asin(sin(eps)*sin(lam))            ! Geocentric declination,     Eq. 25.7
     
     planpos(5)  = ra    ! Geocentric right ascension
     planpos(6)  = dec   ! Geocentric declination
