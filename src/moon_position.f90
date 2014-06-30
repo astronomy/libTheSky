@@ -179,7 +179,7 @@ contains
     use TheSky_planetdata, only: planpos, nPlanpos, moonla_arg,moonla_lrb
     use TheSky_coordinates, only: ecl_2_eq, eq2horiz
     use TheSky_datetime, only: calc_deltat, calc_gmst
-    use TheSky_local, only: lat0
+    use TheSky_local, only: lon0,lat0
     
     implicit none
     real(double), intent(in) :: jd
@@ -187,7 +187,7 @@ contains
     
     integer :: i,j,mal(4,60),mab(4,60)
     real(double) :: jde,deltat,t,t2,t3,l,b,r,  lm,d,ms,mm,f,e,esl(60),esb(60),a1,a2,a3
-    real(double) :: ls,omg,ra,dec,eps,eps0,deps,gmst,agst,dpsi,az,alt,hh, args(4),argl,argb
+    real(double) :: ls,omg,ra,dec,eps,eps0,deps,gmst,agst,lst,dpsi,az,alt,hh, args(4),argl,argb
     real(double) :: moondat(nPlanpos), hcl0,hcb0,hcr0, gcl,gcb,delta, elon,pa,illfr
     
     if(sum(moonla_lrb(1:2,1)) .ne. -14616581) call quit_program_warning('moonpos_la(): moon_la.dat not read', 0)
@@ -280,8 +280,11 @@ contains
     
     
     ! Siderial time:
-    gmst = calc_gmst(jd)                  ! Greenwich mean siderial time
+    gmst = calc_gmst(jd)                 ! Greenwich mean siderial time
     agst = rev(gmst + dpsi*cos(eps))     ! Correction for equation of the equinoxes -> Gr. apparent sid. time
+    lst  = rev(agst + lon0)              ! Local apparent siderial time, lon0 > 0 for E
+    
+    planpos(44) = lst                    ! Local APPARENT siderial time
     planpos(45) = agst                   ! Greenwich APPARENT siderial time (in radians)
     planpos(49) = gmst                   ! Greenwich MEAN siderial time (in radians)
     

@@ -44,13 +44,13 @@ contains
     use TheSky_planetdata, only: planpos
     use TheSky_coordinates, only: eq2horiz
     use TheSky_datetime, only: calc_deltat, calc_gmst
-    use TheSky_local, only: lat0
+    use TheSky_local, only: lon0,lat0
     
     implicit none
     real(double), intent(in) :: jd
     integer, intent(in) :: calc
     real(double) :: jde,deltat,t,t2,l0,m,e,c,odot,nu,r,omg,lam,b
-    real(double) :: ra,dec,ls,lm,eps,eps0,deps,gmst,agst,dpsi,az,alt,hh
+    real(double) :: ra,dec,ls,lm,eps,eps0,deps,gmst,agst,lst,dpsi,az,alt,hh
     
     deltat = calc_deltat(jd)
     jde = jd + deltat/86400.d0
@@ -116,6 +116,9 @@ contains
     
     gmst = calc_gmst(jd)              ! Greenwich mean siderial time
     agst = rev(gmst + dpsi*cos(eps))  ! Correction for equation of the equinoxes -> Gr. apparent sid. time
+    lst  = rev(agst + lon0)           ! Local apparent siderial time, lon0 > 0 for E
+    
+    planpos(44) = lst                 ! Local APPARENT siderial time
     planpos(45) = rev(agst)           ! Greenwich mean siderial time
     planpos(49) = rev(gmst)           ! Correction for equation of the equinoxes -> Gr. apparent sid. time
     

@@ -880,8 +880,8 @@ contains
   !! 
   !! \param jd    Julian Day of computation
   !! \param pl    Planet number:  0: Moon,  1-2: Mer-Ven,  3: Sun,  4-9: Mar-Plu
-  !! \param calc  Calculate  1: l,b,r,diam, 2: + ra,dec, 3: + gmst,agst, 4: + az,alt, 5: + elon, mag, k, pa, parang, hp, GC LBR
-  !!                         (Sun and Moon only, optional - default = 5)
+  !! \param calc  Calculate  1: l,b,r,diam, 2: + ra,dec, 3: + gmst,agst, 4: + az,alt, 5: + elon, mag, k, pa, parang, hp, GC LBR,
+  !!                         6: + topocentric positions (Sun and Moon only, optional - default = 5)
   !! \param nt    Number of terms to use for the calculation (has an effect for Moon only; nt<=60); 
   !!              a smaller nt gives faster, but less accurate results (optional, default=60)
   
@@ -892,6 +892,7 @@ contains
     use TheSky_planetdata, only: planpos
     use TheSky_moon, only: moonpos_la
     use TheSky_sun, only: sunpos_la
+    use TheSky_coordinates, only: geoc2topoc_ecl, geoc2topoc_eq, eq2horiz
     
     implicit none
     real(double), intent(in) :: jd
@@ -901,7 +902,7 @@ contains
     integer :: ind, lcalc,lnt
     
     lcalc = 5
-    if(present(calc)) lcalc = max(min(calc,5),1)
+    if(present(calc)) lcalc = calc
     
     planpos = 0.d0
     planpos(39) = dble(pl)
@@ -910,7 +911,7 @@ contains
     case(0)  ! Moon
        
        lnt = 60
-       if(present(nt)) lnt = max(min(nt,60),1)
+       if(present(nt)) lnt = nt
        call moonpos_la(jd, lcalc,lnt)
               
     case(3)  ! Sun
@@ -929,6 +930,23 @@ contains
        do ind = 1,12
           planpos(ind+20) = planpos(ind)
        end do
+       
+       
+       ! Simple correction for horizontal parallax, Meeus p.281, assuming rho=1:
+       planpos(30) = planpos(10) - asin(sin(planpos(17))*cos(planpos(10)))
+       
+       ! More precise conversion to topocentric coordinates:
+       if(lcalc.ge.6) then  ! This takes 15% more CPU time for the Moon (full accuracy; nt=60) and 110% more for the Sun!
+          call geoc2topoc_ecl(planpos(1),planpos(2), planpos(4),planpos(12)/2.d0, planpos(48),planpos(44), & ! l,b, del,r, eps,lst
+               planpos(21),planpos(22),planpos(32))  ! L,B, r
+          planpos(32) = planpos(32)*2.d0                    ! Apparent diameter
+          planpos(24) = planpos(4)*planpos(12)/planpos(32)  ! Distance
+          
+          call geoc2topoc_eq(planpos(5),planpos(6), planpos(4),planpos(8), planpos(25),planpos(26))  ! ra,dec, del,hh, topo ra,dec
+          
+          call eq2horiz(planpos(25),planpos(26),planpos(45), planpos(28),planpos(29),planpos(30))  ! topo ra,dec,agst, -> hh,az,alt
+          
+       end if
     end if
     
   end subroutine planet_position_la
