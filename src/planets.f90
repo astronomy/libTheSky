@@ -182,11 +182,13 @@ contains
     end if
     
     
-    ! Correct for nutation and aberration, and convert to FK5:
-    call nutation(tjm,dpsi,eps0,deps)  ! dpsi: nutation in longitude, deps: in obliquity
-    call nutation2000(jd,dpsi,deps)    ! IAU 2000 Nutation model, doesn't provide eps0(?)
-    eps = eps0 + deps                  ! Correct for nutation: mean -> true obliquity of the ecliptic
+    ! Correct for nutation:
+    call nutation(tjm, dpsi,eps0,deps)  ! dpsi: nutation in longitude, deps: in obliquity
+    call nutation2000(jd, dpsi,deps)    ! IAU 2000 Nutation model, doesn't provide eps0(?)
+    eps = eps0 + deps                   ! Correct for nutation: mean -> true obliquity of the ecliptic
     
+    
+    ! Correct for aberration, and convert to FK5:
     if(pl.lt.10) then  ! I suppose this should also happen for comets, but this compares better...
        if(pl.ne.0) call aberration_ecl(tjm,hcl0, gcl,gcb)
        call fk5(tjm, gcl,gcb)
@@ -933,7 +935,7 @@ contains
        
        
        ! Simple correction for horizontal parallax, Meeus p.281, assuming rho=1:
-       planpos(30) = planpos(10) - asin(sin(planpos(17))*cos(planpos(10)))
+       if(lcalc.eq.5) planpos(30) = planpos(10) - asin(sin(planpos(17))*cos(planpos(10)))
        
        ! More precise conversion to topocentric coordinates:
        if(lcalc.ge.6) then  ! This takes 15% more CPU time for the Moon (full accuracy; nt=60) and 110% more for the Sun!
