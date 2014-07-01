@@ -817,23 +817,22 @@ contains
   !!
   !! \retval  refract  Refraction in altitude (rad).  You should add the result to the uncorrected altitude.
   !!
-  !! \see Meeus (1998), Eq. 16.4 ff, based on Samundsson, Sky & Telescope vol.72, p.70 (1986)
+  !! \see Meeus (1998), Eq. 16.4 ff, based on Samundsson, Sky & Telescope vol.72, p.70 (1986), converted to radians
   
   
   function refract(alt, press,temp)
     use SUFR_kinds, only: double
-    use SUFR_constants, only: pio2, r2d,d2r,am2r
+    use SUFR_constants, only: pio2
     
     implicit none
     real(double), intent(in) :: alt
     real(double), intent(in), optional :: press,temp
-    real(double) :: refract, alt1
+    real(double) :: refract
     
     if(alt.lt.0.d0 .or. alt.ge.pio2) then  ! alt < 0  or  >= 90 deg; refraction is meaningless
        refract = 0.d0
     else
-       alt1 = alt*r2d                                                    ! -> degrees
-       refract = 1.02d0*am2r / tan((alt1 + 10.3d0/(alt1 + 5.11d0))*d2r)  ! -> rad
+       refract = 2.97d-4/tan(alt + 3.14d-3/(alt + 8.92d-2))
        if(present(press)) refract = refract * press/1010.d0              ! Correct for pressure
        if(present(temp))  refract = refract * 283.d0/(273.d0 + temp)     ! Correct for temperature
     end if
