@@ -819,7 +819,6 @@ contains
   !!
   !! \see Meeus (1998), Eq. 16.4 ff, based on Samundsson, Sky & Telescope vol.72, p.70 (1986), converted to radians
   
-  
   function refract(alt, press,temp)
     use SUFR_kinds, only: double
     use SUFR_constants, only: pio2
@@ -841,6 +840,312 @@ contains
   !*********************************************************************************************************************************
   
   
+  
+  !*********************************************************************************************************************************
+  !> \brief  Compute the atmospheric refraction of light for a given true altitude.
+  !!         This is a wrapper for aref(), which does the opposite (compute refraction for an observed zenithal angle).
+  !!         This is an expensive way to go about(!)
+  !!
+  !! \param  alt0  The true (theoretical, computed) altitude of the object in radians
+  !!
+  !! \param  h0    The height of the observer above sea level in metres
+  !! \param  lat0  The latitude of the observer in radians
+  !!
+  !! \param  t0    The temperature at the observer in degrees Celcius
+  !! \param  p0    The pressure at the observer in millibars
+  !! \param  rh    The relative humidity at the observer (%)
+  !!
+  !! \param  lam   The wavelength of the light at the observer in nanometres
+  !! \param  dTdh  The temperature lapse rate dT/dh in Kelvin/metre in the troposphere (only the absolute value is used)
+  !!
+  !! \param  eps   The desired precision in arcseconds
+  !!
+  !! \retval atmospheric_refraction  The refraction at the observer in radians
+  !!
+  !!
+  !! \todo  Adapt aref() to compute the integral the other way around for a direct method(?)
+  !!
+  
+  function atmospheric_refraction(alt0, h0,lat0, t0,p0,rh, lam,dTdh, eps)
+    use SUFR_kinds, only: double
+    use SUFR_constants, only: d2r,r2d, pio2
+    
+    implicit none
+    real(double), intent(in) :: alt0, h0,lat0, t0,p0, rh,lam, dTdh, eps
+    real(double) :: atmospheric_refraction, z0,zi,zio,dz, ph,lamm,t0K,rhfr
+    
+    atmospheric_refraction = 0.d0
+    if(alt0.lt.0.d0 .or. alt0.ge.pio2) return  ! No refraction if h<0 or h>= 90d
+    
+    ! Convert some variables/units:
+    z0   = 90.d0 - alt0*r2d  ! Altitude (rad) -> zenith angle (deg)
+    ph   = lat0*r2d          ! Latitude: rad -> deg
+    lamm = lam / 1000.d0     ! Wavelength: nanometre -> micrometre
+    t0K  = t0 + 273.15d0     ! Temperature: degC -> K
+    rhfr = rh/100.d0         ! Relative humidity: % -> fraction
+    
+    zi  = z0
+    zio = huge(zio)
+    dz  = huge(dz)
+    
+    do while(dz.gt.eps)
+       atmospheric_refraction = aref(zi, h0,ph, t0K,p0,rhfr, lamm,dTdh, eps)
+       zi = z0 - atmospheric_refraction
+       dz = abs(zi-zio)
+       zio = zi
+    end do
+    
+    atmospheric_refraction = atmospheric_refraction * d2r
+    
+  end function atmospheric_refraction
+  !*********************************************************************************************************************************
+  
+  
+  !*********************************************************************************************************************************
+  !> \brief  Compute the atmospheric refraction of light for a given observed zenith angle.
+  !!         The method is based on N.A.O Technical Notes 59 and 63 and a paper by Standish and Auer 'Astronomical Refraction: 
+  !!         Computational Method for all Zenith Angles'.
+  !!
+  !! \param  z0    The observed zenith distance of the object in degrees
+  !!
+  !! \param  h0    The height of the observer above sea level in metres
+  !! \param  ph    The latitude of the observer in degrees
+  !!
+  !! \param  t0    The temperature at the observer in Kelvin
+  !! \param  p0    The pressure at the observer in millibars
+  !! \param  rh    The relative humidity at the observer
+  !!
+  !! \param  lam   The wavelength of the light at the observer in micrometres
+  !! \param  dTdh  The temperature lapse rate dT/dh in Kelvin/metre in the troposphere, the absolute value is used
+  !!
+  !! \param  eps   The desired precision in arcseconds
+  !!
+  !! \retval aref  The refraction at the observer in degrees
+  !!
+  !! \see  Hohenkerk & Sinclair, HMNAO technical note 63 (1985)
+  !!
+  
+  function aref(z0, h0,ph, t0,p0,rh, lam,dTdh,eps)
+    use SUFR_kinds, only: double
+    implicit none
+    real(double), intent(in) :: z0, h0,ph, t0,p0, rh,lam, dTdh, eps
+    
+    real(double), parameter :: gcr=8314.36d0, md=28.966d0, mw=18.016d0, s=6378120.d0, gamma=18.36d0
+    real(double), parameter :: ht=11000.d0, hs=80000.d0, dgr=0.01745329252d0, z2=11.2684d-06
+    
+    integer :: i,in,is,istart, j,k
+    real(double) :: aref, n,n0,nt,nts,ns,a(10), dndr,dndr0,dndrs,dndrt,dndrts, f,f0, fb,fe,ff,fo,fs,ft,fts,gb, h
+    real(double) :: pw0,r,r0,refo,refp,reft,rg,rs,rt,  sk0,step,t,t0o,tg,tt,z,z1,zs,zt,zts
+    
+    ! Always defined:
+    z = 0.d0; reft=0.d0
+    
+    ! Set up parameters defined at the observer for the atmosphere:
+    gb = 9.784d0*(1.d0 - 0.0026d0*cos(2.d0*ph*dgr) - 0.00000028d0*h0)
+    z1 = (287.604d0 + 1.6288d0/(lam**2) + 0.0136d0/(lam**4)) * (273.15d0/1013.25d0)*1.d-6
+    
+    a(1) = abs(dTdh)
+    a(2) = (gb*md)/gcr
+    a(3) = a(2)/a(1)
+    a(4) = gamma
+    pw0  = rh*(t0/247.1d0)**a(4)
+    a(5) = pw0*(1.d0 - mw/md)*a(3)/(a(4)-a(3))
+    a(6) = p0 + a(5)
+    a(7) = z1*a(6)/t0
+    a(8) = ( z1*a(5) + z2*pw0)/t0
+    a(9) = (a(3) - 1.d0)*a(1)*a(7)/t0
+    a(10) = (a(4) - 1.d0)*a(1)*a(8)/t0
+    
+    ! At the Observer:
+    r0 = s + h0
+    call troposphere_model(r0,t0,a,r0,t0o,n0,dndr0)
+    sk0 = n0 * r0 * sin(z0*dgr)
+    
+    
+    f0 = refi(r0,n0,dndr0)
+    
+    ! At the Tropopause in the Troposphere:
+    rt = s + ht
+    call troposphere_model(r0,t0,a,rt,tt,nt,dndrt)
+    zt = asin(sk0/(rt*nt))/dgr
+    ft = refi(rt,nt,dndrt)
+    
+    ! At the Tropopause in the Stratosphere:
+    call stratosfeer_model(rt,tt,nt,a(2),rt,nts,dndrts)
+    zts = asin(sk0/(rt*nts))/dgr
+    fts = refi(rt,nts,dndrts)
+    
+    ! At the stratosphere limit:
+    rs = s + hs
+    call stratosfeer_model(rt,tt,nt,a(2),rs,ns,dndrs)
+    zs = asin(sk0/(rs*ns))/dgr
+    fs = refi(rs,ns,dndrs)
+    
+    ! Integrate the refraction integral in the troposhere and stratosphere
+    ! ie Ref = Ref troposhere + Ref stratopshere
+    
+    ! Initial step lengths etc:
+    refo = -huge(refo)
+    is = 16
+    do k = 1,2
+       istart = 0
+       fe = 0.d0
+       fo = 0.d0
+       
+       if(k.eq.1) then
+          h = (zt - z0)/dble(is)
+          fb = f0
+          ff = ft
+       else if(k.eq.2) then
+          h = (zs - zts )/dble(is)
+          fb = fts
+          ff = fs
+       end if
+       
+       in = is - 1
+       is = is/2
+       step = h
+       
+200    continue
+       
+       do i = 1,in
+          if(i.eq.1.and.k.eq.1) then
+             z = z0 + h
+             r = r0
+          else if(i.eq.1.and.k.eq.2) then
+             z = zts + h
+             r = rt
+          else
+             z = z + step
+          end if
+          
+          ! Given the Zenith distance (Z) find R:
+          rg = r
+          do j = 1,4
+             if(k.eq.1) then
+                call troposphere_model(r0,t0,a,rg,tg,n,dndr)
+             else if(k.eq.2) then
+                call stratosfeer_model(rt,tt,nt,a(2),rg,n,dndr)
+             end if
+             rg = rg - ( (rg*n - sk0/sin(z*dgr))/(n + rg*dndr) )
+          end do
+          r = rg
+          
+          ! Find Refractive index and Integrand at R:
+          if(k.eq.1) then
+             call troposphere_model(r0,t0,a,r,t,n,dndr)
+          else if(k.eq.2) then
+             call stratosfeer_model(rt,tt,nt,a(2),r,n,dndr)
+          end if
+          
+          f = refi(r,n,dndr)
+          
+          if(istart.eq.0.and.mod(i,2).eq.0) then
+             fe = fe + f
+          else
+             fo = fo + f
+          end if
+       end do
+       
+       ! Evaluate the integrand using Simpson's Rule:
+       refp = h*(fb + 4.d0*fo + 2.d0*fe + ff)/3.d0
+       
+       if(abs(refp-refo).gt.0.5d0*eps/3600.d0) then
+          is = 2*is
+          in = is
+          step = h
+          h = h/2.d0
+          fe = fe + fo
+          fo = 0.d0
+          refo = refp
+          if(istart.eq.0) istart = 1
+          goto 200
+       end if
+       if(k.eq.1) reft = refp
+    end do
+    
+    aref = reft + refp
+    
+  end function aref
+  !*********************************************************************************************************************************
+  
+  
+  !*********************************************************************************************************************************
+  !> \brief  The refraction integrand
+  !!
+  !! \param r      The current distance from the centre of the Earth in metres
+  !! \param n      The refractive index at R
+  !! \param dndr   The rate the refractive index is changing at R
+  !!
+  !! \retval refi  The integrand of the refraction function
+  
+  function refi(r,n,dndr)
+    use SUFR_kinds, only: double
+    implicit none
+    real(double), intent(in) :: r,n,dndr
+    real(double) :: refi
+    
+    refi = r*dndr/(n + r*dndr)
+  end function refi
+  !*********************************************************************************************************************************
+  
+  
+  !*********************************************************************************************************************************
+  !> \brief  Atmospheric model for the troposphere
+  !!
+  !! \param r0     The height of the observer from the centre of the Earth
+  !! \param t0     The temperature at the observer in Kelvin
+  !! \param a      Constants defined at the observer
+  !! \param r      The current distance from the centre of the Earth in metres
+  !!
+  !! \retval t     The temperature at R in Kelvin
+  !! \retval n     The refractive index at R
+  !! \retval dndr  The rate the refractive index is changing at R
+  
+  subroutine troposphere_model(r0,t0, a,r, t,n,dndr)
+    use SUFR_kinds, only: double
+    implicit none
+    real(double), intent(in) :: r0,t0, a(10),r
+    real(double), intent(out) :: t,n,dndr
+    real(double) :: tt0, tt01,tt02
+    
+    t    = t0 - a(1)*(r-r0)
+    tt0  = t/t0
+    tt01 = tt0**(a(3)-2.d0)
+    tt02 = tt0**(a(4)-2.d0)
+    
+    n    = 1.d0 + ( a(7)*tt01 - a(8)*tt02 )*tt0
+    dndr = -a(9)*tt01 + a(10)*tt02
+    
+  end subroutine troposphere_model
+  !*********************************************************************************************************************************
+  
+  
+  !*********************************************************************************************************************************
+  !> \brief Atmospheric model for the stratosphere
+  !!
+  !! \param  rt    The height of the tropopause from the centre of the Earth in metres
+  !! \param  tt    The temperature at the tropopause in Kelvin
+  !! \param  nt    The refractive index at the tropopause
+  !! \param  a     Constant of the atmospheric model = G*MD/R
+  !! \param  r     The current distance from the centre of the Earth in metres
+  !!
+  !! \retval n     The refractive index at R
+  !! \retval dndr  The rate the refractive index is changing at R
+  
+  subroutine stratosfeer_model(rt,tt,nt, a,r, n,dndr)
+    use SUFR_kinds, only: double
+    implicit none
+    real(double), intent(in) :: rt,tt,nt, a,r
+    real(double), intent(out) :: n,dndr
+    real(double) :: b
+    
+    b    = a/tt
+    n    = 1.d0 + (nt - 1.d0)*exp(-b*(r-rt))
+    dndr = -b*(nt-1.d0)*exp(-b*(r-rt))
+    
+  end subroutine stratosfeer_model
+  !*********************************************************************************************************************************
   
 end module TheSky_coordinates
 !***********************************************************************************************************************************
