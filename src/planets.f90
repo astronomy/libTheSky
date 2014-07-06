@@ -48,7 +48,7 @@ contains
     use TheSky_vsop, only: vsop_lbr
     use TheSky_local, only: lon0, lat0, deltat
     use TheSky_coordinates, only: ecl_2_eq, eq2horiz, hc_spher_2_gc_rect, geoc2topoc_ecl, rect_2_spher
-    use TheSky_coordinates, only: precess_ecl, fk5, aberration_ecl
+    use TheSky_coordinates, only: precess_ecl, fk5, aberration_ecl, refract
     use TheSky_nutation, only: nutation, nutation2000
     use TheSky_sun, only: sunmagn
     use TheSky_moon, only: moon_lbr, moonmagn
@@ -330,6 +330,7 @@ contains
     planpos(28) = rev(tophh)        ! Hour angle
     planpos(29) = rev(topaz)
     planpos(30) = topalt
+    planpos(31) = topalt + refract(topalt)  ! Topocentric altitude, corrected for atmospheric refraction
     
     planpos(32) = topdiam
     

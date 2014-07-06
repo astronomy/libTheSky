@@ -828,7 +828,7 @@ contains
     real(double), intent(in), optional :: press,temp
     real(double) :: refract
     
-    if(alt.lt.0.d0 .or. alt.ge.pio2) then  ! alt < 0  or  >= 90 deg; refraction is meaningless
+    if(abs(alt).ge.pio2) then  ! |alt| >= 90 deg; refraction is meaningless
        refract = 0.d0
     else
        refract = 2.97d-4/tan(alt + 3.14d-3/(alt + 8.92d-2))
@@ -875,7 +875,7 @@ contains
     real(double) :: atmospheric_refraction, z0,zi,zio,dz, ph,lamm,t0K,rhfr
     
     atmospheric_refraction = 0.d0
-    if(alt0.lt.0.d0 .or. alt0.ge.pio2) return  ! No refraction if h<0 or h>= 90d
+    if(abs(alt0).ge.pio2) return  ! No refraction if |alt| >= 90d
     
     ! Convert some variables/units:
     z0   = 90.d0 - alt0*r2d  ! Altitude (rad) -> zenith angle (deg)
