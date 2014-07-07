@@ -620,10 +620,21 @@ contains
     implicit none
     real(double), intent(in) :: ra,dec,agst
     real(double), intent(out) :: hh,az,alt
+    real(double) :: sinhh,coshh, sinlat0,coslat0, sindec,cosdec,tandec
     
     hh  = rev( agst + lon0 - ra )                                 ! Local Hour Angle (agst since ra is also corrected for nutation?)
-    az  = rev(  atan2( sin(hh),    cos(hh)  * sin(lat0) - tan(dec) * cos(lat0) ))   ! Azimuth
-    alt = rev2( asin(  sin(lat0) * sin(dec) + cos(lat0) * cos(dec) * cos(hh)   ))   ! Altitude
+    
+    ! Some preparation, saves ~29%:
+    sinhh   = sin(hh)
+    coshh   = cos(hh)
+    sinlat0 = sin(lat0)
+    coslat0 = sqrt(1.d0-sinlat0**2)   ! Cosine of a latitude is always positive
+    sindec  = sin(dec)
+    cosdec  = sqrt(1.d0-sindec**2)    ! Cosine of a declination is always positive
+    tandec  = sindec/cosdec
+    
+    az  = rev( atan2( sinhh,    coshh  * sinlat0 - tandec * coslat0 ))  ! Azimuth
+    alt = rev2( asin( sinlat0 * sindec + coslat0 * cosdec * coshh ))    ! Altitude
     
   end subroutine eq2horiz
   !*********************************************************************************************************************************
