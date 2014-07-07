@@ -895,7 +895,7 @@ contains
     use TheSky_planetdata, only: planpos
     use TheSky_moon, only: moonpos_la
     use TheSky_sun, only: sunpos_la
-    use TheSky_coordinates, only: geoc2topoc_ecl, geoc2topoc_eq, eq2horiz
+    use TheSky_coordinates, only: geoc2topoc_ecl, geoc2topoc_eq, eq2horiz, refract
     
     implicit none
     real(double), intent(in) :: jd
@@ -933,7 +933,7 @@ contains
        do ind = 1,12
           planpos(ind+20) = planpos(ind)
        end do
-       
+       planpos(31) = planpos(30)  ! Altitude, "corrected" for refraction
        
        ! Simple correction for horizontal parallax, Meeus p.281, assuming rho=1:
        if(lcalc.eq.5) planpos(30) = planpos(10) - asin(sin(planpos(17))*cos(planpos(10)))
@@ -950,6 +950,8 @@ contains
           call eq2horiz(planpos(25),planpos(26),planpos(45), planpos(28),planpos(29),planpos(30))  ! topo ra,dec,agst, -> hh,az,alt
           
        end if
+       
+       if(lcalc.ge.5) planpos(31) = planpos(30) + refract(planpos(30))  ! Topocentric altitude, corrected for atmospheric refraction
     end if
     
   end subroutine planet_position_la
