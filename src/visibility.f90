@@ -949,7 +949,54 @@ contains
   end function aperture
   !*********************************************************************************************************************************
   
-
+  
+  
+  !*********************************************************************************************************************************
+  !> \brief  Convert naked-eye visual limiting magnitude (V) to sky surface brightness in (B) magnitudes per square arcsecond
+  !!
+  !! \param  Mlim                Naked-eye visual limiting magnitude (V)
+  !! \retval Mlim2skybrightness  Sky surface brightness in (B) magnitudes per square arcsecond
+  !!
+  !! \see   http://adsabs.harvard.edu/abs/1990PASP..102..212S
+  !! \note  Sky surface brightness is sometimes referred to as sqm (which is in fact a device to measure it)
+  
+  function mlim2skybrightness(Mlim)
+    use SUFR_kinds, only: double
+    
+    implicit none
+    real(double), intent(in) :: Mlim
+    real(double) :: Mlim2skybrightness
+    
+    if(Mlim.lt.7.93d0) then
+       Mlim2skybrightness = 21.58d0 - 5*log10(10.d0**(1.586d0-Mlim/5.d0) - 1.d0)
+    else
+       Mlim2skybrightness = 99.99d0
+    end if
+        
+  end function mlim2skybrightness
+  !*********************************************************************************************************************************
+  
+  
+  !*********************************************************************************************************************************
+  !> \brief  Convert sky surface brightness in (B) magnitudes per square arcsecond to naked-eye visual limiting magnitude (V)
+  !!
+  !! \param  Mlim                Naked-eye visual limiting magnitude (V)
+  !! \retval Mlim2skybrightness  Sky surface brightness in (B) magnitudes per square arcsecond
+  !!
+  !! \see   http://adsabs.harvard.edu/abs/1990PASP..102..212S
+  !! \note  Sky surface brightness is sometimes referred to as sqm (which is in fact a device to measure it)
+  
+  function skybrightness2mlim(skyBright)
+    use SUFR_kinds, only: double
+    
+    implicit none
+    real(double), intent(in) :: skyBright
+    real(double) :: skybrightness2mlim
+    
+    skybrightness2mlim = 7.93d0 - 5*log10(10.d0**(4.316d0-skyBright/5.d0) + 1.d0)
+    
+  end function skybrightness2mlim
+  !*********************************************************************************************************************************
   
 end module TheSky_visibility
 !***********************************************************************************************************************************
