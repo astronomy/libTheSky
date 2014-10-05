@@ -832,7 +832,7 @@ contains
   
   function refract(alt, press,temp)
     use SUFR_kinds, only: double
-    use SUFR_constants, only: pio2
+    use SUFR_constants, only: pio2, d2r
     
     implicit none
     real(double), intent(in) :: alt
@@ -846,6 +846,9 @@ contains
        if(present(press)) refract = refract * press/1010.d0              ! Correct for pressure
        if(present(temp))  refract = refract * 283.d0/(273.d0 + temp)     ! Correct for temperature
     end if
+    
+    if(alt+refract.lt.-0.3d0*d2r) refract = 0.d0  ! No refraction if the object is more than 0.3 deg below the horizon 
+    !                                               (maximum apparent Moon radius ~ 0.29deg)
     
   end function refract
   !*********************************************************************************************************************************
