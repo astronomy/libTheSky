@@ -659,10 +659,19 @@ contains
     implicit none
     real(double), intent(in) :: az,alt,agst
     real(double), intent(out) :: ra,dec,hh
+    real(double) :: sinlat0,coslat0, cosaz,sinalt,cosalt,tanalt
     
-    hh  = rev(  atan2( sin(az),    cos(az)  * sin(lat0) + tan(alt) * cos(lat0) ))   ! Local Hour Angle
-    dec = rev2( asin(  sin(lat0) * sin(alt) - cos(lat0) * cos(alt) * cos(az)   ))   ! Declination
-    ra  = rev( agst + lon0 - hh )                                                   ! Right ascension
+    ! Some preparation to save time:
+    sinlat0 = sin(lat0)
+    coslat0 = sqrt(1.d0-sinlat0**2)  ! Cosine of a latitude is always positive
+    cosaz   = cos(az)
+    sinalt  = sin(alt)
+    cosalt  = sqrt(1.d0-sinalt**2)   ! Cosine of a altitude is always positive
+    tanalt  = sinalt/cosalt
+    
+    hh  = rev(  atan2( sin(az),  cosaz  * sinlat0 + tanalt * coslat0 ))   ! Local Hour Angle
+    dec = rev2( asin(  sinlat0 * sinalt - coslat0 * cosalt * cosaz   ))   ! Declination
+    ra  = rev( agst + lon0 - hh )                                         ! Right ascension
     
   end subroutine horiz2eq
   !*********************************************************************************************************************************
