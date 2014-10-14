@@ -49,7 +49,7 @@ contains
     implicit none
     real(double), intent(in) :: jd
     integer, intent(in) :: calc
-    real(double) :: jde,deltat,t,t2,l0,m,e,c,odot,nu,r,omg,aber,lam,b
+    real(double) :: jde,deltat,t,t2, l0,m,e,c,odot,nu,omg,r, aber, lam,b
     real(double) :: ra,dec,lm,eps,eps0,deps,gmst,agst,lst,dpsi,az,alt,hh
     
     deltat = calc_deltat(jd)
@@ -72,12 +72,12 @@ contains
     ! Nutation, aberration:
     !omg = 2.18236d0 - 33.75704138d0 * t  ! Meeus, p.164
     !dpsi = -8.34267d-5 * sin(omg)        ! Meeus, p.164
-    omg = 2.1824390725d0 - 33.7570464271d0 * t  + 3.622256d-5 * t2 + 3.7337958d-8 * t2*t - 2.879321d-10 * t2*t2  ! Meeus, Eq.47.7
+    omg  = 2.1824390725d0 - 33.7570464271d0 * t  + 3.622256d-5 * t2 + 3.7337958d-8 * t2*t - 2.879321d-10 * t2*t2  ! Meeus, Eq.47.7
     lm   = 3.8103417d0 + 8399.709113d0*t      ! Mean long. Moon, Meeus, p.144
     dpsi = -8.338795d-5*sin(omg) - 6.39954d-6*sin(2*l0) - 1.115d-6*sin(2*lm) + 1.018d-6*sin(2*omg)  ! Nutation in lon, Meeus, p.144
-    aber = -9.93087d-5/r
-    lam = rev(odot + aber + dpsi)  ! Apparent geocentric longitude, referred to the true equinox of date
-    b   = 0.d0
+    aber = -9.93087d-5/r            ! Aberration, Meeus Eq.25.10
+    lam  = rev(odot + aber + dpsi)  ! Apparent geocentric longitude, referred to the true equinox of date
+    b    = 0.d0
     
     
     planpos(1)  = lam  ! Geocentric longitude

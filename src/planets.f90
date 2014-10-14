@@ -330,7 +330,7 @@ contains
     planpos(28) = rev(tophh)        ! Hour angle
     planpos(29) = rev(topaz)
     planpos(30) = topalt
-    planpos(31) = topalt + refract(topalt)  ! Topocentric altitude, corrected for atmospheric refraction
+    planpos(31) = topalt + refract(topalt)  ! Topocentric altitude, corrected for (cheap) atmospheric refraction
     
     planpos(32) = topdiam
     
@@ -935,6 +935,7 @@ contains
        end do
        planpos(31) = planpos(30)  ! Altitude, "corrected" for refraction
        
+       
        ! Simple correction for horizontal parallax, Meeus p.281, assuming rho=1:
        if(lcalc.eq.5) planpos(30) = planpos(10) - asin(sin(planpos(17))*cos(planpos(10)))
        
@@ -948,7 +949,6 @@ contains
           call geoc2topoc_eq(planpos(5),planpos(6), planpos(4),planpos(8), planpos(25),planpos(26))  ! ra,dec, del,hh, topo ra,dec
           
           call eq2horiz(planpos(25),planpos(26),planpos(45), planpos(28),planpos(29),planpos(30))  ! topo ra,dec,agst, -> hh,az,alt
-          
        end if
        
        if(lcalc.ge.5) planpos(31) = planpos(30) + refract(planpos(30))  ! Topocentric altitude, corrected for atmospheric refraction

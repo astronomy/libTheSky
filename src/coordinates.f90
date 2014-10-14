@@ -829,7 +829,8 @@ contains
   
   
   !*********************************************************************************************************************************
-  !> \brief  Compute the atmospheric refraction for a given altitude.  You should add the result to the uncorrected altitude.
+  !> \brief  Compute the atmospheric refraction for a given true altitude.  You should add the result to the uncorrected altitude
+  !!         in order to obtain the observed altitude.
   !!
   !! \param   alt      Altitude (rad)
   !! \param   press    Air pressure (hPa; optional)
