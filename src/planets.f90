@@ -676,9 +676,9 @@ contains
     
     ! Meeus, step 1, p.293:
     d      = jde - 2433282.5d0  ! Since 1950 (!)
-    t1     = d/36525.d0  ! In julian centuries
+    t1     = d/36525.d0  ! Time since 1950 (!) in Julian centuries
     
-    t2     = (jde - jd1900)/36525.d0           ! Time since J1900.0, in Julian centuries
+    t2     = (jde - jd1900)/36525.d0           ! Time since J1900.0 (!), in Julian centuries
     in = (3.120262d0 + 0.0006d0 * t2) * d2r    ! Inclination of Jupiter's rotation axis to the orbital plane (Meeus, p.311)
     
     t3 = jde - 2443000.5d0 - planpos(7)        ! Days since 1976-08-10 (Meeus, p.305), minus light-travel time
