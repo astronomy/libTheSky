@@ -240,7 +240,7 @@ contains
     end if
     
     ! Convert heliocentric to topocentric coordinates:
-    call geoc2topoc_ecl(gcl,gcb,delta,diam/2.d0,eps,lst, topl,topb,topdiam)             ! Geocentric to topocentric: l, b, diam
+    call geoc2topoc_ecl(gcl,gcb, delta,diam/2.d0, eps,lst,  topl,topb, topdiam)         ! Geocentric to topocentric: l, b, diam
     if(pl.eq.-1) topdiam = res2                                                         ! Earth penumbra radius at Moon distance
     topdiam = 2*topdiam
     if(pl.ge.0.and.pl.lt.10) topdelta = pland(pl)/tan(topdiam)/au
@@ -937,7 +937,7 @@ contains
        
        
        ! Simple correction for horizontal parallax, Meeus p.281, assuming rho=1:
-       if(lcalc.eq.5) planpos(30) = planpos(10) - asin(sin(planpos(17))*cos(planpos(10)))
+       if(lcalc.eq.5) planpos(30) = planpos(10) - asin(sin(planpos(17))*cos(planpos(10)))  ! alt' = alt - Hp*cos(alt)
        
        ! More precise conversion to topocentric coordinates:
        if(lcalc.ge.6) then  ! This takes 15% more CPU time for the Moon (full accuracy; nt=60) and 110% more for the Sun!

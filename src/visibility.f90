@@ -544,7 +544,7 @@ contains
   
   function limmag_full(year,month, obselev,obslat, sunAlt,sunElon, moonPhase,moonAlt,moonElon, objalt, humid,temp,snrat)
     use SUFR_kinds, only: double
-    use SUFR_constants, only: d2r,r2d
+    use SUFR_constants, only: d2r,r2d, earthr
     
     implicit none
     integer, intent(in) :: year, month
@@ -553,7 +553,7 @@ contains
     
     integer :: i,m,y
     real(double) :: limmag_full,  b(5),k(5),dm(5),wa(5),mo(5),oz(5),wt(5),bo(5),cm(5),ms(5),  am,zm,rm,zs,rs,rh,te,la,al,sn,z
-    real(double) :: lt,ra,sl,zz,xg,xa,xo,kr,ka,ko,kw,  x,xm,xs,bn,mm,c3,fm,bm,hs,bt,c4,fs,bd,bl,c1,c2,th
+    real(double) :: lt,ra,sl,zz,xg,xa,xo,kr,ka,ko,kw,  x,xm,xs,bn,mm,c3,fm,bm,hs,bt,c4,fs,bd,bl,c1,c2,th, rekm
     
     
     b = 0.d0;  k = 0.d0;  dm = 0.d0
@@ -596,9 +596,10 @@ contains
     
     ! Airmass for each component:
     zz = z*d2r
+    rekm = earthr*1.d-5  ! Earth's radius cm -> km
     xg = 1.d0/(cos(zz) + 0.0286d0*exp(-10.5d0*cos(zz)))           ! Gas
     xa = 1.d0/(cos(zz) + 0.0123d0*exp(-24.5d0*cos(zz)))           ! Aerosol
-    xo = 1.d0/sqrt(1.d0 - (sin(zz)/(1.d0 + (20.d0/6378.d0)))**2)  ! Ozone
+    xo = 1.d0/sqrt(1.d0 - (sin(zz)/(1.d0 + (20.d0/rekm)))**2)     ! Ozone
     
     ! UBVRI extinction for each component:
     do i=1,5

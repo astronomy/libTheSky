@@ -756,33 +756,35 @@ contains
   !!
   !! \see  Meeus, Astronomical Algorithms, 1998, Ch. 11 and 40
   
-  subroutine geoc2topoc_ecl(gcl,gcb,gcr,gcs,eps,lst, tcl,tcb,tcs)
+  subroutine geoc2topoc_ecl(gcl,gcb, gcr,gcs, eps,lst,  tcl,tcb, tcs)
     use SUFR_kinds, only: double
+    use SUFR_constants, only: earthr
     use SUFR_angles, only: rev
     use TheSky_local, only: lat0, height
     
     implicit none
     real(double), intent(in) :: gcl,gcb,gcr,gcs,eps,lst
     real(double), intent(out) :: tcl,tcb,tcs
-    real(double) :: ba,re,u,rs,rc,shp,n
+    real(double) :: ba,re,u,rs,rc,sinHp,n
     
     ! Meeus, Ch.11, p.82:
-    ba = 0.99664710d0   ! b/a = 1-f
-    re = 6378140.d0     ! Earth rad in m
+    ba = 0.996647189335d0  ! b/a = 1-f: flattening of the Earth - WGS84 ellipsoid 
+    re = earthr*1.d-2      ! Equatorial radius of the Earth in metres
+    !                        (http://earth-info.nga.mil/GandG/publications/tr8350.2/wgs84fin.pdf)
     
     u  = atan(ba*tan(lat0))
     rs = ba*sin(u) + height/re*sin(lat0)
     rc = cos(u)    + height/re*cos(lat0)
     
     
-    shp = sin(4.26345d-5)/gcr  ! Sine of the horizontal parallax, Meeus, Eq. 40.1
+    sinHp = sin(4.26345d-5)/gcr  ! Sine of the horizontal parallax, Meeus, Eq. 40.1
     
     ! Meeus, Ch.40, p.282:
-    n  = cos(gcl)*cos(gcb) - rc*shp*cos(lst)
+    n  = cos(gcl)*cos(gcb) - rc*sinHp*cos(lst)
     
-    tcl = rev( atan2( sin(gcl)*cos(gcb) - shp*(rs*sin(eps) + rc*cos(eps)*sin(lst)) , n ) )  ! Topocentric longitude
-    tcb = atan((cos(tcl)*(sin(gcb) - shp*(rs*cos(eps) - rc*sin(eps)*sin(lst))))/n)          ! Topocentric latitude
-    tcs = asin(cos(tcl)*cos(tcb)*sin(gcs)/n)                                                ! Topocentric semi-diameter
+    tcl = rev( atan2( sin(gcl)*cos(gcb) - sinHp*(rs*sin(eps) + rc*cos(eps)*sin(lst)) , n ) )  ! Topocentric longitude
+    tcb = atan((cos(tcl)*(sin(gcb) - sinHp*(rs*cos(eps) - rc*sin(eps)*sin(lst))))/n)          ! Topocentric latitude
+    tcs = asin(cos(tcl)*cos(tcb)*sin(gcs)/n)                                                  ! Topocentric semi-diameter
     
   end subroutine geoc2topoc_ecl
   !*********************************************************************************************************************************
@@ -803,26 +805,28 @@ contains
   
   subroutine geoc2topoc_eq(gcra,gcd,gcr,gch, tcra,tcd)
     use SUFR_kinds, only: double
+    use SUFR_constants, only: earthr
     use TheSky_local, only: lat0, height
     
     implicit none
     real(double), intent(in) :: gcra,gcd,gcr,gch
     real(double), intent(out) :: tcra,tcd
-    real(double) :: ba,re,u,rs,rc,shp,dra
+    real(double) :: ba,re,u,rs,rc,sinHp,dra
     
     ! Meeus, Ch.11, p.82:
-    ba = 0.99664710d0   ! 1-f
-    re = 6378140.d0     ! Earth radius in m
+    ba = 0.996647189335d0  ! b/a = 1-f: flattening of the Earth - WGS84 ellipsoid 
+    re = earthr*1.d-2      ! Equatorial radius of the Earth in metres
+    !                        (http://earth-info.nga.mil/GandG/publications/tr8350.2/wgs84fin.pdf)
     
     u  = atan(ba*tan(lat0))
     rs = ba*sin(u) + height/re*sin(lat0)
     rc = cos(u) + height/re*cos(lat0)
     
     ! Meeus Ch.40:
-    shp   = sin(4.26345d-5)/gcr                                            ! Sine of the horizontal parallax, Meeus, Eq. 40.1
-    dra  = atan2( -rc*shp*sin(gch) , cos(gcd)-rc*shp*cos(gch) )            ! Meeus, Eq. 40.2
-    tcra = gcra + dra                                                      ! Topocentric right ascension
-    tcd  = atan2( (sin(gcd)-rs*shp)*cos(dra) , cos(gcd)-rc*shp*cos(gch) )  ! Topocentric declination - Meeus, Eq. 40.3
+    sinHp   = sin(4.26345d-5)/gcr                                              ! Sine of the horizontal parallax, Meeus, Eq. 40.1
+    dra  = atan2( -rc*sinHp*sin(gch) , cos(gcd)-rc*sinHp*cos(gch) )            ! Meeus, Eq. 40.2
+    tcra = gcra + dra                                                          ! Topocentric right ascension
+    tcd  = atan2( (sin(gcd)-rs*sinHp)*cos(dra) , cos(gcd)-rc*sinHp*cos(gch) )  ! Topocentric declination - Meeus, Eq. 40.3
     
   end subroutine geoc2topoc_eq
   !*********************************************************************************************************************************
@@ -852,7 +856,7 @@ contains
     if(abs(alt).ge.pio2) then  ! |alt| >= 90 deg; refraction is meaningless
        refract = 0.d0
     else
-       refract = 2.97d-4/tan(alt + 3.14d-3/(alt + 8.92d-2))
+       refract = 2.9670597d-4/tan(alt + 3.137559d-3/(alt + 8.91863d-2))  ! Overstated accuracy in translation from degrees
        if(present(press)) refract = refract * press/1010.d0              ! Correct for pressure
        if(present(temp))  refract = refract * 283.d0/(273.d0 + temp)     ! Correct for temperature
     end if
@@ -951,15 +955,17 @@ contains
   
   function aref(z0, h0,ph, t0,p0,rh, lam,dTdh,eps)
     use SUFR_kinds, only: double
+    use SUFR_constants, only: earthr
+    
     implicit none
     real(double), intent(in) :: z0, h0,ph, t0,p0, rh,lam, dTdh, eps
     
-    real(double), parameter :: gcr=8314.36d0, md=28.966d0, mw=18.016d0, s=6378120.d0, gamma=18.36d0
+    real(double), parameter :: gcr=8314.36d0, md=28.966d0, mw=18.016d0, gamma=18.36d0
     real(double), parameter :: ht=11000.d0, hs=80000.d0, dgr=0.01745329252d0, z2=11.2684d-06
     
     integer :: i,in,is,istart, j,k
     real(double) :: aref, n,n0,nt,nts,ns,a(10), dndr,dndr0,dndrs,dndrt,dndrts, f,f0, fb,fe,ff,fo,fs,ft,fts,gb, h
-    real(double) :: pw0,r,r0,refo,refp,reft,rg,rs,rt,  sk0,step,t,t0o,tg,tt,z,z1,zs,zt,zts
+    real(double) :: pw0,r,r0,refo,refp,reft,rg,rs,rt,  sk0,step,t,t0o,tg,tt,z,z1,zs,zt,zts, earthrm
     
     ! Always defined:
     z = 0.d0; reft=0.d0
@@ -981,7 +987,8 @@ contains
     a(10) = (a(4) - 1.d0)*a(1)*a(8)/t0
     
     ! At the Observer:
-    r0 = s + h0
+    earthrm = earthr*1.d-2  ! cm -> m
+    r0 = earthrm + h0
     call troposphere_model(r0,t0,a,r0,t0o,n0,dndr0)
     sk0 = n0 * r0 * sin(z0*dgr)
     
@@ -989,7 +996,7 @@ contains
     f0 = refi(r0,n0,dndr0)
     
     ! At the Tropopause in the Troposphere:
-    rt = s + ht
+    rt = earthrm + ht
     call troposphere_model(r0,t0,a,rt,tt,nt,dndrt)
     zt = asin(sk0/(rt*nt))/dgr
     ft = refi(rt,nt,dndrt)
@@ -1000,7 +1007,7 @@ contains
     fts = refi(rt,nts,dndrts)
     
     ! At the stratosphere limit:
-    rs = s + hs
+    rs = earthrm + hs
     call stratosfeer_model(rt,tt,nt,a(2),rs,ns,dndrs)
     zs = asin(sk0/(rs*ns))/dgr
     fs = refi(rs,ns,dndrs)
