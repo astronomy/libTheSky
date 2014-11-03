@@ -167,7 +167,7 @@ contains
     tjc  = djd/36525.d0             ! Julian Centuries after 2000.0 UT
     tjc2 = tjc**2
     
-    gmst = 4.894961212735793d0 + 6.300388098984957d0*djd + 6.77070812713916d-6*tjc2 - 4.50872966158d-10*tjc2*tjc  ! Eq. 11.4
+    gmst = 4.89496121273579229d0 + 6.3003880989849575d0*dJD + 6.77070812713916d-6*tjc2 - 4.5087296615715d-10*tjc2*tjc  ! Eq. 11.4
     
     calc_gmst = rev(gmst)          ! If corrected for equation of the equinoxes: agst = rev(gmst + dpsi*cos(eps))
     

@@ -49,31 +49,32 @@ contains
     implicit none
     real(double), intent(in) :: jd
     integer, intent(in) :: calc
-    real(double) :: jde,deltat,t,t2, l0,m,e,c,odot,nu,omg,r, aber, lam,b
+    real(double) :: jde,deltat,tjc,tjc2, l0,m,e,c,odot,nu,omg,r, aber, lam,b
     real(double) :: ra,dec,lm,eps,eps0,deps,gmst,agst,lst,dpsi,az,alt,hh
     
     deltat = calc_deltat(jd)
-    jde = jd + deltat/86400.d0
-    t   = (jde-jd2000)/36525.d0    ! Julian Centuries after 2000.0 in dynamical time, the T in Meeus, p.163, Eq. 25.1
-    t2  = t*t
+    jde    = jd + deltat/86400.d0
+    !tjc    = (jde-jd2000)/36525.d0    ! Julian Centuries after 2000.0 in dynamical time, the T in Meeus, p.163, Eq. 25.1
+    tjc    = (jd-jd2000)/36525.d0     ! Julian Centuries after 2000.0;  JD compares better than JD (2015-2114)
+    tjc2   = tjc*tjc                  ! T^2                             In fact JD - DeltaT compares even better(!)
     
-    l0 = 4.895063168d0 + 628.331966786d0 *t + 5.291838d-6    *t2  ! Mean longitude, Eq. 25.2
-    m  = 6.240060141d0 + 628.301955152d0 *t - 2.682571d-6    *t2  ! Mean anomaly, Eq. 25.3
-    !m  = 6.24003588115d0 + 628.301956024d0*t - 2.79776d-6*t2  - 5.8177641733d-8*t2*t  ! Mean anomaly, Meeus p.144
-    !m  = 6.24006012726d0 + 628.301955167d0*t - 2.680826d-6*t2  - 7.1267d-10*t2*t      ! Mean anomaly, Meeus Eq.47.3
-    e  = 0.016708634d0 - 0.000042037d0   *t - 0.0000001267d0 *t2  ! Eccentricity of the Earth's orbit, Eq. 25.4
+    l0 = 4.895063168d0 + 628.331966786d0 *tjc + 5.291838d-6    *tjc2  ! Mean longitude, Eq. 25.2
+    m  = 6.240060141d0 + 628.301955152d0 *tjc - 2.682571d-6    *tjc2  ! Mean anomaly, Eq. 25.3
+    !m  = 6.24003588115d0 + 628.301956024d0*tjc - 2.79776d-6*tjc2  - 5.8177641733d-8*tjc2*tjc  ! Mean anomaly, Meeus p.144
+    !m  = 6.24006012726d0 + 628.301955167d0*tjc - 2.680826d-6*tjc2  - 7.1267d-10*tjc2*tjc      ! Mean anomaly, Meeus Eq.47.3
+    e  = 0.016708634d0 - 0.000042037d0   *tjc - 0.0000001267d0 *tjc2  ! Eccentricity of the Earth's orbit, Eq. 25.4
     
     ! Sun's equation of the centre:
-    c = (3.34161088d-2 - 8.40725d-5*t - 2.443d-7*t2)*sin(m)  +  (3.489437d-4 - 1.76278d-6*t)*sin(2*m) + 5.044d-6*sin(3*m)
+    c = (3.34161088d-2 - 8.40725d-5*tjc - 2.443d-7*tjc2)*sin(m)  +  (3.489437d-4 - 1.76278d-6*tjc)*sin(2*m) + 5.044d-6*sin(3*m)
     odot = rev(l0 + c)  ! True longitude
     nu = rev(m + c)     ! True anomaly
     r = 1.000001018d0*(1.d0-e*e)/(1.d0 + e*cos(nu))  ! Heliocentric distance of the Earth / geocentric dist. of the Sun, Eq. 25.5
     
     ! Nutation, aberration:
-    !omg = 2.18236d0 - 33.75704138d0 * t  ! Meeus, p.164
+    !omg = 2.18236d0 - 33.75704138d0 *tjc  ! Meeus, p.164
     !dpsi = -8.34267d-5 * sin(omg)        ! Meeus, p.164
-    omg  = 2.1824390725d0 - 33.7570464271d0 * t  + 3.622256d-5 * t2 + 3.7337958d-8 * t2*t - 2.879321d-10 * t2*t2  ! Meeus, Eq.47.7
-    lm   = 3.8103417d0 + 8399.709113d0*t      ! Mean long. Moon, Meeus, p.144
+    omg  = 2.1824390725d0 - 33.7570464271d0 *tjc  + 3.622256d-5 *tjc2 + 3.7337958d-8 *tjc2*tjc - 2.879321d-10 *tjc2*tjc2  ! Eq.47.7
+    lm   = 3.8103417d0 + 8399.709113d0*tjc      ! Mean long. Moon, Meeus, p.144
     dpsi = -8.338795d-5*sin(omg) - 6.39954d-6*sin(2*l0) - 1.115d-6*sin(2*lm) + 1.018d-6*sin(2*omg)  ! Nutation in lon, Meeus, p.144
     aber = -9.93087d-5/r            ! Aberration, Meeus Eq.25.10
     lam  = rev(odot + aber + dpsi)  ! Apparent geocentric longitude, referred to the true equinox of date
@@ -96,14 +97,14 @@ contains
     
     planpos(40) = jde                     ! JD
     planpos(41:43) = planpos(1:3)         ! Geocentric, "true" L,B,R of the Sun
-    planpos(46) = t                       ! App. dyn. time in Julian Centuries since 2000.0
+    planpos(46) = tjc                     ! App. dyn. time in Julian Centuries since 2000.0
     
     if(calc.eq.1) return
     
     
     
     ! Obliquity of the ecliptic and nutation:
-    eps0 = 0.409092804222d0 - 2.26965525d-4*t - 2.86d-9*t2 + 8.78967d-9*t2*t               ! Mean obliq. o.t. eclip, Meeus, Eq.22.2
+    eps0 = 0.409092804222d0 - 2.26965525d-4*tjc - 2.86d-9*tjc2 + 8.78967d-9*tjc2*tjc       ! Mean obliq. o.t. eclip, Meeus, Eq.22.2
     deps = 4.46d-5*cos(omg) + 2.76d-6*cos(2*l0) + 4.848d-7*cos(2*lm) - 4.36d-7*cos(2*omg)  ! Nutation in obliquity, Meeus, p.144
     eps  = eps0 + deps                                                                     ! True obliquity of the ecliptic
     

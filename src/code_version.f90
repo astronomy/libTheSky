@@ -16,8 +16,8 @@ contains
   subroutine print_libTheSky_version(unit)
     implicit none
     integer, intent(in) :: unit
-    character :: libTheSky_version*(99) = 'rev.88, hash df3086e (2014-10-30)'
-    character :: compile_date*(99) = 'Mon 3 Nov 13:15:40 CET 2014'
+    character :: libTheSky_version*(99) = 'rev.89, hash 7b586ac (2014-11-03)'
+    character :: compile_date*(99) = 'Mon 3 Nov 14:50:19 CET 2014'
     character :: compiler*(99) = 'gfortran'
     character :: compiler_flags*(99) = '-O2'
     

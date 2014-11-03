@@ -127,7 +127,7 @@ contains
     
     if(pl.eq.0) then
        if(tc.eq.0) then
-          sa = asin(earthr/(planpos(4)*AU))*0.7275d0-0.5667d0*d2r  ! Exact altitude for Moon, ~0.1-0.2deg, for geocentric coordinates
+          sa = asin(earthr/(planpos(4)*AU))*0.7275d0-0.5667d0*d2r  ! Exact altitude for Moon, ~0.1-0.2deg, for geocentric coord.
        else  !tc.eq.1:
           sa = -0.8333d0*d2r  ! For Moon, in combination with topocentric coordinates
        end if
