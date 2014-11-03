@@ -70,7 +70,7 @@ contains
   
   subroutine riset(jd,pl,  rt,tt,st, rh,ta,sh,  sa0, ltime)
     use SUFR_kinds, only: double
-    use SUFR_constants, only: pi,pi2, d2r,am2r, enpname
+    use SUFR_constants, only: pi,pi2, d2r,am2r, enpname, earthr,AU
     use SUFR_angles, only: rev
     use SUFR_date_and_time, only: cal2jd,jd2cal
     use SUFR_numerics, only: deq
@@ -127,7 +127,7 @@ contains
     
     if(pl.eq.0) then
        if(tc.eq.0) then
-          sa = asin(4.26345d-5/planpos(4))*0.7275d0-0.5667d0*d2r  ! Exact altitude for Moon, ~0.1-0.2deg, for geocentric coordinates
+          sa = asin(earthr/(planpos(4)*AU))*0.7275d0-0.5667d0*d2r  ! Exact altitude for Moon, ~0.1-0.2deg, for geocentric coordinates
        else  !tc.eq.1:
           sa = -0.8333d0*d2r  ! For Moon, in combination with topocentric coordinates
        end if
@@ -263,7 +263,7 @@ contains
   
   subroutine riset_ipol(jd,pl, rt,tt,st, rh,ta,sh, sa0, ltime)
     use SUFR_kinds, only: double
-    use SUFR_constants, only: pi,pi2, d2r,am2r, enpname
+    use SUFR_constants, only: pi,pi2, d2r,am2r, enpname, earthr,AU
     use SUFR_system, only: warn
     use SUFR_angles, only: rev
     use SUFR_date_and_time, only: cal2jd,jd2cal
@@ -316,7 +316,7 @@ contains
     
     call planet_position(jd1,pl, LBaccur=1.d-6,Raccur=1.d-2, ltime=ltime)
     ! Exact altitude for moon, ~0.1-0.2deg, for geocentric coordinates:
-    if(tc.eq.0.and.pl.eq.0) sa = asin(4.26345d-5/planpos(4))*0.7275d0-0.5667d0*d2r
+    if(tc.eq.0.and.pl.eq.0) sa = asin(earthr/(planpos(4)*AU))*0.7275d0-0.5667d0*d2r
     
     ! For Moon, in combination with topocentric coordinates:
     if(tc.eq.1.and.pl.eq.0) sa = -0.8333d0*d2r

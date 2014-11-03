@@ -758,7 +758,7 @@ contains
   
   subroutine geoc2topoc_ecl(gcl,gcb, gcr,gcs, eps,lst,  tcl,tcb, tcs)
     use SUFR_kinds, only: double
-    use SUFR_constants, only: earthr
+    use SUFR_constants, only: earthr,au
     use SUFR_angles, only: rev
     use TheSky_local, only: lat0, height
     
@@ -777,7 +777,7 @@ contains
     rc = cos(u)    + height/re*cos(lat0)
     
     
-    sinHp = sin(4.26345d-5)/gcr  ! Sine of the horizontal parallax, Meeus, Eq. 40.1
+    sinHp = sin(earthr/au)/gcr  ! Sine of the horizontal parallax, Meeus, Eq. 40.1
     
     ! Meeus, Ch.40, p.282:
     n  = cos(gcl)*cos(gcb) - rc*sinHp*cos(lst)
@@ -805,7 +805,7 @@ contains
   
   subroutine geoc2topoc_eq(gcra,gcd,gcr,gch, tcra,tcd)
     use SUFR_kinds, only: double
-    use SUFR_constants, only: earthr
+    use SUFR_constants, only: earthr,au
     use TheSky_local, only: lat0, height
     
     implicit none
@@ -823,7 +823,8 @@ contains
     rc = cos(u) + height/re*cos(lat0)
     
     ! Meeus Ch.40:
-    sinHp   = sin(4.26345d-5)/gcr                                              ! Sine of the horizontal parallax, Meeus, Eq. 40.1
+    sinHp = sin(earthr/au)/gcr  ! Sine of the horizontal parallax, Meeus, Eq. 40.1
+    
     dra  = atan2( -rc*sinHp*sin(gch) , cos(gcd)-rc*sinHp*cos(gch) )            ! Meeus, Eq. 40.2
     tcra = gcra + dra                                                          ! Topocentric right ascension
     tcd  = atan2( (sin(gcd)-rs*sinHp)*cos(dra) , cos(gcd)-rc*sinHp*cos(gch) )  ! Topocentric declination - Meeus, Eq. 40.3
