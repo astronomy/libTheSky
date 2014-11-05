@@ -981,8 +981,8 @@ contains
   !*********************************************************************************************************************************
   !> \brief  Convert sky surface brightness in (B) magnitudes per square arcsecond to naked-eye visual limiting magnitude (V)
   !!
-  !! \param  Mlim                Naked-eye visual limiting magnitude (V)
-  !! \retval Mlim2skybrightness  Sky surface brightness in (B) magnitudes per square arcsecond
+  !! \param  skyBright           Sky surface brightness in (B) magnitudes per square arcsecond
+  !! \retval skybrightness2mlim  Naked-eye visual limiting magnitude (V)
   !!
   !! \see   http://adsabs.harvard.edu/abs/1990PASP..102..212S
   !! \note  Sky surface brightness is sometimes referred to as sqm (which is in fact a device to measure it)
