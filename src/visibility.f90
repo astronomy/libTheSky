@@ -464,28 +464,62 @@ contains
   !!
   !! \param alt  Altitude of object (radians)
   !!
-  !! - Results are 1 <= airmass <~ 38; return 1.d99 for h<0
+  !! - Results are 1 <= airmass <~ ??; return ~1000 for h<0
+  !! - Maximum supposed error (at the horizon) of 0.0037 air mass
   !!
-  !! \see Kasten and Young (1989); http://en.wikipedia.org/wiki/Airmass#Interpolative_formulas
+  !! \see Young (1994); https://en.wikipedia.org/wiki/Air_mass_%28astronomy%29#Interpolative_formulas
   
   function airmass(alt)
     use SUFR_kinds, only: double
-    use SUFR_constants, only: pio2, r2d
+    use SUFR_constants, only: pio2
     
     implicit none
     real(double), intent(in) :: alt
-    real(double) :: airmass,z,zdeg
+    real(double) :: airmass,z,cosz,cosz2
     
     if(alt.lt.0.d0) then
        airmass = 1000.d0 * (0.15d0 + abs(alt))  ! Very bad (adds at least ~30 magnitudes due to extinction), 
        !                                          but still worse when farther below the horizon - for solvers
     else
        z = min(pio2 - alt, pio2)  ! Zenith angle
-       zdeg = z*r2d
-       airmass = max( 1.d0 / ( cos(z) + 0.50572d0*(96.07995d0-zdeg)**(-1.6364d0) ) ,  1.d0 )
+       cosz = cos(z)
+       cosz2 = cosz**2
+       airmass = (1.002432d0*cosz2 + 0.148386d0*cosz + 0.0096467d0) / &
+            (cosz2*cosz + 0.149864d0*cosz2 + 0.0102963d0*cosz + 0.000303978d0)
+       airmass = max( airmass, 1.d0 )
     end if
     
   end function airmass
+  !*********************************************************************************************************************************
+  
+   
+  !*********************************************************************************************************************************
+  !> \brief  Compute the airmass for a celestial object with a given altitude; simpler alternative for airmass()
+  !!
+  !! \param alt  Altitude of object (radians)
+  !!
+  !! - Results are 1 <= airmass <~ 38; return ~1000 for h<0
+  !!
+  !! \see Kasten and Young (1989); http://en.wikipedia.org/wiki/Airmass#Interpolative_formulas
+  
+  function airmass2(alt)
+    use SUFR_kinds, only: double
+    use SUFR_constants, only: pio2, r2d
+    
+    implicit none
+    real(double), intent(in) :: alt
+    real(double) :: airmass2,z,zdeg
+    
+    if(alt.lt.0.d0) then
+       airmass2 = 1000.d0 * (0.15d0 + abs(alt))  ! Very bad (adds at least ~30 magnitudes due to extinction), 
+       !                                          but still worse when farther below the horizon - for solvers
+    else
+       z = min(pio2 - alt, pio2)  ! Zenith angle
+       zdeg = z*r2d
+       airmass2 = max( 1.d0 / ( cos(z) + 0.50572d0*(96.07995d0-zdeg)**(-1.6364d0) ) ,  1.d0 )
+    end if
+    
+  end function airmass2
   !*********************************************************************************************************************************
   
   
@@ -496,7 +530,8 @@ contains
   !!
   !! \note  The magnitude of an object corrected for airmass should be  m' = m + airmass_ext(ele) * airmass(alt)
   !!
-  !! \see  Green, ICQ 14, 55 (1992),  http://www.icq.eps.harvard.edu/ICQExtinct.html
+  !! \see  Green, ICQ 14, 55 (1992),  http://www.icq.eps.harvard.edu/ICQExtinct.html, based on
+  !!       Hayes & Latham, ApJ 197, 593 (1975): http://esoads.eso.org/abs/1975ApJ...197..593H
   
   function airmass_ext(ele)
     use SUFR_kinds, only: double
@@ -506,8 +541,8 @@ contains
     real(double):: airmass_ext, Aoz,Aray,Aaer
     
     Aoz  = 0.016d0                       ! Ozone  (Schaefer 1992)
-    Aray = 0.1451d0 * exp(-ele/7996.d0)  ! Rayleigh scattering, Eq.2
-    Aaer = 0.120d0  * exp(-ele/1500.d0)  ! Aerosol scattering, Eq.4
+    Aray = 0.1451d0 * exp(-ele/7996.d0)  ! Rayleigh scattering (for lambda=510 nm), Eq.2
+    Aaer = 0.120d0  * exp(-ele/1500.d0)  ! Aerosol scattering (for lambda = 0.51 micron), Eq.4
     
     airmass_ext = Aoz + Aray + Aaer      ! Total extinction in magnitudes per unit air mass
     

@@ -843,7 +843,8 @@ contains
   !!
   !! \retval  refract  Refraction in altitude (rad).  You should add the result to the uncorrected altitude.
   !!
-  !! \see Meeus (1998), Eq. 16.4 ff, based on Samundsson, Sky & Telescope vol.72, p.70 (1986), converted to radians
+  !! \see Meeus (1998), Eq. 16.4 ff, based on T. Saemundsson, "Atmospheric refraction", Sky & Telescope vol.72, p.70 (1986);
+  !!                                          converted to radians
   
   function refract(alt, press,temp)
     use SUFR_kinds, only: double
