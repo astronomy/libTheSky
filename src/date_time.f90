@@ -580,20 +580,32 @@ contains
   !*********************************************************************************************************************************
   !> \brief  Returns time zone: tz0 or tz0+1
   !!
-  !! \param jd  Julian day (UT?)
+  !! \param jd      Julian day (UT?)
+  !! \param ltz0    Default time zone for the current location ('winter time')
+  !! \param ldsttp  Daylight-savings time rules to use: 1 EU, 2: USA/Canada
   !!
   !! \note
   !!  - currently implemented for EU (dsttp=1) and USA/Canada >2007 (dsttp=2) only
+  !!  - tz0 and dsttp can be provided through the module TheSky_local, or using the optional arguments.  Note that using the
+  !!    latter will update the former!
   
-  function gettz(jd)
+  function gettz(jd, ltz0,ldsttp)
     use SUFR_kinds, only: double
     use SUFR_date_and_time, only: jd2cal, cal2jd
     use TheSky_local, only: dsttp, tz,tz0
     
     implicit none
     real(double), intent(in) :: jd
+    real(double), intent(in), optional :: ltz0
+    integer, intent(in), optional :: ldsttp
+    
     real(double) :: gettz,dd,jd0,d0
     integer :: m,m1,m2,y
+    
+    
+    ! Handle optional variables:
+    if(present(ltz0))   tz0 = ltz0
+    if(present(ldsttp)) dsttp = ldsttp
     
     gettz = 0.d0
     call jd2cal(jd,y,m,dd)

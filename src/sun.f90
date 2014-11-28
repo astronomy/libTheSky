@@ -33,14 +33,15 @@ contains
   !! \param calc  Calculate:  1: l,b,r,  2: & ra,dec,  3: & gmst,agst,  4: & az,alt,  5: & mag + p.a.,  99: & topo alt + refraction
   !!
   !! \note
-  !! - lat0, lon0 and height must be provided through the module TheSky_local (rad, rad and m)
+  !! - lat0, lon0 and height can be provided through the module TheSky_local (rad, rad and m), or through the optional arguments.
+  !!   Note that using the latter will update the former!
   !! - results are returned in the array planpos() in the module TheSky_planetdata
   !!
   !! \see Meeus, Astronomical Algorithms, 1998, Ch.25
   !!
   !! \todo  odot is off by ~10" in Meeus, Example 25a.  Would need better L0 or C (or M?)
   
-  subroutine sunpos_la(jd, calc)
+  subroutine sunpos_la(jd, calc, lat,lon,hgt)
     use SUFR_kinds, only: double
     use SUFR_constants, only: jd2000, au, earthr,rsun
     use SUFR_angles, only: rev
@@ -48,13 +49,20 @@ contains
     use TheSky_planetdata, only: planpos
     use TheSky_coordinates, only: eq2horiz, refract
     use TheSky_datetime, only: calc_deltat, calc_gmst
-    use TheSky_local, only: lon0,lat0
+    use TheSky_local, only: lon0,lat0, height
     
     implicit none
     real(double), intent(in) :: jd
     integer, intent(in) :: calc
+    real(double), intent(in), optional :: lat,lon,hgt
+    
     real(double) :: jde,deltat,tjc,tjc2, l0,m,e,c,odot,nu,omg,r, aber, lam,b
     real(double) :: ra,dec,lm,eps,eps0,deps,gmst,agst,lst,dpsi,az,alt,hh
+    
+    ! Handle optional variables:
+    if(present(lat)) lat0 = lat
+    if(present(lon)) lon0 = lon
+    if(present(hgt)) height = hgt
     
     deltat = calc_deltat(jd)
     jde    = jd + deltat/86400.d0
@@ -160,6 +168,7 @@ contains
     if(calc.eq.5) return
     
     ! calc = 99:
+    planpos(29) = planpos(9)                             ! topocentric azimuth ~ geocentric azimuth
     planpos(30) = alt - asin(sin(planpos(17))*cos(alt))  ! alt' = alt - Hp*cos(alt); topocentric altitude
     planpos(31) = planpos(30) + refract(planpos(30))     ! Topocentric altitude, corrected for atmospheric refraction
     
