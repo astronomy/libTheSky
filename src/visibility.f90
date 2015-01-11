@@ -247,9 +247,13 @@ contains
     ! When is the planet visible?
     !   plvis(1): time planet becomes visible, plvis(2): time planet becomes invisible
     
-    times = (/rv12(lrts(1)), rv12(lsts(1)),  rv12(lrts(4)), rv12(lsts(4))/)  ! rv12: -12 - 12h; noon - noon
+    times = (/rv12(lrts(1)), rv12(lsts(1)),  rv12(lrts(4)), rv12(lsts(4))/)  ! rv12: -12 - 12h; noon - noon: Sun rise,set, pl r,s
     azs   = (/lras(1), lsas(1),  lras(4), lsas(4)/)
     call sorted_index_list(times,ind)
+    
+    ! Special case: ind = [2 4 3 1] - Ss Ps Pr Sr: Planet is visible twice.  Program takes latter, make sure it's the longest:
+    if(ind(1).eq.2.and.ind(2).eq.4.and.ind(3).eq.3.and.ind(4).eq.1 .and. times(4)-times(2).gt.times(1)-times(3)) ind = [3,1,2,4]
+    
     
     
     ! Starting at noon, Sun is up, planet may be:
