@@ -252,7 +252,12 @@ contains
     call sorted_index_list(times,ind)
     
     ! Special case: ind = [2 4 3 1] - Ss Ps Pr Sr: Planet is visible twice.  Program takes latter, make sure it's the longest:
-    if(ind(1).eq.2.and.ind(2).eq.4.and.ind(3).eq.3.and.ind(4).eq.1 .and. times(4)-times(2).gt.times(1)-times(3)) ind = [3,1,2,4]
+    if(ind(1).eq.2.and.ind(2).eq.4.and.ind(3).eq.3.and.ind(4).eq.1 .and. times(4)-times(2).gt.times(1)-times(3)) then
+       ind = [3,1,2,4]
+       
+       ! If the planet is invisible for less than an hour, ignore it:
+       if(times(2)-times(1) .lt. 1.d0) times = [times(2),times(2), times(2),times(1)]  ! Only the last two array elements count
+    end if
     
     
     
