@@ -835,9 +835,9 @@ contains
   
   !*********************************************************************************************************************************
   !> \brief  Compute the atmospheric refraction for a given true altitude.  You should add the result to the uncorrected altitude
-  !!         in order to obtain the observed altitude.  Return 0 if alt < -0.3°.
+  !!         in order to obtain the observed altitude.  Return 0 if alt + refract < -0.3°.
   !!
-  !! \param   alt      Altitude (rad)
+  !! \param   alt      True (computed) altitude (rad)
   !! \param   press    Air pressure (hPa; optional)
   !! \param   temp     Air temperature (degrees Celcius; optional)
   !!
@@ -855,7 +855,7 @@ contains
     real(double), intent(in), optional :: press,temp
     real(double) :: refract
     
-    if(abs(alt).ge.pio2 .or. alt.lt.-0.3d0*d2r) then  ! |alt| >= 90° or alt < -0.3°; refraction is meaningless
+    if(abs(alt).ge.pio2) then  ! |alt| >= 90° refraction is meaningless
        refract = 0.d0
     else
        refract = 2.9670597d-4/tan(alt + 3.137559d-3/(alt + 8.91863d-2))  ! Overstated accuracy in translation from degrees
@@ -863,7 +863,7 @@ contains
        if(present(temp))  refract = refract * 283.d0/(273.d0 + temp)     ! Correct for temperature
     end if
     
-    if(alt+refract.lt.-0.3d0*d2r) refract = 0.d0  ! No refraction if the object is more than 0.3 deg below the horizon 
+    if(alt+refract.lt.-0.3d0*d2r) refract = 0.d0  ! No refraction if the object seems more than 0.3 deg below the horizon 
     !                                               (maximum apparent Moon radius ~ 0.29deg)
     
   end function refract
@@ -872,7 +872,7 @@ contains
   
   
   !*********************************************************************************************************************************
-  !> \brief  Compute the atmospheric refraction of light for a given true altitude.  Return 0 for alt<-0.3°.
+  !> \brief  Compute the atmospheric refraction of light for a given true altitude.  Return 0 for alt<-0.9°.
   !!         This is a wrapper for aref(), which does the opposite (compute refraction for an observed zenithal angle).
   !!         This is an expensive way to go about(!)
   !!
@@ -905,8 +905,8 @@ contains
     real(double) :: atmospheric_refraction, z0,zi,zio,dz, ph,lamm,t0K,rhfr
     
     atmospheric_refraction = 0.d0
-    if(abs(alt0).ge.pio2) return  ! No refraction if |alt| >= 90°
-    if(alt0.lt.-0.3d0*d2r) return  ! No refraction if alt < -0.3° - allowing this can cause aref() to fail
+    if(abs(alt0).ge.pio2) return   ! No refraction if |alt| >= 90°
+    if(alt0.lt.-0.9d0*d2r) return  ! No refraction if alt < -0.9° - allowing this can cause aref() to fail
     
     ! Convert some variables/units:
     z0   = 90.d0 - alt0*r2d  ! Altitude (rad) -> zenith angle (deg)
@@ -971,7 +971,7 @@ contains
     real(double) :: pw0,r,r0,refo,refp,reft,rg,rs,rt,  sk0,step,t,t0o,tg,tt,z,z1,zs,zt,zts, earthrm
     
     aref = 0.d0
-    if(z0.gt.90.d0) return  ! Object cannot be observed at z>90°; return 0 for the refraction
+    if(z0.gt.180.d0) return  ! Object below the nadir causes trouble...
     
     ! Always defined:
     z = 0.d0; reft=0.d0
