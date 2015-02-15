@@ -433,10 +433,10 @@ contains
     k    = 9.93650849745d-5  ! Constant of aberration, radians
     odot = rev(l0+pi)        ! Longitude of the Sun
     
-    e    = 0.016708634d0 - 4.2037d-5 * tt   - 1.267d-7 * tt2
-    pii  = 1.79659568d0  + 3.001024d-2 * tt + 8.0285d-6 * tt2
+    e    = 0.016708634d0 - 4.2037d-5 * tt   - 1.267d-7 * tt2   ! Eccentricity
+    pii  = 1.79659568d0  + 3.001024d-2 * tt + 8.0285d-6 * tt2  ! Longitude of perihelion
     
-    dl   = k * ( -cos(odot-l)  +  e * cos(pii-l)) / cos(b)  ! Meeus, Eq. 23.2
+    dl   =  k * ( -cos(odot-l)  +  e * cos(pii-l)) / cos(b)  ! Meeus, Eq. 23.2
     db   = -k * sin(b) * (sin(odot-l)  -  e * sin(pii-l))
     
     l    = l + dl
@@ -835,7 +835,7 @@ contains
   
   !*********************************************************************************************************************************
   !> \brief  Compute the atmospheric refraction for a given true altitude.  You should add the result to the uncorrected altitude
-  !!         in order to obtain the observed altitude.
+  !!         in order to obtain the observed altitude.  Return 0 if alt < -0.3°.
   !!
   !! \param   alt      Altitude (rad)
   !! \param   press    Air pressure (hPa; optional)
@@ -855,7 +855,7 @@ contains
     real(double), intent(in), optional :: press,temp
     real(double) :: refract
     
-    if(abs(alt).ge.pio2) then  ! |alt| >= 90 deg; refraction is meaningless
+    if(abs(alt).ge.pio2 .or. alt.lt.-0.3d0*d2r) then  ! |alt| >= 90° or alt < -0.3°; refraction is meaningless
        refract = 0.d0
     else
        refract = 2.9670597d-4/tan(alt + 3.137559d-3/(alt + 8.91863d-2))  ! Overstated accuracy in translation from degrees
@@ -872,7 +872,7 @@ contains
   
   
   !*********************************************************************************************************************************
-  !> \brief  Compute the atmospheric refraction of light for a given true altitude.
+  !> \brief  Compute the atmospheric refraction of light for a given true altitude.  Return 0 for alt<-0.3°.
   !!         This is a wrapper for aref(), which does the opposite (compute refraction for an observed zenithal angle).
   !!         This is an expensive way to go about(!)
   !!
@@ -905,7 +905,8 @@ contains
     real(double) :: atmospheric_refraction, z0,zi,zio,dz, ph,lamm,t0K,rhfr
     
     atmospheric_refraction = 0.d0
-    if(abs(alt0).ge.pio2) return  ! No refraction if |alt| >= 90d
+    if(abs(alt0).ge.pio2) return  ! No refraction if |alt| >= 90°
+    if(alt0.lt.-0.3d0*d2r) return  ! No refraction if alt < -0.3° - allowing this can cause aref() to fail
     
     ! Convert some variables/units:
     z0   = 90.d0 - alt0*r2d  ! Altitude (rad) -> zenith angle (deg)
@@ -934,7 +935,7 @@ contains
   !*********************************************************************************************************************************
   !> \brief  Compute the atmospheric refraction of light for a given observed zenith angle.
   !!         The method is based on N.A.O Technical Notes 59 and 63 and a paper by Standish and Auer 'Astronomical Refraction: 
-  !!         Computational Method for all Zenith Angles'.
+  !!         Computational Method for all Zenith Angles'.  Return 0 if z0>90°.
   !!
   !! \param  z0    The observed zenith distance of the object in degrees
   !!
@@ -968,6 +969,9 @@ contains
     integer :: i,in,is,istart, j,k
     real(double) :: aref, n,n0,nt,nts,ns,a(10), dndr,dndr0,dndrs,dndrt,dndrts, f,f0, fb,fe,ff,fo,fs,ft,fts,gb, h
     real(double) :: pw0,r,r0,refo,refp,reft,rg,rs,rt,  sk0,step,t,t0o,tg,tt,z,z1,zs,zt,zts, earthrm
+    
+    aref = 0.d0
+    if(z0.gt.90.d0) return  ! Object cannot be observed at z>90°; return 0 for the refraction
     
     ! Always defined:
     z = 0.d0; reft=0.d0
