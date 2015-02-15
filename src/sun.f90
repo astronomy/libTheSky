@@ -27,7 +27,10 @@ contains
   
   
   !*********************************************************************************************************************************
-  !> \brief  Low-accuracy solar coordinates (~0.01deg)
+  !> \brief  Low-accuracy solar coordinates
+  !!
+  !! - accuracy: ~0.01°;  ~0.0033° when comparing ecliptical coordinates to VSOP87 for 1900-2100 (10^5 random instances)
+  !! - for 1900-2100, the terms greater than Tjc^2 can be neglected without loss of accuracy
   !! 
   !! \param jd    Julian Day of computation
   !! \param calc  Calculate:  1: l,b,r,  2: & ra,dec,  3: & gmst,agst,  4: & az,alt,  5: & mag + p.a.,  99: & topo alt + refraction
@@ -37,7 +40,10 @@ contains
   !!   Note that using the latter will update the former!
   !! - results are returned in the array planpos() in the module TheSky_planetdata
   !!
-  !! \see Meeus, Astronomical Algorithms, 1998, Ch.25
+  !! \see
+  !! - Chapront-Touze, Chapront, A&A, 190, p.342, 1988, Table 6 (CTC88)
+  !! - Meeus, Astronomical Algorithms, 1998, Ch.25
+  !! - Simon et al, A&A, 282, p.663 (1994)
   !!
   !! \todo  odot is off by ~10" in Meeus, Example 25a.  Would need better L0 or C (or M?)
   
@@ -56,7 +62,7 @@ contains
     integer, intent(in) :: calc
     real(double), intent(in), optional :: lat,lon,hgt
     
-    real(double) :: jde,deltat,tjc,tjc2, l0,m,e,c,odot,nu,omg,r, aber, lam,b
+    real(double) :: jde,deltat,tjc,tjc2,tjc3,tjc4, Aorb, l0,m,e,c,odot,nu,omg,a1e2,r, aber, lam,b
     real(double) :: ra,dec,lm,eps,eps0,deps,gmst,agst,lst,dpsi,az,alt,hh
     
     ! Handle optional variables:
@@ -66,38 +72,49 @@ contains
     
     deltat = calc_deltat(jd)
     jde    = jd + deltat/86400.d0
-    !tjc    = (jde-jd2000)/36525.d0    ! Julian Centuries after 2000.0 in dynamical time, the T in Meeus, p.163, Eq. 25.1
-    tjc    = (jd-jd2000)/36525.d0     ! Julian Centuries after 2000.0;  JD compares better than JD (2015-2114)
-    tjc2   = tjc*tjc                  ! T^2                             In fact JD - DeltaT compares even better(!)
+    !tjc    = (jde-jd2000)/36525.d0    ! Julian Centuries after 2000.0 in dynamical time
+    tjc    = (jd-jd2000)/36525.d0     ! Julian Centuries after 2000.0;  JD compares better to VSOP87 than JDE (~7% for 1900-2100)
+    tjc2   = tjc*tjc                  ! T^2                             In fact JD - DeltaT compares even better(!) (~4%)
+    tjc3   = tjc2*tjc                 ! T^3
+    tjc4   = tjc2*tjc2                ! T^4
     
-    l0 = 4.895063168d0 + 628.331966786d0 *tjc + 5.291838d-6    *tjc2  ! Mean longitude, Eq. 25.2
-    !l0 = 4.895063113086d0 + 628.331965406500135d0 *tjc + 5.29213354358d-6 *tjc2 + 3.4940522d-10 *tjc2*tjc - &
-    !     1.1407666d-10 *tjc2*tjc2 - 8.726646d-14 *tjc2*tjc2*tjc + 9.696d-16 * tjc2*tjc2*tjc2  ! Simon et al, 5.9.3
-    m  = 6.240060141d0 + 628.301955152d0 *tjc - 2.682571d-6    *tjc2  ! Mean anomaly, Eq. 25.3
-    !m  = 6.24006012726d0 + 628.301955167d0*tjc - 2.680826d-6*tjc2  - 7.1267d-10*tjc2*tjc      ! Mean anomaly, Meeus Eq.47.3
+    Aorb = 1.0000010178d0  ! Semi-major axis of the Earth's orbit (Simon et al, 1994)
     
+    ! Sun's mean longitude, Simon et al, 5.9.3:
+    l0 = 4.895063113086d0 + 628.331965406500135d0 *tjc + 5.29213354358d-6 *tjc2 + 3.4940522d-10 *tjc3 - &
+         1.1407666d-10 *tjc4 - 8.726646d-14 *tjc4*tjc + 9.696d-16 * tjc4*tjc2
     
-    ! Eccentricity of the Earth's orbit:
-    e  = 0.016708634d0 - 0.000042037d0   *tjc - 0.0000001267d0 *tjc2  ! Meeus, Eq. 25.4
-    !e  = 0.0167086342d0 - 0.00004203654d0 *tjc - 0.000000126734d0 *tjc2 + 1.444d-10*tjc2*tjc - 2.d-14*tjc2*tjc2 &
-    !     + 3.d-15*tjc2*tjc2*tjc ! Simon ea, 5.9.3
+    ! Sun's mean anomaly, l' in CTC88:
+    m  = 6.24006012697d0 + 628.3019551680d0*tjc - 2.680535d-6*tjc2  + 7.12676d-10*tjc3
     
-    ! Sun's equation of the centre:
-    c = (3.34161088d-2 - 8.40725d-5*tjc - 2.443d-7*tjc2)*sin(m)  +  (3.489437d-4 - 1.76278d-6*tjc)*sin(2*m) + 5.044d-6*sin(3*m)
-    odot = rev(l0 + c)  ! True longitude
-    nu = rev(m + c)     ! True anomaly
-    r = 1.000001018d0*(1.d0-e*e)/(1.d0 + e*cos(nu))  ! Heliocentric distance of the Earth / geocentric dist. of the Sun, Eq. 25.5
+    ! Eccentricity of the Earth's orbit, Simon et al, 5.9.3:
+    e  = 0.0167086342d0 - 4.203654d-5 *tjc - 1.26734d-7 *tjc2  + 1.444d-10*tjc3 - 2.d-14*tjc4 + 3.d-15*tjc4*tjc
     
-    ! Longitude of the Moon's mean ascending node, Eq.47.7:
-    omg  = 2.1824390725d0 - 33.7570464271d0 *tjc  + 3.622256d-5 *tjc2 + 3.7337958d-8 *tjc2*tjc - 2.879321d-10 *tjc2*tjc2
+    ! Sun's equation of the centre := true - mean anomaly - https://en.wikipedia.org/wiki/Equation_of_the_center:
+    c = (2*e - 0.25d0*e**3)*sin(m) + 1.25d0*e**2*sin(2*m) + 13.d0/12.d0*e**3*sin(3*m)  ! Brown, 1896, Chap. III, Eq.7, up to e^3
+    !c = (2*e - 0.25d0*e**3)*sin(m) + (1.25d0*e**2 - 11.d0/24.d0*e**4)*sin(2*m) + 13.d0/12.d0*e**3*sin(3*m) &
+    !     + 103.d0/96.d0*e**4*sin(4*m) ! Brown, 1896, Chap. III, Eq.7, up to e^4
     
-    ! Mean longitude of the Moon:
-    lm   = 3.8103417d0 + 8399.709113d0*tjc      ! Meeus, p.144
-    !lm   = 3.81034102259d0 + 8399.709113521569d0*tjc - 2.315703d-5*tjc2 + 3.23904315d-8*tjc2*tjc - 2.6771317d-10*tjc2*tjc2 !Eq.47.1
+    odot = l0 + c  ! True longitude
+    nu = m + c     ! True anomaly
     
-    dpsi = -8.338795d-5*sin(omg) - 6.39954d-6*sin(2*l0) - 1.115d-6*sin(2*lm) + 1.018d-6*sin(2*omg)  ! Nutation in lon, Meeus, p.144
-    aber = -9.93087d-5/r            ! Aberration, Meeus Eq.25.10
-    lam  = rev(odot + aber + dpsi)  ! Apparent geocentric longitude, referred to the true equinox of date
+    a1e2 = Aorb*(1.d0-e**2)  ! a(1-e^2)
+    r = a1e2/(1.d0 + e*cos(nu))  ! Heliocentric distance of the Earth / geocentric dist. of the Sun, Eq. 25.5
+    
+    ! Longitude of the Moon's mean ascending node, CTC88:
+    omg  = 2.18243919722d0  -  33.7570446083d0 *tjc  +  3.623594d-5 *tjc2  +  3.734035d-8 *tjc3  -  2.87931d-10 *tjc4
+    
+    ! Mean longitude of the Moon, L in CTC88:
+    lm   = 3.810344430588d0  +  8399.709113522267d0*tjc  -  2.315615585d-5*tjc2  +  3.23904d-8*tjc3  -  2.67714d-10*tjc4
+    
+    ! Nutation in longitude, Meeus, p.144
+    dpsi = -8.338795d-5*sin(omg) - 6.39954d-6*sin(2*l0) - 1.115d-6*sin(2*lm) + 1.018d-6*sin(2*omg)
+    
+    ! Annual abberation = k * a(1-e^2)/r, Kovalevsky and Seidelmann, Fundamentals of Astrometry (2004):
+    aber = -9.9365085d-5 * a1e2/r
+    
+    ! Apparent geocentric longitude and latitude, referred to the true equinox of date:
+    lam  = rev(odot + aber + dpsi)
     b    = 0.d0
     
     
@@ -124,7 +141,7 @@ contains
     
     
     ! Obliquity of the ecliptic and nutation:
-    eps0 = 0.409092804222d0 - 2.26965525d-4*tjc - 2.86d-9*tjc2 + 8.78967d-9*tjc2*tjc       ! Mean obliq. o.t. eclip, Meeus, Eq.22.2
+    eps0 = 0.409092804222d0 - 2.26965525d-4*tjc - 2.86d-9*tjc2 + 8.78967d-9*tjc3           ! Mean obliq. o.t. eclip, Meeus, Eq.22.2
     deps = 4.46d-5*cos(omg) + 2.76d-6*cos(2*l0) + 4.848d-7*cos(2*lm) - 4.36d-7*cos(2*omg)  ! Nutation in obliquity, Meeus, p.144
     eps  = eps0 + deps                                                                     ! True obliquity of the ecliptic
     
