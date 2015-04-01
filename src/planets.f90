@@ -896,13 +896,15 @@ contains
     use TheSky_moon, only: moonpos_la
     use TheSky_sun, only: sunpos_la
     use TheSky_coordinates, only: geoc2topoc_ecl, geoc2topoc_eq, eq2horiz, refract
+    use TheSky_local, only: lat0
     
     implicit none
     real(double), intent(in) :: jd
     integer, intent(in) :: pl
     integer, intent(in), optional :: calc,nt
     
-    integer :: ind, lcalc,lnt
+    integer :: lcalc,lnt
+    real(double) :: dh_ref, parAng, dRA_ref
     
     lcalc = 5
     if(present(calc)) lcalc = calc
@@ -930,10 +932,8 @@ contains
     
     ! Fill topocentric planpos elements (21-32) with geocentric values (1-12) for Moon and Sun:
     if(pl.eq.0 .or. pl.eq.3) then
-       do ind = 1,12
-          planpos(ind+20) = planpos(ind)
-       end do
-       planpos(31) = planpos(30)  ! Altitude, "corrected" for refraction
+       planpos(21:32) = planpos(1:12)
+       planpos(31) = planpos(30)  ! Altitude, "corrected" for refraction - except that it is not corrected in the cheap version
        
        
        ! Simple correction for horizontal parallax, Meeus p.281, assuming rho=1:
@@ -951,7 +951,17 @@ contains
           call eq2horiz(planpos(25),planpos(26),planpos(45), planpos(28),planpos(29),planpos(30))  ! topo ra,dec,agst, -> hh,az,alt
        end if
        
-       if(lcalc.ge.5) planpos(31) = planpos(30) + refract(planpos(30))  ! Topocentric altitude, corrected for atmospheric refraction
+       if(lcalc.ge.5) then
+          dh_ref = refract(planpos(30))       ! Corrected for atmospheric refraction in altitude
+          planpos(31) = planpos(30) + dh_ref  ! Topocentric altitude, corrected for atmospheric refraction
+          
+          parAng = atan2(sin(planpos(28)),tan(lat0)*cos(planpos(26)) - sin(planpos(26))*cos(planpos(28)))  ! Topoc. paral. angle
+          dRA_ref = dh_ref / cos(planpos(26)) * sin(parAng)
+          planpos(25) = rev(planpos(25) + dRA_ref)  ! Correct topocentric RA for refraction
+          planpos(28) = rev(planpos(28) - dRA_ref)  ! Correct topocentric HA for refraction
+          planpos(26) = planpos(26) + dh_ref*cos(parAng)
+          
+       end if
     end if
     
   end subroutine planet_position_la

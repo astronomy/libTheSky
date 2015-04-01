@@ -115,14 +115,15 @@ contains
   
   
   !*********************************************************************************************************************************
-  !> \brief  Compute UT, JD, JDE, DeltaT and TZ, using the date and time stored in the module TheSky_local
+  !> \brief  Compute UT, JD, JDE, DeltaT and TZ, using the date and (local) time and TZ stored in the module TheSky_local
   !!
   !! \retval ut   Universal time
   !! \retval jd   Julian date
   !! \retval jde  Julian date
   !!
-  !! - Date and time are obtained from year, month, day, hour, minute, second, through the module TheSky_local
+  !! - Date and time are obtained from year, month, day, hour, minute, second, through the module TheSky_local, assuming LOCAL time
   !! - DeltaT and TZ are returned through the module TheSky_local
+  !! - Computed JD is in UNIVERSAL time
   
   subroutine calctime(ut,jd,jde)
     use SUFR_kinds, only: double
@@ -133,7 +134,7 @@ contains
     real(double), intent(out) :: ut,jd,jde
     real(double) :: lt
     
-    lt = hour + (minute + second/60.d0)/60.d0
+    lt = dble(hour) + (dble(minute) + second/60.d0)/60.d0
     ut = lt - tz
     jd = cal2jd(year,month,day+ut/24.d0)              ! This is the 'UT JD'
     
@@ -495,7 +496,7 @@ contains
     real(double), intent(in) :: jd
     
     call printdate1(jd)
-    write(6,*)''
+    write(*,*)''
     
   end subroutine printdate
   !*********************************************************************************************************************************
@@ -516,11 +517,14 @@ contains
     integer :: d,mm,yy,h,m
     
     call jd2cal(jd+1.d-10, yy,mm,dd)
+    
     d  = int(dd)
+    
     tm = (dd - dble(d))*24.d0
     h  = int(tm)
     m  = int((tm-h)*60.d0)
     s  = (tm-h-m/60.d0)*3600.d0
+    
     if(s.gt.59.999d0) then
        s = s - 60.d0
        m = m + 1
@@ -533,7 +537,8 @@ contains
        h = h - 24
        d = d + 1
     end if
-    write(6,'(2x,F0.6,I6,2I3,2x,2I3,F7.3,A7,I2)', advance='no') jd,yy,mm,d,h,m,s,'tz:',nint(tz)
+    
+    write(*,'(2x,F0.6,I6,2I3,2x,2I3,F7.3,A7,I2)', advance='no') jd,yy,mm,d,h,m,s,'tz:',nint(tz)
     
   end subroutine printdate1
   !*********************************************************************************************************************************
