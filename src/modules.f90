@@ -1,7 +1,7 @@
 !> \file modules.f90  Modules used by libTheSky
 
 
-!  Copyright (c) 2002-2014  Marc van der Sluys - marc.vandersluys.nl
+!  Copyright (c) 2002-2015  Marc van der Sluys - marc.vandersluys.nl
 !   
 !  This file is part of the libTheSky package, 
 !  see: http://libthesky.sf.net/
