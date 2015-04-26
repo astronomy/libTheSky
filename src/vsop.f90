@@ -67,16 +67,18 @@ contains
     real(double) :: fac, lbr(3), accur, desired_accuracy(3)
     
     desired_accuracy = VSOPtruncs(1:3, pl)  ! Set accuracy equal to VSOP87 truncation
-    !desired_accuracy = 1.d-9  ! 5e-9 rad = 1 mas = VSOP87 accuracy for Mercury in 1900-2100
     if(present(LBaccur)) desired_accuracy(1:2) = (/LBaccur,LBaccur/)
     if(present(Raccur))  desired_accuracy(3)   = Raccur
+    !desired_accuracy = 1.d-9  ! 5e-9 rad = 1 mas = VSOP87 accuracy for Mercury in 1900-2100
     !desired_accuracy = 0.d0  ! Use all available terms
     
     lbr = 0.d0
-    Nle = 0
+    !$omp parallel do private(Nli,Nle,skip,li,pow,fac,nTerm)
     do var=1,3  ! L,B,R
-       Nli = Nle
-       Nle = Nle + VSOPnls(var,pl)
+       Nli = 0
+       if(var.ge.2) Nli = VSOPnls(1,pl)
+       if(var.eq.3) Nli = Nli + VSOPnls(2,pl)
+       Nle = Nli + VSOPnls(var,pl)
        
        skip = -1  ! Switch to skip terms if sufficient accuracy is reached
        do li=Nli+1,Nle
@@ -88,7 +90,7 @@ contains
              
              ! Determine current accuracy (A*T^n):
              if(mod(li,3).eq.0) then  ! Reduce overhead, experimentally optimised to 3
-                nTerm = li-vsopNblk(pow,1,pl)+1
+                nTerm = li - vsopNblk(pow,1,pl)+1
                 accur = 2*sqrt(dble(nTerm)) * abs(fac)
                 if(accur.lt.desired_accuracy(var)) skip = pow  ! Skip the remaining terms for this power
              end if
@@ -96,6 +98,7 @@ contains
           
        end do  ! li
     end do  ! var
+    !$omp end parallel do
     
     lon = lbr(1)
     lat = lbr(2)

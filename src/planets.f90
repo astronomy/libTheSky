@@ -960,7 +960,6 @@ contains
           planpos(25) = rev(planpos(25) + dRA_ref)  ! Correct topocentric RA for refraction
           planpos(28) = rev(planpos(28) - dRA_ref)  ! Correct topocentric HA for refraction
           planpos(26) = planpos(26) + dh_ref*cos(parAng)
-          
        end if
     end if
     
