@@ -75,15 +75,14 @@ include( FileList )
 include( CompilerFlags_Fortran )
 
 
-# Code-version generator:
-# This implies that the file code_version* is removed by 'make clean'!
-if( CREATE_VERSION )
+# Create the file code_version.f90, which contains the code version number/hash and date:
+if( NOT EXISTS ${CMAKE_SOURCE_DIR}/src/code_version.f90 OR CREATE_VERSION )
   add_custom_command(
     OUTPUT ${CMAKE_SOURCE_DIR}/src/code_version.f90
     COMMAND cd $(CMAKE_SOURCE_DIR)
     COMMAND . ${CMAKE_SOURCE_DIR}/code_version.sh ${CMAKE_SOURCE_DIR} src/code_version.f90 ${Fortran_COMPILER_NAME} ${OPT_FLAGS}
     )
-endif( CREATE_VERSION )
+endif( NOT EXISTS ${CMAKE_SOURCE_DIR}/src/code_version.f90 OR CREATE_VERSION )
 
 
 # Create libraries:
