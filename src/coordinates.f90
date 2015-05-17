@@ -611,30 +611,40 @@ contains
   !! \retval hh    Local hour angle
   !! \retval az    Azimuth
   !! \retval alt   Altitude
+  !!
+  !! \param  lat   Geographical latitude (rad), optional
+  !! \param  lon   Geographical longitude (rad), optional
   
-  subroutine eq2horiz(ra,dec,agst, hh,az,alt)
+  subroutine eq2horiz(ra,dec,agst, hh,az,alt, lat,lon)
     use SUFR_kinds, only: double
     use SUFR_angles, only: rev,rev2
     use TheSky_local, only: lat0,lon0
     
     implicit none
     real(double), intent(in) :: ra,dec,agst
+    real(double), intent(in), optional :: lat,lon
     real(double), intent(out) :: hh,az,alt
-    real(double) :: sinhh,coshh, sinlat0,coslat0, sindec,cosdec,tandec
+    real(double) :: llat,llon, sinhh,coshh, sinlat,coslat, sindec,cosdec,tandec
     
-    hh  = rev( agst + lon0 - ra )                                 ! Local Hour Angle (agst since ra is also corrected for nutation?)
+    ! Lat, lon added later as optional variables:
+    llat = lat0
+    llon = lon0
+    if(present(lat)) llat = lat
+    if(present(lon)) llon = lon
+    
+    hh  = rev( agst + lon0 - ra )  ! Local Hour Angle (agst since ra is also corrected for nutation?)
     
     ! Some preparation, saves ~29%:
-    sinhh   = sin(hh)
-    coshh   = cos(hh)
-    sinlat0 = sin(lat0)
-    coslat0 = sqrt(1.d0-sinlat0**2)   ! Cosine of a latitude is always positive
-    sindec  = sin(dec)
-    cosdec  = sqrt(1.d0-sindec**2)    ! Cosine of a declination is always positive
-    tandec  = sindec/cosdec
+    sinhh  = sin(hh)
+    coshh  = cos(hh)
+    sinlat = sin(llat)
+    coslat = sqrt(1.d0-sinlat**2)    ! Cosine of a latitude is always positive
+    sindec = sin(dec)
+    cosdec = sqrt(1.d0-sindec**2)    ! Cosine of a declination is always positive
+    tandec = sindec/cosdec
     
-    az  = rev( atan2( sinhh,    coshh  * sinlat0 - tandec * coslat0 ))  ! Azimuth
-    alt = rev2( asin( sinlat0 * sindec + coslat0 * cosdec * coshh ))    ! Altitude
+    az  = rev( atan2( sinhh,   coshh  * sinlat - tandec * coslat ))  ! Azimuth
+    alt = rev2( asin( sinlat * sindec + coslat * cosdec * coshh ))   ! Altitude
     
   end subroutine eq2horiz
   !*********************************************************************************************************************************
@@ -650,8 +660,11 @@ contains
   !! \retval hh    Local hour angle
   !! \retval ra    Right ascension
   !! \retval dec   Declination
+  !!
+  !! \param  lat   Geographical latitude (rad), optional
+  !! \param  lon   Geographical longitude (rad), optional
   
-  subroutine horiz2eq(az,alt,agst, hh,ra,dec)
+  subroutine horiz2eq(az,alt, agst,  hh,ra,dec,  lat,lon)
     use SUFR_kinds, only: double
     use SUFR_angles, only: rev,rev2
     use TheSky_local, only: lat0,lon0
@@ -659,19 +672,26 @@ contains
     implicit none
     real(double), intent(in) :: az,alt,agst
     real(double), intent(out) :: ra,dec,hh
-    real(double) :: sinlat0,coslat0, cosaz,sinalt,cosalt,tanalt
+    real(double), intent(in), optional :: lat,lon
+    real(double) :: sinlat,coslat, cosaz,sinalt,cosalt,tanalt, llat,llon
+    
+    ! Lat, lon added later as optional variables:
+    llat = lat0
+    llon = lon0
+    if(present(lat)) llat = lat
+    if(present(lon)) llon = lon
     
     ! Some preparation to save time:
-    sinlat0 = sin(lat0)
-    coslat0 = sqrt(1.d0-sinlat0**2)  ! Cosine of a latitude is always positive
-    cosaz   = cos(az)
-    sinalt  = sin(alt)
-    cosalt  = sqrt(1.d0-sinalt**2)   ! Cosine of a altitude is always positive
-    tanalt  = sinalt/cosalt
+    sinlat = sin(llat)
+    coslat = sqrt(1.d0-sinlat**2)  ! Cosine of a latitude is always positive
+    cosaz  = cos(az)
+    sinalt = sin(alt)
+    cosalt = sqrt(1.d0-sinalt**2)  ! Cosine of a altitude is always positive
+    tanalt = sinalt/cosalt
     
-    hh  = rev(  atan2( sin(az),  cosaz  * sinlat0 + tanalt * coslat0 ))   ! Local Hour Angle
-    dec = rev2( asin(  sinlat0 * sinalt - coslat0 * cosalt * cosaz   ))   ! Declination
-    ra  = rev( agst + lon0 - hh )                                         ! Right ascension
+    hh  = rev(  atan2( sin(az),  cosaz  * sinlat + tanalt * coslat ))  ! Local Hour Angle
+    dec = rev2( asin(  sinlat * sinalt - coslat * cosalt * cosaz   ))  ! Declination
+    ra  = rev( agst + llon - hh )                                      ! Right ascension
     
   end subroutine horiz2eq
   !*********************************************************************************************************************************
