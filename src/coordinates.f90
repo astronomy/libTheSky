@@ -632,7 +632,7 @@ contains
     if(present(lat)) llat = lat
     if(present(lon)) llon = lon
     
-    hh  = rev( agst + lon0 - ra )  ! Local Hour Angle (agst since ra is also corrected for nutation?)
+    hh  = rev( agst + llon - ra )  ! Local Hour Angle (agst since ra is also corrected for nutation?)
     
     ! Some preparation, saves ~29%:
     sinhh  = sin(hh)
