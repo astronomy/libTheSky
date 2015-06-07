@@ -729,11 +729,14 @@ contains
   !! \param  objDec     Declination of the observed object (rad)
   !! \param  objAlt     Altitude of the observed object (rad)
   !!
+  !! \param  lat        Latitude of the observer (optional; rad)
+  !! \param  heigt      Height/altitude of the observer above sea level (optional; metres)
+  !!
   !! \retval limmag_jd  Limiting magnitude
   !!
-  !! \note  Using observer's location from module TheSky_local
+  !! \note  Using observer's location from module TheSky_local; overruled by optional dummy variables lat and heigt
   
-  function limmag_jd(jd, objRA,objDec,objAlt)
+  function limmag_jd(jd, objRA,objDec,objAlt, lat,heigt)
     use SUFR_kinds, only: double
     use SUFR_angles, only: asep
     use SUFR_date_and_time, only: jd2cal
@@ -744,8 +747,14 @@ contains
     
     implicit none
     real(double), intent(in) :: jd, objRA,objDec,objAlt
+    real(double), intent(in), optional :: lat,heigt
     integer :: year, month
-    real(double) :: limmag_jd,  day, sunAlt,sunElon, moonPhase,moonAlt,moonElon, planpos0(nplanpos)
+    real(double) :: limmag_jd,  llat,lheight,  day, sunAlt,sunElon, moonPhase,moonAlt,moonElon, planpos0(nplanpos)
+    
+    llat = lat0
+    lheight = height
+    if(present(lat)) llat = lat
+    if(present(heigt)) lheight = heigt
     
     call jd2cal(jd, year,month,day)
     
@@ -760,7 +769,7 @@ contains
     moonAlt   = planpos(10)                                   ! Moon altitude
     moonElon  = asep(objRA, planpos(5),  objDec, planpos(6))  ! Moon elongation
     
-    limmag_jd = limmag_full(year,month, height,lat0, sunAlt,sunElon, moonPhase,moonAlt,moonElon, objAlt)
+    limmag_jd = limmag_full(year,month, lheight,llat, sunAlt,sunElon, moonPhase,moonAlt,moonElon, objAlt)
     
     planpos = planpos0                                        ! Restore original contents
     
