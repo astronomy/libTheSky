@@ -778,6 +778,39 @@ contains
   
   
   !*********************************************************************************************************************************
+  !> \brief  Calculate limiting magnitude for the local zenith, based on JD and object altitude, wrapper for limmag_jd()
+  !!
+  !! \param  jd         Julian day
+  !! \param  lat        Latitude of the observer (rad)
+  !! \param  lon        Longitude of the observer (rad)
+  !! \param  height     Height/altitude of the observer above sea level (metres)
+  !!
+  !! \retval limmag_zenith_jd  Limiting magnitude
+  
+  function limmag_zenith_jd(jd, lat,lon,height)
+    use SUFR_kinds, only: double
+    use SUFR_constants, only: pio2
+    
+    use TheSky_datetime, only: calc_gmst
+    use TheSky_coordinates, only: horiz2eq
+    
+    implicit none
+    real(double), intent(in) :: jd, lat,lon,height
+    real(double) :: limmag_zenith_jd,  objAlt, gmst,  hh,objRA,objDec
+    
+    ! Compute the RA and dec corresponding to the local zenith at JD, lat and lon:
+    objAlt = pio2  ! Altitude of the zenith = pi/2
+    gmst = calc_gmst(jd)  ! Greenwich mean sidereal time
+    call horiz2eq(0.d0,objAlt, gmst,  hh,objRA,objDec,  lat,lon)  ! Use azimith = 0, gmst iso agst
+    
+    ! Compute the limiting magnitude for the desired JD and the RA, dec and alt corresponding to the zenith:
+    limmag_zenith_jd = limmag_jd(jd, objRA,objDec, objAlt, lat,height)
+    
+  end function limmag_zenith_jd
+  !*********************************************************************************************************************************
+  
+  
+  !*********************************************************************************************************************************
   !> \brief  Calculate limiting magnitude based on JD and planet ID, wrapper for limmag_jd()
   !!
   !! \param  jd            Julian day
