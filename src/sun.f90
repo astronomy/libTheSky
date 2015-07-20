@@ -37,7 +37,6 @@ contains
   !!
   !! \param lat   Latitude of the observer
   !! \param lon   Longitude of the observer
-  !! \param hgt   Height of the observer above sea level
   !!
   !! \note
   !! - lat0, lon0 and height can be provided through the module TheSky_local (rad, rad and m), or through the optional arguments.
@@ -51,7 +50,7 @@ contains
   !!
   !! \todo  odot is off by ~10" in Meeus, Example 25a.  Would need better L0 or C (or M?)
   
-  subroutine sunpos_la(jd, calc, lat,lon,hgt)
+  subroutine sunpos_la(jd, calc, lat,lon)
     use SUFR_kinds, only: double
     use SUFR_constants, only: jd2000, au, earthr,rsun
     use SUFR_angles, only: rev
@@ -59,20 +58,21 @@ contains
     use TheSky_planetdata, only: planpos
     use TheSky_coordinates, only: eq2horiz, refract
     use TheSky_datetime, only: calc_deltat, calc_gmst
-    use TheSky_local, only: lon0,lat0, height
+    use TheSky_local, only: lon0,lat0
     
     implicit none
     real(double), intent(in) :: jd
     integer, intent(in) :: calc
-    real(double), intent(in), optional :: lat,lon,hgt
+    real(double), intent(in), optional :: lat,lon
     
     real(double) :: jde,deltat,tjc,tjc2,tjc3,tjc4, Aorb, l0,m,e,c,odot,nu,omg,a1e2,r, aber, lam,b
-    real(double) :: ra,dec,lm,eps,eps0,deps,gmst,agst,lst,dpsi,az,alt,hh
+    real(double) :: ra,dec,lm,eps,eps0,deps,gmst,agst,lst,dpsi,az,alt,hh, llat,llon
     
     ! Handle optional variables:
-    if(present(lat)) lat0 = lat
-    if(present(lon)) lon0 = lon
-    if(present(hgt)) height = hgt
+    llat = lat0
+    llon = lon0
+    if(present(lat)) llat = lat
+    if(present(lon)) llon = lon
     
     deltat = calc_deltat(jd)
     jde    = jd + deltat/86400.d0
@@ -165,7 +165,7 @@ contains
     
     gmst = calc_gmst(jd)              ! Greenwich mean siderial time
     agst = rev(gmst + dpsi*cos(eps))  ! Correction for equation of the equinoxes -> Gr. apparent sid. time
-    lst  = rev(agst + lon0)           ! Local apparent siderial time, lon0 > 0 for E
+    lst  = rev(agst + llon)           ! Local apparent siderial time, llon > 0 for E
     
     planpos(44) = lst                 ! Local APPARENT siderial time
     planpos(45) = rev(agst)           ! Greenwich mean siderial time
@@ -175,7 +175,7 @@ contains
     
     
     
-    call eq2horiz(ra,dec,agst, hh,az,alt)
+    call eq2horiz(ra,dec,agst, hh,az,alt, llat,llon)
     planpos(8)  = rev(hh)  ! Geocentric hour angle
     planpos(9)  = rev(az)  ! Geocentric azimuth
     planpos(10) = alt      ! Geocentric altitude
@@ -184,7 +184,7 @@ contains
     
     
     planpos(13) = sunmagn(r)                                            ! Apparent magnitude
-    planpos(16) = atan2(sin(hh),tan(lat0)*cos(dec) - sin(dec)*cos(hh))  ! Parallactic angle
+    planpos(16) = atan2(sin(hh),tan(llat)*cos(dec) - sin(dec)*cos(hh))  ! Parallactic angle
     
     if(calc.eq.5) return
     
