@@ -82,9 +82,12 @@ contains
     
     pl0 = pl                           ! Remember which planet was computed last
     
-    
-    lLBaccur = VSOPtruncs(1, pl)  ! Set L,B accuracy equal to VSOP87 truncation
-    lRaccur  = VSOPtruncs(3, pl)  ! Set R accuracy equal to VSOP87 truncation
+    lLBaccur = 0.d0
+    lRaccur = 0.d0
+    if(pl.ge.1 .and. pl.le.8) then
+       lLBaccur = VSOPtruncs(1, pl)  ! Set L,B accuracy equal to VSOP87 truncation
+       lRaccur  = VSOPtruncs(3, pl)  ! Set R accuracy equal to VSOP87 truncation
+    end if
     if(present(LBaccur)) lLBaccur = LBaccur
     if(present(Raccur))  lRaccur  = Raccur
     

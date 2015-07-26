@@ -328,6 +328,7 @@ contains
     do i=deltat_n-1,1,-1              ! i is usually near deltat_n, so start from the back
        if(deltat_years(i).le.y) exit
     end do
+    i = max(i,1)  ! i can be 0 if whole do loop is run without match
     
     yr0 = deltat_years(i)
     dt0 = deltat_values(i)
