@@ -382,14 +382,14 @@ contains
   subroutine rect_2_spher(x,y,z, l,b,r) 
     use SUFR_kinds, only: double
     use SUFR_angles, only: rev
-    use SUFR_numerics, only: deq
+    use SUFR_numerics, only: deq0
     
     implicit none
     real(double), intent(in) :: x,y,z
     real(double), intent(out) :: l,b,r
     real(double) :: x2,y2
     
-    if(deq(x,0.d0) .and. deq(y,0.d0) .and. deq(z,0.d0)) then
+    if(deq0(x) .and. deq0(y) .and. deq0(z)) then
        l = 0.d0
        b = 0.d0
        r = 0.d0

@@ -73,7 +73,7 @@ contains
     use SUFR_constants, only: pi,pi2, d2r,am2r, enpname, earthr,AU
     use SUFR_angles, only: rev
     use SUFR_date_and_time, only: cal2jd,jd2cal
-    use SUFR_numerics, only: deq
+    use SUFR_numerics, only: deq0
     
     use TheSky_planets, only: planet_position, planet_position_la
     use TheSky_planetdata, only: planpos
@@ -211,7 +211,7 @@ contains
           azalt(mi) = 0.d0
        end if
        
-       if(m(mi).lt.0.d0 .and. deq(sa0,0.d0)) then
+       if(m(mi).lt.0.d0 .and. deq0(sa0)) then
           m(mi) = 0.d0
           azalt(mi) = 0.d0
        end if
@@ -267,7 +267,7 @@ contains
     use SUFR_system, only: warn
     use SUFR_angles, only: rev
     use SUFR_date_and_time, only: cal2jd,jd2cal
-    use SUFR_numerics, only: deq
+    use SUFR_numerics, only: deq0
     
     use TheSky_planets, only: planet_position
     use TheSky_planetdata, only: planpos
@@ -417,7 +417,7 @@ contains
        end if  ! if(pl.eq.0)
        
        
-       if(m(mi).lt.0. .and. deq(sa0,0.d0)) then
+       if(m(mi).lt.0. .and. deq0(sa0)) then
           m(mi) = 0.d0
           azalt(mi) = 0.d0
        end if
@@ -469,7 +469,7 @@ contains
     use SUFR_constants, only: pi2, d2r
     use SUFR_angles, only: rev, rev2
     use SUFR_date_and_time, only: cal2jd, jd2cal
-    use SUFR_numerics, only: deq
+    use SUFR_numerics, only: deq0
     
     use TheSky_planets, only: planet_position
     use TheSky_planetdata, only: planpos
@@ -551,7 +551,7 @@ contains
           end if
        end if
        
-       if(m(mi).lt.0. .and. deq(sa0,0.d0)) then
+       if(m(mi).lt.0. .and. deq0(sa0)) then
           m(mi) = 0.d0
           azalt(mi) = 0.d0
        end if

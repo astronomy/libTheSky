@@ -450,7 +450,7 @@ contains
     use SUFR_constants, only: d2r, jd2000
     use SUFR_system, only: quit_program_error
     use SUFR_angles, only: rev
-    use SUFR_numerics, only: deq
+    use SUFR_numerics, only: deq0
     
     use TheSky_local, only: deltat
     use TheSky_planetdata, only: plelems, plelems2000, plelemdata
@@ -461,7 +461,7 @@ contains
     integer :: el,pl,te
     real(double) :: jde,tm,tms(0:3)
     
-    if(deq(plelemdata(1,1,1,1),0.d0))  call quit_program_error('planetelements():  did you forget to call readplanetelements()?', 0)
+    if(deq0(plelemdata(1,1,1,1)))  call quit_program_error('planetelements():  did you forget to call readplanetelements()?', 0)
     
     deltat = calc_deltat(jd)
     jde = jd + deltat/86400.d0
