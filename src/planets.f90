@@ -69,7 +69,7 @@ contains
     real(double) :: hcl0,hcb0,hcr0, hcl,hcb,hcr, hcl00,hcb00,hcr00, sun_gcl,sun_gcb, gcx,gcy,gcz, gcx0,gcy0,gcz0, dhcr
     real(double) :: gcl,gcb,delta,gcl0,gcb0,delta0
     real(double) :: ra,dec,gmst,agst,lst,hh,az,alt,elon,  topra,topdec,topl,topb,topdiam,topdelta,tophh,topaz,topalt
-    real(double) :: diam,illfr,pa,magn,  parang,hp,res1,res2
+    real(double) :: diam,illfr,pa,magn,  parang,hp, rES1,rES2
     logical :: lltime
     
     ! Make sure these are always defined:
@@ -227,8 +227,8 @@ contains
     if(pl.ge.0.and.pl.lt.10) diam = atan(pland(pl)/(delta*au))
     !if(pl.lt.10.and.pl.ge.0) diam = atan(planr(pl)/(2*delta*au))*2
     if(pl.eq.-1) then
-       call earthshadow(delta,hcr0,res1,res2)  ! Calc Earth shadow radii at Moon distance
-       diam = 2*res1                           ! Core-shadow diameter to planpos(12)
+       call earthshadow(delta,hcr0, rES1,rES2)  ! Calc Earth shadow radii at Moon distance: (pen)umbra radius - geocentric
+       diam = 2*rES1                            ! Umbra diameter to planpos(12)
     end if
     
     ! Comets:
@@ -244,8 +244,8 @@ contains
     
     ! Convert heliocentric to topocentric coordinates:
     call geoc2topoc_ecl(gcl,gcb, delta,diam/2.d0, eps,lst,  topl,topb, topdiam)         ! Geocentric to topocentric: l, b, diam
-    if(pl.eq.-1) topdiam = res2                                                         ! Earth penumbra radius at Moon distance
-    topdiam = 2*topdiam
+    if(pl.eq.-1) topdiam = rES2                                                         ! Earth penumbra radius at Moon distance
+    topdiam = 2*topdiam                                                                 ! Was radius, now diameter
     if(pl.ge.0.and.pl.lt.10) topdelta = pland(pl)/tan(topdiam)/au
     
     
@@ -596,9 +596,9 @@ contains
   
   
   !*********************************************************************************************************************************
-  !> \brief  Calculate the umbra and penumbra radii of the Earth's shadow 
+  !> \brief  Calculate the umbra and penumbra geocentric radii of the Earth's shadow
   !! 
-  !! \param dm0  Distance of the Moon (AU?)
+  !! \param dm0  Distance of the Moon (AU)
   !! \param ds0  Distance of the Sun  (AU)
   !!
   !! \retval r1  Umbra radius at distance of the Moon (rad)
@@ -615,8 +615,8 @@ contains
     real(double), intent(out) :: r1,r2
     real(double) :: rs,re,ds,dm,p1,ps,ss
     
-    dm = dm0*au
-    ds = ds0*au
+    dm = dm0*au  ! AU -> cm
+    ds = ds0*au  ! AU -> cm
     
     re = earthr
     rs = planr(3)

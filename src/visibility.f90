@@ -30,7 +30,7 @@
 !
 !  limmag_full                   Calculate limiting magnitude, full function
 !  limmag_jd                     Calculate limiting magnitude based on JD and object altitude, wrapper for limmag_full()
-!  limmag_jd_pl                  Calculate limiting magnitude based on JD and planet ID, wrapper for limmag_jd_pl()
+!  limmag_jd_pl                  Calculate limiting magnitude based on JD and planet ID, wrapper for limmag_jd()
 !  limmag_sun                    Calculate limiting magnitude, based on the altitude of the Sun only
 !
 !  pl_xsmag:                     Compute the excess magnitude (mag-lim.mag) for planet pl at JD, considering Sun, Moon and airmass
@@ -831,15 +831,16 @@ contains
     integer, intent(in) :: pl
     real(double) :: limmag_jd_pl,  objRA,objDec,objAlt, planpos0(nplanpos)
     
-    call planet_position_la(jd, pl, 0,0)  ! Planet position
-    objRA    = planpos(5)                 ! Object right ascension
-    objDec   = planpos(6)                 ! Object declination
-    objAlt   = planpos(10)                ! Object altitude
-    planpos0 = planpos                    ! Save
+    planpos0 = planpos                     ! Save
+    
+    call planet_position_la(jd, pl, 6,10)  ! Planet position
+    objRA    = planpos(5)                  ! Object right ascension
+    objDec   = planpos(6)                  ! Object declination
+    objAlt   = planpos(10)                 ! Object altitude
     
     limmag_jd_pl = limmag_jd(jd, objRA,objDec,objAlt)
     
-    planpos = planpos0                    ! Restore
+    planpos = planpos0                     ! Restore
     
   end function limmag_jd_pl
   !*********************************************************************************************************************************
