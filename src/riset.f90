@@ -109,7 +109,7 @@ contains
     if(pl.eq.3) sa = sa - 16.d0*am2r        ! Compensate for radius of Sun, -16 arcminutes  ! sa = -0.8333d0*d2r - default for Sun
     if(pl.eq.0) sa = 0.125d0*d2r            ! Approximate standard altitude for Moon
     
-    if(abs(sa0).gt.1.d-9) sa = sa0*d2r
+    if(abs(sa0).gt.1.d-9) sa = sa0*d2r      ! Use a user-specified altitude
     
     mmax = 3                   ! Maximum m: transit only: mmax=1, +rise/set: mmax=3
     if(sa0.gt.90.d0) mmax = 1  ! Compute only transit
@@ -151,14 +151,14 @@ contains
     end if
     
     
-    do mi=1,mmax
+    do mi=1,mmax           ! Transit, rise, set
        mj = 0
        accur = 1.d-4       ! Accuracy.  Initially 1d-4, later 1d-6 ~ 0.1s. Don't make this smaller than 1d-16
        use_vsop = .false.  ! Initially
        
        dm = huge(dm)
        do while(abs(dm).ge.accur .or. .not.use_vsop)
-          th0 = agst + 6.300388092591991d0*m(mi)  ! Meeus, p.103
+          th0 = agst + 6.300388092591991d0*m(mi)  ! (Solar day in sidereal days) * 2 pi; Meeus, p.103
           jd1 = jd0 + m(mi) + deltat/86400.d0
           
           if(abs(dm).le.accur) then

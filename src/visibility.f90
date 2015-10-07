@@ -62,7 +62,7 @@ contains
   
   subroutine best_planet_xsmag(jdin,plID, jdout, xsmag) 
     use SUFR_kinds, only: double
-    use SUFR_date_and_time, only: jd2cal,cal2jd
+    use SUFR_date_and_time, only: cal2jd
     use SUFR_solvers, only: minimum_solver
     
     use TheSky_planetdata, only: pl0
