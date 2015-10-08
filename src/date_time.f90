@@ -153,7 +153,7 @@ contains
   !! \param  jd         Julian day of computation
   !! \retval calc_gmst  Greenwich Mean Siderial Time in radians
   !!
-  !! \see Meeus, Sect. 11: Siderial time at Greenwich
+  !! \see Explanatory Supplement to the Astronomical Almanac, 3rd edition, Eq. 6.66 (2012)
   
   function calc_gmst(jd)
     use SUFR_kinds, only: double
@@ -162,13 +162,15 @@ contains
     
     implicit none
     real(double), intent(in) :: jd
-    real(double) :: calc_gmst, djd, tjc,tjc2, gmst
+    real(double) :: calc_gmst, djd,djd2,djd4, DeltaT, gmst
     
-    djd  = jd-jd2000
-    tjc  = djd/36525.d0             ! Julian Centuries after 2000.0 UT
-    tjc2 = tjc**2
+    djd  = jd-jd2000                ! Julian Days after 2000.0 UT
+    djd2 = djd**2
+    djd4 = djd2**2
     
-    gmst = 4.89496121273579229d0 + 6.3003880989849575d0*dJD + 6.77070812713916d-6*tjc2 - 4.5087296615715d-10*tjc2*tjc  ! Eq. 11.4
+    DeltaT = 63.8285d0  ! Value of DeltaT in 2000.0 - don't want to waste time by computing it here
+    gmst = 4.89496121042905d0 + 6.30038809894828323d0*djd + 5.05711849d-15*djd2 - 4.378d-28*djd2*djd - 8.1601415d-29*djd4 &
+         - 2.7445d-36*djd4*djd + 7.0855723730d-12*DeltaT  ! Eq. 6.66
     
     calc_gmst = rev(gmst)          ! If corrected for equation of the equinoxes: agst = rev(gmst + dpsi*cos(eps))
     
