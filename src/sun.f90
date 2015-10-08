@@ -111,8 +111,9 @@ contains
     ! Mean longitude of the Moon, L in CTC88:
     lm   = 3.810344430588d0  +  8399.709113522267d0*tjc  -  2.315615585d-5*tjc2  +  3.23904d-8*tjc3  -  2.67714d-10*tjc4
     
-    ! Nutation in longitude, Meeus, p.144
-    dpsi = -8.338795d-5*sin(omg) - 6.39954d-6*sin(2*l0) - 1.115d-6*sin(2*lm) + 1.018d-6*sin(2*omg)
+    ! Nutation in longitude, 1980 IAU Theory of Nutation, Seidelmann (1982), Table I, lines 1,9,31,2,10 -> rad:
+    dpsi = (-8.338601d-5-7.1365d-8*tjc)*sin(omg) - 6.39324d-6*sin(2*l0) - 1.1025d-6*sin(2*lm) + 9.9969d-7*sin(2*omg) &
+         + 6.9134d-7*sin(m)
     
     ! Annual abberation = k * a(1-e^2)/r, Kovalevsky and Seidelmann, Fundamentals of Astrometry (2004):
     aber = -9.9365085d-5 * a1e2/r
