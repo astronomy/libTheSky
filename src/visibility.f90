@@ -761,12 +761,12 @@ contains
     planpos0 = planpos                                        ! Save current contents
     
     call planet_position_la(jd, 3, 4, 0)                      ! Sun position - 4: need alitude
-    sunAlt = planpos(10)                                      ! Sun altitude
+    sunAlt = planpos(31)                                      ! Sun altitude
     sunElon = asep(objRA, planpos(5),  objDec, planpos(6))    ! Sun elongation
     
     call planet_position_la(jd, 0, 5, 60)                     ! Moon position - 4: need k;  60 terms
     moonPhase = planpos(14)                                   ! Moon phase (illuminated fraction, k)
-    moonAlt   = planpos(10)                                   ! Moon altitude
+    moonAlt   = planpos(31)                                   ! Moon altitude
     moonElon  = asep(objRA, planpos(5),  objDec, planpos(6))  ! Moon elongation
     
     limmag_jd = limmag_full(year,month, lheight,llat, sunAlt,sunElon, moonPhase,moonAlt,moonElon, objAlt)
@@ -836,7 +836,7 @@ contains
     call planet_position_la(jd, pl, 6,10)  ! Planet position
     objRA    = planpos(5)                  ! Object right ascension
     objDec   = planpos(6)                  ! Object declination
-    objAlt   = planpos(10)                 ! Object altitude
+    objAlt   = planpos(31)                 ! Object altitude - refracted
     
     limmag_jd_pl = limmag_jd(jd, objRA,objDec,objAlt)
     
@@ -921,9 +921,13 @@ contains
     call planet_position_la(jd, pl, 4,60)  ! Compute planet position
     objRA  = planpos(5)                    ! Object right ascension
     objDec = planpos(6)                    ! Object declination
-    objAlt = planpos(10)                   ! Object altitude
+    objAlt = planpos(31)                   ! Object altitude - refracted
     
-    pl_xsmag = planpos(13) - limmag_jd(jd, objRA,objDec,objAlt)  ! Magnitude - limiting magnitude
+    if(objAlt.lt.0.d0) then  ! Object is below the horizon
+       pl_xsmag = 99.d0 - objAlt  ! Huge contrast, and worst if further below the horizon, for solvers
+    else
+       pl_xsmag = planpos(13) - limmag_jd(jd, objRA,objDec,objAlt)  ! Magnitude - limiting magnitude
+    end if
     
   end function pl_xsmag
   !*********************************************************************************************************************************
@@ -972,12 +976,16 @@ contains
     real(double) :: pl_xsmag_la, airmass_ext, sunAlt
     
     call planet_position_la(jd,  3, 4,0)  ! Sun position
-    sunAlt = planpos(10)
+    sunAlt = planpos(31)                  ! Refracted
     
     call planet_position_la(jd, pl, 0,0)  ! Planet position
     
-    airmass_ext = 0.2811d0  ! Extinction in magnitudes per unit airmass, at sea level
-    pl_xsmag_la = (planpos(13) + airmass_ext * airmass(planpos(10))) - limmag_sun(sunAlt)  ! (m + ext) - limmag
+    if(planpos(31).lt.0.d0) then  ! Object is below the horizon
+       pl_xsmag_la = 99.d0 - planpos(31) ! Huge contrast, and worst if further below the horizon, for solvers
+    else
+       airmass_ext = 0.2811d0  ! Extinction in magnitudes per unit airmass, at sea level
+       pl_xsmag_la = (planpos(13) + airmass_ext * airmass(planpos(31))) - limmag_sun(sunAlt)  ! (m + ext) - limmag
+    end if
     
   end function pl_xsmag_la
   !*********************************************************************************************************************************
@@ -1004,13 +1012,20 @@ contains
   
 
   !*********************************************************************************************************************************
-  !> \brief  Aperture in centimetres needed to observe an object with given excess magnitude (0: not needed)
+  !> \brief  Aperture diameter in centimetres needed to observe an object with given excess magnitude (0: no instrument needed)
   !!
   !! \param xsmag  Excess magnitude:  magnitude of an object  MINUS  limiting magnitude  (>0: too weak for naked eye)
-  !! \param pupil  Pupil size (mm, default: 7)
+  !! \param pupil  Pupil diameter (mm, default: 6)
   !! \param tc     Transmission coefficient of the instrument (default: 0.8 = 80%)
   !!
   !! \note  This routine should be used as an indication only - no hard facts...
+  !!
+  !! \see
+  !! - http://iovs.arvojournals.org/article.aspx?articleid=2161149 - Fig.3a
+  !!   - average pupil diameter at low light: 7 -> 5mm for 20- -> 80-year olds
+  !!   - use 6mm as default value
+  !! - http://www.telescope-optics.net/functions.htm
+  !!   - default tc for amateur telescopes: ~80%
   
   function aperture(xsmag, pupil, tc)
     use SUFR_kinds, only: double
@@ -1021,7 +1036,7 @@ contains
     real(double) :: aperture, lpupil, ltc
     
     ! Pupil size:
-    lpupil = 7.d0  ! Default pupil size: 7mm
+    lpupil = 6.d0  ! Default pupil diameter: 6mm
     if(present(pupil)) lpupil = pupil
     
     ! Light-transmission coefficient:
@@ -1031,7 +1046,7 @@ contains
     if(xsmag.le.0.d0) then
        aperture = 0.d0
     else
-       aperture = lpupil * sqrt(10.d0**(xsmag/2.5d0) / ltc) / 10.d0  ! Aperture in cm
+       aperture = lpupil * sqrt(10.d0**(xsmag/2.5d0) / ltc) / 10.d0  ! Aperture diameter in cm
     end if
     
   end function aperture
