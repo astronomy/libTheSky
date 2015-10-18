@@ -340,24 +340,24 @@ contains
   !*********************************************************************************************************************************
   !> \brief  Calculate the magnitude of the Moon
   !!
-  !! \param pa     Phase angle
-  !! \param delta  Geocentric(?) distance
+  !! \param pa     Phase angle (rad)
+  !! \param delta  Geocentric(?) distance (AU)
   !!
-  !! \see  http://cleardarksky.com/others/BenSugerman/star.htm, but converted to radians
+  !! \see
+  !! - Allen, 1976
+  !! - http://cleardarksky.com/others/BenSugerman/star.htm
   
   function moonmagn(pa, delta)
     use SUFR_kinds, only: double
     
     implicit none
     real(double), intent(in) :: pa,delta
-    real(double) :: moonmagn,magn,dist,ill
+    real(double) :: moonmagn
     
-    magn = -12.73d0 + 1.48969d0*abs(pa) + 0.043107d0*pa**4  ! Allen, 1976
-    dist = 2.5696d-3/delta                                  ! Average distance over current distance, in AU
+    moonmagn = -12.73d0 + 1.489690267d0*abs(pa) + 0.04310727d0*pa**4  ! Allen, 1976
     
-    ! Correct for variable distance and 'opposition effect' if pa < 7d:
-    ill = 10.d0**(-0.4d0*(magn+16.57d0))  *  dist**2  *  max(1.d0,(1.35d0 - 2.864789d0*abs(pa)))
-    moonmagn = -2.5d0*log10(ill) - 16.57d0
+    ! Correct for variable distance and the 'opposition effect' which occurs when pa < 7d:
+    moonmagn = moonmagn - 2.5*log10( (2.5696d-3/delta)**2  *  max(1.d0, 1.35d0 - 2.864789d0*abs(pa) ) )  ! (1-1.35)/2.865 ~ 7d
     
   end function moonmagn
   !*********************************************************************************************************************************
