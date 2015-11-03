@@ -615,7 +615,7 @@ contains
     
     ! Compute the extinction and sky brightness:
     call limmag_extinction(month, obsLat,obsElev, objAlt, relHum,temp, 3,3,  extCoef, extMag)  ! Compute only V band (3)
-    call limmag_skyBrightness(year, sunAlt,sunElon, moonPhase,moonAlt,moonElon, objAlt, 3,3,  extCoef,  skyBr)  ! Compute only V band (3)
+    call limmag_skyBrightness(year, sunAlt,sunElon, moonPhase,moonAlt,moonElon, objAlt, 3,3,  extCoef,  skyBr)  ! Only V band (3)
     
     
     ! Visual limiting magnitude (V=3 in UBVRI):
@@ -732,7 +732,8 @@ contains
     
     implicit none
     integer, intent(in) :: year, band1,band2
-    real(double), intent(in) :: objAlt, moonAlt,sunAlt, moonPhase,moonElon, sunElon, extCoef(5)
+    real(double), intent(in), value :: objAlt, moonAlt,sunAlt, moonPhase,moonElon, sunElon  ! May be called as planpos()
+    real(double), intent(in) :: extCoef(5)
     real(double), intent(out) :: skyBr(5)
     
     integer :: iBand, band1l,band2l
@@ -799,7 +800,7 @@ contains
        bt = bt * (1.745329252d0/sunElon) * (1.d0 - 10.d0**((-0.4d0*extCoef(iBand))*objAM))
        
        ! Daylight brightness:
-       c4 =  10.d0**(-0.4d0*extCoef(iBand)*sunAM)
+       c4 = 10.d0**(-0.4d0*extCoef(iBand)*sunAM)
        fs = 1.888628d4/sunElon**2 + 10.d0**(6.15d0 - sunElon/0.6981317d0)
        fs = fs + 10.d0**5.36d0 * (1.06d0 + cos(sunElon)**2)
        bd = 10.d0**(-0.4d0*(ms(iBand) -mo(iBand) + 43.27d0))
@@ -846,10 +847,11 @@ contains
     use TheSky_local, only: lat0, height
     
     implicit none
-    real(double), intent(in) :: jd, objRA,objDec,objAlt
+    real(double), intent(in), value :: jd, objRA,objDec,objAlt  ! Often called as planpos(i) -> pass by value
     real(double), intent(in), optional :: lat,heigt
     integer :: year, month
     real(double) :: limmag_jd,  llat,lheight,  day, sunAlt,sunElon, moonPhase,moonAlt,moonElon, planpos0(nplanpos)
+    
     
     llat = lat0
     lheight = height
@@ -861,13 +863,13 @@ contains
     planpos0 = planpos                                        ! Save current contents
     
     call planet_position_la(jd, 3, 4, 0)                      ! Sun position - 4: need alitude
-    sunAlt = planpos(31)                                      ! Sun altitude
-    sunElon = asep(objRA, planpos(5),  objDec, planpos(6))    ! Sun elongation
+    sunAlt = planpos(31)                                        ! Sun altitude
+    sunElon = asep(objRA, planpos(5),  objDec, planpos(6))        ! Sun elongation
     
     call planet_position_la(jd, 0, 5, 60)                     ! Moon position - 4: need k;  60 terms
-    moonPhase = planpos(14)                                   ! Moon phase (illuminated fraction, k)
-    moonAlt   = planpos(31)                                   ! Moon altitude
-    moonElon  = asep(objRA, planpos(5),  objDec, planpos(6))  ! Moon elongation
+    moonPhase = planpos(14)                                     ! Moon phase (illuminated fraction, k)
+    moonAlt   = planpos(31)                                     ! Moon altitude
+    moonElon  = asep(objRA, planpos(5),  objDec, planpos(6))      ! Moon elongation
     
     limmag_jd = limmag_full(year,month, lheight,llat, sunAlt,sunElon, moonPhase,moonAlt,moonElon, objAlt)
     
@@ -1024,7 +1026,7 @@ contains
     objAlt = planpos(31)                   ! Object altitude - refracted
     
     if(objAlt.lt.0.d0) then  ! Object is below the horizon
-       pl_xsmag = 99.d0 - objAlt  ! Huge contrast, and worst if further below the horizon, for solvers
+       pl_xsmag = 99.d0 - objAlt  ! Huge contrast, and worse if further below the horizon, for solvers
     else
        pl_xsmag = planpos(13) - limmag_jd(jd, objRA,objDec,objAlt)  ! Magnitude - limiting magnitude
     end if
