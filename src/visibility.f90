@@ -54,13 +54,15 @@ contains
   !*********************************************************************************************************************************
   !> \brief  Find the moment (JD) of optimal excess magnitude for a planet, i.e. the lowest mag - lim.mag
   !!
-  !! \param  jdin    Julian day to compute best moment for
-  !! \param  plID    Planet to compute visibility for (0-Moon, 1-Mercury, etc.)
+  !! \param  jdin     Julian day to compute best moment for
+  !! \param  plID     Planet to compute visibility for (0-Moon, 1-Mercury, etc.)
   !!
-  !! \retval jdout   Moment of best excess magnitude
-  !! \retval xsmag   Excess magnitude at that moment (magnitude - limiting magnitude; <0: ~visible to the naked eye)
+  !! \retval jdout    Moment of best excess magnitude
+  !! \retval xsmag    Excess magnitude at that moment (magnitude - limiting magnitude; <0: ~visible to the naked eye)
+  !!
+  !! \param  rsCWarn  Print convergence warnings in riset()  (optional; default = true)
   
-  subroutine best_planet_xsmag(jdin,plID, jdout, xsmag) 
+  subroutine best_planet_xsmag(jdin,plID, jdout, xsmag, rsCWarn)
     use SUFR_kinds, only: double
     use SUFR_date_and_time, only: cal2jd
     use SUFR_solvers, only: minimum_solver
@@ -73,11 +75,16 @@ contains
     integer, intent(in) :: plID
     real(double), intent(out) :: jdout
     real(double), intent(out), optional :: xsmag
+    logical, intent(in), optional :: rsCWarn
     
     integer :: status
     real(double) :: tz, jd1,jd2, plvis(2), lxsmag
+    logical :: lrsCWarn
     
-    call planet_visibility_tonight(jdin, plID, 0.d0, 0.d0, 11,  plvis)  ! Sun<0d; Planet>0d, comp=11 twl/today
+    lrsCWarn = .true.  ! riset() convergence warnings on by default
+    if(present(rsCWarn)) lrsCWarn = rsCWarn
+    
+    call planet_visibility_tonight(jdin, plID, 0.d0, 0.d0, 11,  plvis, rsCWarn=lrsCWarn)  ! Sun<0d; Planet>0d, comp=11 twl/today
     
     tz = gettz(jdin)
     jd1 = floor(jdin+0.5d0) - 0.5d0 + (plvis(1)-tz)/24.d0
@@ -101,6 +108,7 @@ contains
   !!
   !! \param  jd                      Julian day to compute best moment for
   !! \param  pl                      Planet to compute visibility for (0-Moon, 1-Mercury, etc.)
+  !!
   !! \retval best_planet_visibility  Best moment to observe the planet (JD)
   
   function best_planet_visibility(jd,pl) 
@@ -117,6 +125,7 @@ contains
     implicit none
     real(double), intent(in) :: jd
     integer, intent(in) :: pl
+    
     integer :: yr,mn
     real(double) :: best_planet_visibility,dy,jd1, sun_maxalt,smaxalt
     real(double) :: srt,stt,sst,srh,sta,ssh, mrt,mtt,mst,mrh,mta,msh, sundat(nplanpos)
@@ -190,8 +199,9 @@ contains
   !! \retval tas     Transit altitudes:  1-2, of Sun,  4-5 of planet
   !! \retval sas     Set azimuths:       1-2, of Sun,  4-5 of planet
   !!
+  !! \param  rsCWarn  Print convergence warnings in riset()  (optional; default = true)
   
-  subroutine planet_visibility_tonight(jd, pl, sunAlt, plalt, comp,   plvis, plazs,   rts, tts, sts,  ras, tas, sas)
+  subroutine planet_visibility_tonight(jd, pl, sunAlt, plalt, comp,   plvis, plazs,   rts, tts, sts,  ras, tas, sas, rsCWarn)
     use SUFR_kinds, only: double
     use SUFR_constants, only: r2d
     use SUFR_angles, only: rv12
@@ -204,13 +214,17 @@ contains
     integer, intent(in) :: pl, comp
     real(double), intent(out) :: plvis(2)
     real(double), intent(out), optional :: plazs(2),  rts(5), tts(5), sts(5),  ras(5), tas(5), sas(5)
+    logical, intent(in), optional :: rsCWarn
     
     integer :: irs, ix, maxi, ind(4)
     real(double) :: alt, times(4),azs(4), st,sh,  lrts(5), ltts(5), lsts(5), lras(5),ltas(5),lsas(5)
-    logical :: sup,pup,pvis,pvisold
+    logical :: sup,pup,pvis,pvisold, lrsCWarn
     
     lrts=0.d0; ltts=0.d0; lsts=0.d0; lras=0.d0;ltas=0.d0;lsas=0.d0; plvis=0.d0
     if(present(plazs)) plazs=0.d0
+    
+    lrsCWarn = .true.  ! riset() convergence warnings on by default
+    if(present(rsCWarn)) lrsCWarn = rsCWarn
     
     ! On day JD, we want set times for JD and rise times for JD+1:
     
@@ -222,10 +236,10 @@ contains
        if(irs.eq.2) alt = 0.d0
        
        ! Today:    s.set lsts:
-       call riset(jd, 3,   lrts(irs), ltts(irs), lsts(irs),   lras(irs), ltas(irs), lsas(irs),   alt)
+       call riset(jd, 3,   lrts(irs), ltts(irs), lsts(irs),   lras(irs), ltas(irs), lsas(irs),   alt,  cWarn=lrsCWarn)
        
        ! Tomorrow: s.rise lrts(2) / st. twl lrts(1):
-       if(comp.lt.10) call riset(jd+1.d0, 3,   lrts(irs), ltts(irs), st,   lras(irs), ltas(irs), sh,   alt)
+       if(comp.lt.10) call riset(jd+1.d0, 3,   lrts(irs), ltts(irs), st,   lras(irs), ltas(irs), sh,   alt,  cWarn=lrsCWarn)
     end do  ! irs=1,2
     
     
@@ -236,10 +250,10 @@ contains
        if(irs.eq.5) alt = 0.d0
        
        ! Today: planet set:
-       call riset(jd, pl,   lrts(irs), ltts(irs), lsts(irs),   lras(irs), ltas(irs), lsas(irs),   alt)
+       call riset(jd, pl,   lrts(irs), ltts(irs), lsts(irs),   lras(irs), ltas(irs), lsas(irs),   alt,  cWarn=lrsCWarn)
        
        ! Tomorrow: planet rise, transit:
-       if(comp.lt.10) call riset(jd+1.d0, pl,   lrts(irs), ltts(irs), st,   lras(irs), ltas(irs), sh,   alt)
+       if(comp.lt.10) call riset(jd+1.d0, pl,   lrts(irs), ltts(irs), st,   lras(irs), ltas(irs), sh,   alt,  cWarn=lrsCWarn)
     end do  ! irs=4,5
     
     
