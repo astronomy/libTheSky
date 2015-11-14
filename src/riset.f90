@@ -42,6 +42,7 @@ contains
   !! \retval sh    Setting wind direction (rad)
   !! 
   !! \param ltime  Passed to planet_position(). If .true., include light time, doubling the CPU time while gaining a bit of accur.
+  !! \param cWarn  Warn upon convergence failure (optional; default: true)
   !!
   !! \note
   !! - for sa0 = 0.d0, rise and set times are computed
@@ -68,7 +69,7 @@ contains
   !! - Meeus, Astronomical algorithms, Ch.15, but with geographic longitude east of Greenwich defined as > 0
   
   
-  subroutine riset(jd,pl,  rt,tt,st, rh,ta,sh,  sa0, ltime)
+  subroutine riset(jd,pl,  rt,tt,st, rh,ta,sh,  sa0, ltime, cWarn)
     use SUFR_kinds, only: double
     use SUFR_constants, only: pi,pi2, d2r,am2r, enpname, earthr,AU
     use SUFR_angles, only: rev
@@ -83,20 +84,23 @@ contains
     integer, intent(in) :: pl
     real(double), intent(in) :: jd, sa0
     real(double), intent(out) :: rt,tt,st,rh,ta,sh
-    logical, intent(in), optional :: ltime
+    logical, intent(in), optional :: ltime, cWarn
     
     integer :: mi,mj,yr,mnt,tc,mmax
     real(double) :: dy,day0,  jd0,jd1,m(3),  ra,dec
     real(double) :: sa,ch0,h0,agst,th0,dm,corr(3),accur,  ha,alt,azalt(3)
     character :: event(3)*(13)
-    logical :: use_vsop, lltime
+    logical :: use_vsop, lltime, lcWarn
     
     lltime = .false.                    ! Call planet_position() IGNORING light time by default (faster, lower accuracy)
     if(present(ltime)) lltime = ltime
     
+    lcWarn = .true.                     ! Warn upon convergence failure
+    if(present(cWarn)) lcWarn = cWarn
+    
     ! Use the old interpolation routine for all but Moon and Sun:
     if(pl.ne.0.and.pl.ne.3) then
-       call riset_ipol(jd,pl, rt,tt,st, rh,ta,sh, sa0, lltime)
+       call riset_ipol(jd,pl, rt,tt,st, rh,ta,sh, sa0, lltime, lcWarn)
        return
     end if
     
@@ -193,8 +197,8 @@ contains
        
        
        if(mj.gt.30) then  ! Convergence failed
-          if(pl.ne.3.or.nint(sa0).ne.-18) write(0,'(A,F10.3,A)') '  * WARNING:  riset():  Riset failed to converge: '// &
-               trim(enpname(pl))//'  '//trim(event(mi)),sa0,'d *'
+          if(lcWarn .and. pl.ne.3.or.nint(sa0).ne.-18) write(0,'(A,F10.3,A)') '  * WARNING:  riset():  Riset failed to '// &
+               'converge: '//trim(enpname(pl))//'  '//trim(event(mi)),sa0,'d *'
           
           m(mi) = 0.d0
           azalt(mi) = 0.d0
@@ -250,6 +254,7 @@ contains
   !! \retval sh   Setting wind direction (rad)
   !! 
   !! \param ltime  Passed to planet_position(). If .true., include light time, doubling the CPU time while gaining a bit of accur.
+  !! \param cWarn  Warn upon convergence failure (optional; default: true)
   !! 
   !! \note
   !! - for sa0 = 0.d0, rise and set times are computed
@@ -261,7 +266,7 @@ contains
   !! \see
   !! - Meeus, Astronomical algorithms, Ch.15, but with geographic longitude east of Greenwich defined as > 0
   
-  subroutine riset_ipol(jd,pl, rt,tt,st, rh,ta,sh, sa0, ltime)
+  subroutine riset_ipol(jd,pl, rt,tt,st, rh,ta,sh, sa0, ltime, cWarn)
     use SUFR_kinds, only: double
     use SUFR_constants, only: pi,pi2, d2r,am2r, enpname, earthr,AU
     use SUFR_system, only: warn
@@ -278,12 +283,17 @@ contains
     real(double), intent(in) :: jd, sa0
     real(double), intent(out) :: rt,tt,st, rh,ta,sh
     logical, intent(in) :: ltime
+    logical, intent(in), optional :: cWarn
     
     integer :: mi,mj,yr,mnt,tc,mmax, indic
     real(double) :: dy,day0,  jd0,jd1,jd2,m(3)
     real(double) :: ra0,dec0,ra1,dec1,ra2,dec2,ra,dec, sa,ch0,h0,agst,th0,n,dm,corr(3),accur,  ha,alt,azalt(3)
     character :: event(3)*(13)
+    logical :: lcWarn
     save :: indic
+    
+    lcWarn = .true.
+    if(present(cWarn)) lcWarn = cWarn
     
     if((pl.eq.0.or.pl.eq.3) .and. indic.ne.12345) then
        call warn("riset_ipol():  Don't use this routine for Sun or Moon - use riset() instead.", 0)
@@ -382,8 +392,8 @@ contains
        
        
        if(mj.gt.30) then  ! Convergence failed
-          if(pl.ne.3.or.nint(sa0).ne.-18) write(0,'(A,F10.3,A)') '  * WARNING:  riset_ipol():  Riset failed to converge: '// &
-               trim(enpname(min(pl,19)))//'  '//trim(event(mi)),sa0,'d'
+          if(lcWarn .and. pl.ne.3.or.nint(sa0).ne.-18) write(0,'(A,F10.3,A)') '  * WARNING:  riset_ipol():  Riset failed to '// &
+               'converge: '//trim(enpname(min(pl,19)))//'  '//trim(event(mi)),sa0,'d'
           
           m(mi) = 0.d0
           azalt(mi) = 0.d0
@@ -456,6 +466,8 @@ contains
   !! \retval ta   Transit altitude (rad)
   !! \retval sh   Setting wind direction (rad)
   !!
+  !! \param cWarn  Warn upon convergence failure (optional; default: true)
+  !!
   !! for sa0 = 0., rise and set times are computed
   !! for sa0.ne.0, the routine calculates when alt=sa0 is reached
   !! use sa0=-6,-12,-18 for the sun for twilight calculations
@@ -464,7 +476,7 @@ contains
   !! \see
   !! - Meeus, Astronomical algorithms, Ch.15, but with geographic longitude east of Greenwich defined as > 0
   
-  subroutine riset_ad(jd, ra,dec, rt,tt,st,rh,ta,sh, sa0)
+  subroutine riset_ad(jd, ra,dec, rt,tt,st,rh,ta,sh, sa0, cWarn)
     use SUFR_kinds, only: double
     use SUFR_constants, only: pi2, d2r
     use SUFR_angles, only: rev, rev2
@@ -478,9 +490,15 @@ contains
     implicit none
     real(double), intent(in) :: jd, ra,dec, sa0
     real(double), intent(out) :: rt,tt,st,rh,ta,sh
+    logical, intent(in), optional :: cWarn
+    
     integer :: mi,mj,yr,mnt,mmax
     real(double) :: dy,day0,jd1,m(3),  sa,ch0,h0,agst,th0,dm,accur,  ha,alt,azalt(3) !,n
     character :: event(3)*(13)
+    logical :: lcWarn
+    
+    lcWarn = .true.
+    if(present(cWarn)) lcWarn = cWarn
     
     alt = 0.d0;  ha = 0.d0;  h0 = 0.d0
     
@@ -539,7 +557,7 @@ contains
        
        
        if(mj.gt.30) then  ! Convergence failed
-          write(0,'(A,F10.3,A)') '  * WARNING:  riset_ad():  Riset failed to converge: '//trim(event(mi)),sa0,'d *'
+          if(lcWarn) write(0,'(A,F10.3,A)') '  * WARNING:  riset_ad():  Riset failed to converge: '//trim(event(mi)),sa0,'d *'
           
           m(mi) = 0.d0
           azalt(mi) = 0.d0
