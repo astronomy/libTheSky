@@ -197,7 +197,7 @@ contains
        
        
        if(mj.gt.30) then  ! Convergence failed
-          if(lcWarn .and. pl.ne.3.or.nint(sa0).ne.-18) write(0,'(A,F10.3,A)') '  * WARNING:  riset():  Riset failed to '// &
+          if(lcWarn .and. (pl.ne.3.or.nint(sa0).ne.-18)) write(0,'(A,F10.3,A)') '  * WARNING:  riset():  Riset failed to '// &
                'converge: '//trim(enpname(pl))//'  '//trim(event(mi)),sa0,'d *'
           
           m(mi) = 0.d0
@@ -392,7 +392,7 @@ contains
        
        
        if(mj.gt.30) then  ! Convergence failed
-          if(lcWarn .and. pl.ne.3.or.nint(sa0).ne.-18) write(0,'(A,F10.3,A)') '  * WARNING:  riset_ipol():  Riset failed to '// &
+          if(lcWarn .and. (pl.ne.3.or.nint(sa0).ne.-18)) write(0,'(A,F10.3,A)') '  * WARNING:  riset_ipol():  Riset failed to '// &
                'converge: '//trim(enpname(min(pl,19)))//'  '//trim(event(mi)),sa0,'d'
           
           m(mi) = 0.d0
