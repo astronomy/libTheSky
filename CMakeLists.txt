@@ -38,10 +38,6 @@ set( CMAKE_CONFIGURATION_TYPES "${CMAKE_BUILD_TYPE}" CACHE INTERNAL "internal" )
 project( libTheSky Fortran )
 
 
-# Use CPack for packaging:
-#include( CPack )
-#set( CPACK_INSTALL_PREFIX_PATH ${CMAKE_INSTALL_PREFIX_PATH} )
-
 # Increase verbosity for debugging:
 option( CMAKE_VERBOSE_MAKEFILE "Verbose makefile" on )
 
@@ -73,6 +69,29 @@ include( FileList )
 
 # Set FORTRAN compiler flags:
 include( CompilerFlags_Fortran )
+
+
+# Find the package version from the VERSION file and stick it into PKG_VERSION:
+# The file VERSION is either in the root directory of the package, or in doc/:
+set( VERSION_FILE ${CMAKE_SOURCE_DIR}/VERSION )
+if( NOT EXISTS ${VERSION_FILE} )
+  set( VERSION_FILE ${CMAKE_SOURCE_DIR}/doc/VERSION )
+endif( NOT EXISTS ${VERSION_FILE} )
+
+set( PKG_VERSION "0.0.0" )   # Indicates that the version number was not found
+file(STRINGS ${VERSION_FILE} Lines )
+foreach( Line ${Lines} )
+  string(REGEX MATCH "Release version:.+" Line ${Line} )  # Returns the matching string
+  string(COMPARE NOTEQUAL "${Line}" "" Matches )          # If the string is not empty, we have a match
+  if( Matches )
+    string(REPLACE "Release version:" "" Line ${Line})    # Remove text
+    string(STRIP ${Line} Line)                            # Strip leading and trailing spaces
+    set( PKG_VERSION ${Line} )
+  endif( Matches )
+endforeach()
+message( STATUS "libTheSky version in the current package: ${PKG_VERSION}" )
+message( STATUS "" )
+
 
 
 # Create the file code_version.f90, which contains the code version number/hash and date:
@@ -108,7 +127,7 @@ if( CREATE_STATICLIB )
     set_target_properties( libTheSky_static PROPERTIES OUTPUT_NAME "TheSky" )
   endif( COMPILER_SPECIFIC_LIBS )
   set_target_properties( libTheSky_static PROPERTIES Fortran_MODULE_DIRECTORY ${MODULE_DIRECTORY} )
-  add_dependencies( libTheSky_static libTheSky_shared )  # Ensure it is build after the shared lib
+  add_dependencies( libTheSky_static libTheSky_shared PKG_VERSION )  # Ensure it is build after the shared lib
 endif( CREATE_STATICLIB )
 
 
@@ -123,4 +142,14 @@ add_custom_target( "libTheSky_data"
 # Install to destination:
 #   use DIRECTORY rather than TARGETS to allow include/<fortrancompiler>/
 install( DIRECTORY usr/ DESTINATION ${CMAKE_INSTALL_PREFIX} )
+
+# Install man pages:
+install( DIRECTORY man/ DESTINATION ${CMAKE_INSTALL_PREFIX}/share/man )
+
+# Install documents:
+if( NOT EXISTS VERSION )
+  install( FILES doc/CHANGELOG doc/LICENCE doc/README doc/VERSION DESTINATION ${CMAKE_INSTALL_PREFIX}/share/doc/libthesky-${PKG_VERSION} )
+else( NOT EXISTS VERSION )
+  install( FILES CHANGELOG LICENCE README VERSION DESTINATION ${CMAKE_INSTALL_PREFIX}/share/doc/libthesky-${PKG_VERSION} )
+endif( NOT EXISTS VERSION )
 
