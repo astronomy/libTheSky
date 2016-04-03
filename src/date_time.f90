@@ -129,20 +129,28 @@ contains
   subroutine calctime(ut,jd,jde)
     use SUFR_kinds, only: double
     use SUFR_date_and_time, only: cal2jd
+    use SUFR_numerics, only: dne
     use TheSky_local, only: year,month,day, hour,minute,second, tz,deltat
     
     implicit none
     real(double), intent(out) :: ut,jd,jde
-    real(double) :: lt
+    real(double) :: lt, oldtz
     
+    ! Compute local time, UT and JD:
     lt = dble(hour) + (dble(minute) + second/60.d0)/60.d0
     ut = lt - tz
     jd = cal2jd(year,month,day+ut/24.d0)              ! This is the 'UT JD'
     
+    ! Determine the correct timezone from the JD, and recompute UT and JD:
+    oldtz = tz
+    tz = gettz(jd)                                    ! NEW, good idea?  - perhaps not (when UT is needed!, 2009-03-31)
+    if(dne(tz, oldtz)) then
+       ut = lt - tz
+       jd = cal2jd(year,month,day+ut/24.d0)           ! This is the 'UT JD'
+    end if
+    
     deltat = calc_deltat_ymd(year,month,day)
     jde = jd + deltat/86400.d0
-    
-    tz = gettz(jd)  ! NEW, good idea?  - perhaps not (when UT is needed!, 2009-03-31)
     
   end subroutine calctime
   !*********************************************************************************************************************************
