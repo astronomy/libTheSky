@@ -19,9 +19,11 @@
 !***********************************************************************************************************************************
 !> \brief Procedures for VSOP87
 !!
+!! \note
 !! Accuracies 1900-2100 in milliarcseconds (VSOP87 paper):
 !! - Me: 1,  Ve: 6,  Ea: 5,  Ma: 23,  Ju: 20,  Sa: 100,  Ur: 16,  Ne: 30
 !!
+!! \note
 !! Accuracy < 1" in JD2000 +- range in kyr (Wikipedia):
 !! - Me-Ma: 4, Ju,Sa: 2, Ur,Ne: 6  (i.e., Earth position more accurate than 1" between -2000 and +6000)
 !!

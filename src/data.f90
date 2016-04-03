@@ -114,6 +114,7 @@ contains
   !*********************************************************************************************************************************
   !> \brief Read deltat.dat with historical values for DeltaT
   !! 
+  !! \note
   !! - Is needed by read_locations and hence called from there
   !! \see http://hemel.waarnemen.com/Computing/deltat.html
   
@@ -348,7 +349,8 @@ contains
   !*********************************************************************************************************************************
   !> \brief  Read the data needed to compute the orbital elements of the planets
   !!
-  !! -  use planetelements() to compute them
+  !! \note
+  !! -  use planetelements() to compute the orbital elements
   !! 
   !! - L, a, e, i, Omega, pi for Mer-Nep, mean equinox of date and J2000.0 (=2x6x8)
   !! - Terms in one row are a_0, a_1, a_2, a_3 and should be used as:  Sum(i=0,3) a_i t^i, with t the time in centuries since 2000.0

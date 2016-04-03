@@ -21,7 +21,7 @@
 !  set_date_and_time_to_jd2000:         Set global date/time variables (year, month, ..., minute, second) to JD2000.0
 
 !  calctime:                            Calculates ut, jd and jde
-!  calc_gmst:                            Calculate Greenwich Mean Siderial Time in RAD!
+!  calc_gmst:                           Calculate Greenwich Mean Siderial Time in RAD!
 !  calc_deltat:                         Calculates deltat from jd: SLOW!
 !  calc_deltat_ymd:                     Calculates deltat from y,m,d, faster
 !  find_deltat_in_range:                Find a precise value for DeltaT through linear interpolation in tabulated values
@@ -121,6 +121,7 @@ contains
   !! \retval jd   Julian date
   !! \retval jde  Julian date
   !!
+  !! \note
   !! - Date and time are obtained from year, month, day, hour, minute, second, through the module TheSky_local, assuming LOCAL time
   !! - DeltaT and TZ are returned through the module TheSky_local
   !! - Computed JD is in UNIVERSAL time
@@ -183,6 +184,7 @@ contains
   !!
   !! \retval JD   Julian date
   !!
+  !! \note
   !! - Date and time are obtained from year, month, day, hour, minute, second, through the module TheSky_local
   !! - DeltaT and TZ are returned through the module TheSky_local
   
@@ -250,6 +252,7 @@ contains
   !! \param m  Month
   !! \param d  Day
   !! 
+  !! \note
   !! - Faster than calc_deltat. Use this routine rather than calc_deltat() if y,m,d are known
   
   function calc_deltat_ymd(y,m,d)
@@ -494,6 +497,8 @@ contains
   !> \brief  Prints date/time of a given Julian day (UT) to standard output
   !!
   !! \param jd  Julian day (UT)
+  !!
+  !! \note
   !! - calls printdate1()
   
   subroutine printdate(jd)
@@ -699,6 +704,7 @@ contains
   !! \retval jd     JD: Julian day
   !! \retval jde    JDE: Apparent Julian day
   !!
+  !! \note
   !! - uses the module local to obtain the variables year, month, etc.
   !! - calls calctime(), gettz()
   

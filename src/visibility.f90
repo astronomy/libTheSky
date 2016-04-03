@@ -460,6 +460,8 @@ contains
   !> \brief  Compute the difference between a given right ascension and the RA of the Sun,  used privately by best_obs_date_ra()
   !!
   !! \param jd  Julian day
+  !!
+  !! \note
   !! - Get (RA_obj - RA_sun) for object with RA ra, passed via the common block best_obs_RA
   
   function get_dRA_obj(jd)
@@ -487,6 +489,7 @@ contains
   !!
   !! \param alt  Altitude of object (radians)
   !!
+  !! \note
   !! - Results are 1 <= airmass <~ ??; return ~1000 for h<0
   !! - Maximum supposed error (at the horizon) of 0.0037 air mass
   !!
@@ -521,6 +524,7 @@ contains
   !!
   !! \param alt  Altitude of object (radians)
   !!
+  !! \note
   !! - Results are 1 <= airmass <~ 38; return ~1000 for h<0
   !!
   !! \see Kasten and Young (1989); http://en.wikipedia.org/wiki/Airmass#Interpolative_formulas

@@ -29,15 +29,17 @@ contains
   !*********************************************************************************************************************************
   !> \brief  Low-accuracy solar coordinates
   !!
-  !! - accuracy: ~0.01°;  ~0.0033° when comparing ecliptical coordinates to VSOP87 for 1900-2100 (10^5 random instances)
-  !! - for 1900-2100, the terms greater than Tjc^2 can be neglected without loss of accuracy
-  !! 
   !! \param jd    Julian Day of computation
   !! \param calc  Calculate:  1: l,b,r,  2: & ra,dec,  3: & gmst,agst,  4: & az,alt,  5: & mag + p.a.,  99: & topo alt + refraction
   !!
   !! \param lat   Latitude of the observer
   !! \param lon   Longitude of the observer
   !!
+  !!
+  !! \note
+  !! - accuracy: ~0.01°;  ~0.0033° when comparing ecliptical coordinates to VSOP87 for 1900-2100 (10^5 random instances)
+  !! - for 1900-2100, the terms greater than Tjc^2 can be neglected without loss of accuracy
+  !! 
   !! \note
   !! - lat0, lon0 and height can be provided through the module TheSky_local (rad, rad and m), or through the optional arguments.
   !!   Note that using the latter will update the former!

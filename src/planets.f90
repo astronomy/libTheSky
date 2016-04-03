@@ -437,6 +437,7 @@ contains
   !! - plelems(pl,el):     EoD
   !! - plelems2000(pl,el): J2000.0
   !!
+  !! \note
   !! Elements (el):
   !! - 1: L     - mean longitude
   !! - 2: a     - semi-major axis
