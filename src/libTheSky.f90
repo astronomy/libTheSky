@@ -5,14 +5,14 @@
 !!  under the conditions of the GPL v.3.
 !!  
 !!  \par
-!!  Copyright &copy; 2002-2015  Marc van der Sluys - <a href="http://marc.vandersluys.nl">marc.vandersluys.nl</a>
+!!  Copyright &copy; 2002-2016  Marc van der Sluys - <a href="http://marc.vandersluys.nl">marc.vandersluys.nl</a>
 !!
 !!  \see
 !!  These pages contain the documentation for libTheSky, created by Doxygen.  
 !!  For the libTheSky home page, see: http://libthesky.sf.net
 
 
-!  Copyright (c) 2002-2015  Marc van der Sluys - marc.vandersluys.nl
+!  Copyright (c) 2002-2016  Marc van der Sluys - marc.vandersluys.nl
 !   
 !  This file is part of the libTheSky package, 
 !  see: http://libthesky.sf.net/
