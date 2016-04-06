@@ -849,13 +849,13 @@ contains
   !! \param  objAlt     Altitude of the observed object (rad)
   !!
   !! \param  lat        Latitude of the observer (optional; rad)
-  !! \param  heigt      Height/altitude of the observer above sea level (optional; metres)
+  !! \param  height     Height/altitude of the observer above sea level (optional; metres)
   !!
   !! \retval limmag_jd  Limiting magnitude
   !!
-  !! \note  Using observer's location from module TheSky_local; overruled by optional dummy variables lat and heigt
+  !! \note  Using observer's location from module TheSky_local; overruled by optional dummy variables lat and height
   
-  function limmag_jd(jd, objRA,objDec,objAlt, lat,heigt)
+  function limmag_jd(jd, objRA,objDec,objAlt, lat,height)
     use SUFR_kinds, only: double
     use SUFR_angles, only: asep
     use SUFR_date_and_time, only: jd2cal
@@ -866,7 +866,7 @@ contains
     
     implicit none
     real(double), intent(in), value :: jd, objRA,objDec,objAlt  ! Often called as planpos(i) -> pass by value
-    real(double), intent(in), optional :: lat,heigt
+    real(double), intent(in), optional :: lat,height
     integer :: year, month
     real(double) :: limmag_jd,  llat,lheight,  day, sunAlt,sunElon, moonPhase,moonAlt,moonElon, planpos0(nplanpos)
     
@@ -874,7 +874,7 @@ contains
     llat = lat0
     lheight = height
     if(present(lat)) llat = lat
-    if(present(heigt)) lheight = heigt
+    if(present(height)) lheight = height
     
     call jd2cal(jd, year,month,day)
     

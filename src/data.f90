@@ -115,7 +115,6 @@ contains
   !> \brief Read deltat.dat with historical values for DeltaT
   !! 
   !! \note
-  !! - Is needed by read_locations and hence called from there
   !! \see http://hemel.waarnemen.com/Computing/deltat.html
   
   subroutine read_deltat()
