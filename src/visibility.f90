@@ -862,7 +862,7 @@ contains
     
     use TheSky_planets, only: planet_position_la
     use TheSky_planetdata, only: planpos, nplanpos
-    use TheSky_local, only: lat0, height
+    use TheSky_local, only: lat0, height0=>height
     
     implicit none
     real(double), intent(in), value :: jd, objRA,objDec,objAlt  ! Often called as planpos(i) -> pass by value
@@ -870,11 +870,14 @@ contains
     integer :: year, month
     real(double) :: limmag_jd,  llat,lheight,  day, sunAlt,sunElon, moonPhase,moonAlt,moonElon, planpos0(nplanpos)
     
-    
+    ! Use values from TheSky_local by default:
     llat = lat0
-    lheight = height
+    lheight = height0
+    
+    ! Overrule with values from optional arguments if present:
     if(present(lat)) llat = lat
     if(present(height)) lheight = height
+    
     
     call jd2cal(jd, year,month,day)
     
