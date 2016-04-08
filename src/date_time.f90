@@ -29,7 +29,7 @@
 
 !  jd2dtm:                              Converts JD to y,m,d,h,m,s, input in UT, output in LT
 !  jd2dthm:                             Converts JD to y,m,d,h,m, input in UT, output in LT (no seconds)
-!  jd2time:                             Converts JD to time;  input JD in UT, output time in hours LT
+!  jd2ltime:                            Converts JD to time;  input JD in UT, output time in hours LT
 
 !  printdate:                           Converts JD to y,m,d,h,m,s and prints it out
 !  printdate1:                          prints date/time of JD (UT) without hard return
@@ -511,22 +511,22 @@ contains
   !!
   !! \param jd0  Julian day (UT)
   
-  function jd2time(jd0)
+  function jd2ltime(jd0)
     use SUFR_kinds, only: double
     use SUFR_date_and_time, only: jd2cal
     use TheSky_local, only: tz
     
     implicit none
     real(double), intent(in) :: jd0
-    real(double) :: jd1,dd,jd2time
+    real(double) :: jd1,dd,jd2ltime
     integer :: d,mm,yy
     
     jd1 = jd0 + tz/24.d0       ! UT -> LT
     call jd2cal(jd1,yy,mm,dd)
     d  = int(dd)
-    jd2time = (dd - dble(d))*24.d0
+    jd2ltime = (dd - dble(d))*24.d0
     
-  end function jd2time
+  end function jd2ltime
   !*********************************************************************************************************************************
   
   
