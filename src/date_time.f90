@@ -17,6 +17,7 @@
 
 
 !  set_date_and_time:                   Set global date/time variables (year, month, ..., minute, second) to specified values
+!  get_date_and_time:                   Retrieve the current global date/time variables (year, ..., second, stored in TheSky_local)
 !  set_date_and_time_to_system_clock:   Set global date/time variables (year, month, ..., minute, second) to system clock
 !  set_date_and_time_to_jd2000:         Set global date/time variables (year, month, ..., minute, second) to JD2000.0
 
@@ -77,6 +78,38 @@ contains
     lsecond = second
     
   end subroutine set_date_and_time
+  !*********************************************************************************************************************************
+  
+  
+  
+  !*********************************************************************************************************************************
+  !> \brief  Retrieve the current global date/time variables (year, month, ..., minute, second, stored in TheSky_local)
+  !!
+  !! \retval year    Year
+  !! \retval month   Month
+  !! \retval day     Day
+  !!
+  !! \retval hour    Hour
+  !! \retval minute  Minute
+  !! \retval second  Second
+  
+  subroutine get_date_and_time(year,month,day, hour,minute, second)
+    use SUFR_kinds, only: double
+    use TheSky_local, only: lyear=>year,lmonth=>month,lday=>day, lhour=>hour,lminute=>minute,lsecond=>second
+    
+    implicit none
+    integer, intent(out) :: year,month,day, hour,minute
+    real(double), intent(out) :: second
+    
+    year   = lyear
+    month  = lmonth
+    day    = nint(lday)
+    
+    hour   = lhour
+    minute = lminute
+    second = lsecond
+    
+  end subroutine get_date_and_time
   !*********************************************************************************************************************************
   
   
@@ -615,6 +648,7 @@ contains
   
   function gettz(jd, ltz0,ldsttp)
     use SUFR_kinds, only: double
+    use SUFR_system, only: warn
     use SUFR_date_and_time, only: jd2cal, cal2jd
     use TheSky_local, only: dsttp, tz,tz0
     
@@ -668,6 +702,7 @@ contains
        !   m = m-1
        !end if
        
+       call warn('DST rules not implemented prior to 2007!')
        
        if(y.ge.2007) then
           m1 = 3        ! March
@@ -720,6 +755,7 @@ contains
     use SUFR_kinds, only: double
     use SUFR_constants, only: r2d, endays,enmonths
     use SUFR_time2string, only: hms
+    use SUFR_text, only: d2s
     
     use TheSky_local, only: year,month,day, hour,minute,second, tz, lat0,lon0,height,deltat
     
@@ -741,10 +777,10 @@ contains
        write(op,'(A)') ''  ! Newline
     end do
     
-    write(op,'(A20,3A,I3,A1,I5,  A9,A9,F4.3,A5,F0.1,  A13,2(A4,F0.4), A4,F0.1,A1)') &
+    write(op,'(A20,3A,I3,A1,I5,  A9,A9,F4.3,A5,A,  A13,2(A4,A), A4,A,A1)') &
          'LOCAL:      Date: ',trim(endays(dow(jd))),' ', trim(enmonths(month)),nint(day),',',year,  &
-         'Time:',hms(lt),second-int(second),'tz: ',tz,   &
-         'Location:','l: ',lon0*r2d,'b: ',lat0*r2d, 'h: ',height,'m'
+         'Time:',hms(lt),second-int(second),'tz: ',d2s(tz,1),   &
+         'Location:','l: ',d2s(lon0*r2d,4),'b: ',d2s(lat0*r2d,4), 'h: ',d2s(height,1),'m'
     
     write(op,'(A17,A9,F4.3,A7,F15.6, A12,F0.2,A1, A8,F15.6)') 'UNIVERSAL:  UT:',hms(ut),second-int(second),'JD:',jd, &
          'DeltaT: ',deltat,'s', 'JDE:',jde

@@ -39,6 +39,35 @@ module TheSky_functions
   
 contains
   
+  !*********************************************************************************************************************************
+  !> \brief  Set a location, using the variables in TheSky_local
+  !!
+  !! \param lat0    Latitude (radians, >0 is northern hemisphere)
+  !! \param lon0    Longitude (radians, >0 is east of Greenwich)
+  !! \param height  Altitude/elevation above sealevel, in metres
+  !! \param tz0     Default timezone (standard time, no DST, >0 is east of Greenwich)
+  !! \param dsttp   DST type: 0-none, 1-EU, 2-USA
+  
+  subroutine set_TheSky_location(lat0,lon0,height, tz0,dsttp)
+    use SUFR_kinds, only: double
+    use TheSky_local, only: llon0=>lon0,llat0=>lat0,lheight=>height,ltz=>tz,ltz0=>tz0,ldsttp=>dsttp
+    
+    implicit none
+    real(double), intent(in) :: lat0,lon0,height, tz0
+    integer, intent(in) :: dsttp
+    
+    llat0 = lat0
+    llon0 = lon0
+    lheight = height
+    
+    ltz  = tz0     ! Current timezone (standard time or DST)
+    ltz0 = tz0     ! Default timezone (standard time, no DST)
+    ldsttp = dsttp
+    
+  end subroutine set_TheSky_location
+  !*********************************************************************************************************************************
+  
+  
   
   !*********************************************************************************************************************************
   !> \brief  Identify the constellation a,d lies in
