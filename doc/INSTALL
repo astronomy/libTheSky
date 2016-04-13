@@ -6,13 +6,17 @@ libthesky.sf.net
 
 DEPENDENCIES:
 
-The default installer uses CMake to configure and compile the code.  CMake is
-open-source software, is included in many GNU/Linux distributions, and can be 
-downloaded from http://www.cmake.org/.  Alternatively, you can create your own
+libTheSky is written in Fortran, hence you will need a Fortran compiler.  Gfortran,
+part of gcc, is a free, open-source Fortran compiler included in many GNU/Linux 
+distributions and available from https://gcc.gnu.org/fortran/.  
+
+The default installer uses CMake to configure and compile the code.  CMake is also 
+open-source software, also included in most GNU/Linux distributions, and can be 
+downloaded from http://www.cmake.org/.  Alternatively, you can create your own 
 Makefile or compile and link the code manually.
 
 libTheSky needs the Fortran library libSUFR in order to compile and run.  libSUFR is
-free and open software, and available under the GPL v.3 from http://libsufr.sf.net/.
+free and open software, and available under the GPL v3 from http://libsufr.sf.net/.
 
 
 
@@ -44,10 +48,11 @@ libSUFR.  The third step compiles and links the code, and the last step installs
 on your system - for which you need root priveliges, hence the 'sudo' command.
 
 
-To install the package in a specific system directory, do e.g.:
+To install the package in a specific system directory, e.g. the Linux default /usr/...
+(recommended), do:
 
  $ mkdir build && cd build/
- $ cmake -DCMAKE_INSTALL_PREFIX:PATH=/opt/libTheSky/ ..
+ $ cmake -DCMAKE_INSTALL_PREFIX:PATH=/usr ..
  $ make
  $ sudo make install
 
@@ -56,14 +61,21 @@ To install the package in your own user directory, you won't need root privelige
 can omit the 'sudo' command and combine the last two commands, e.g.:
 
  $ mkdir build && cd build/
- $ cmake -DCMAKE_INSTALL_PREFIX:PATH=/home/me/libTheSky/ ..
+ $ cmake -DCMAKE_INSTALL_PREFIX:PATH=/home/me/usr ..
  $ make install
 
 
-To compile the code with your favourite compiler, prepend the cmake line with e.g. 
-FC=gfortran:
+To compile the code with your favourite compiler (in case you have several installed),
+prepend the cmake line with e.g. FC=gfortran:
 
  $ FC=gfortran cmake ..
+
+
+If you have multiple cores or processors, you can speed up the make step by specifying
+the number of parallel build jobs using the -j option.  E.g., for four cores, you can
+have four parallel jobs and use:
+
+ $ make -j4
 
 
 To compile the code without installing it anywhere, leave out the install step
@@ -72,13 +84,13 @@ To compile the code without installing it anywhere, leave out the install step
  $ cmake ..
  $ make
 
-The compiled libraries and modules can then be found in the usr/ subdirectory
-of the package dir.
+The compiled libraries and modules can then be found in the usr/ subdirectory of the
+package dir.
 
 
-By default, library and module files will be installed as:
-/usr/local/lib/libTheSky.*
-/usr/local/include/libTheSky/*.mod
+On a Linux system, the library and module files could be installed as:
+/usr/lib/libTheSky.*
+/usr/include/libTheSky/*.mod
 
 
 If you want to use the libraries with multiple Fortran compilers, you will want to 
@@ -87,8 +99,8 @@ to any other options):
  $ cmake -DCOMPILER_SPECIFIC_LIBS=on ..
 
 The library files will then be installed as:
-/usr/local/lib/libTheSky_<NameOfFortranCompiler>.*
-/usr/local/include/libTheSky/<NameOfFortranCompiler>/*.mod
+/usr/lib/libTheSky_<NameOfFortranCompiler>.*
+/usr/include/libTheSky/<NameOfFortranCompiler>/*.mod
 
 If one of your Fortran compilers is your default, you can use both the default
 installation method and the compiler-specific method to install the library.
@@ -124,6 +136,6 @@ full/latest version instead, do something like:
 
 CETERA:
 
-If you run into problems or have questions, please feel free to contact the developer 
-(preferably by email) through libthesky.sf.net or marc.vandersluys.nl
+If you run into problems or have questions, please feel free to contact Marc van der Sluys 
+(preferably by email) through marc.vandersluys.nl or libthesky.sf.net
 
