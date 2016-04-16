@@ -34,9 +34,9 @@ directory by doing e.g.:
 
 CONFIGURING, COMPILING AND INSTALLING:
 
-To configure, compile and install the code and data files (in the default system
-directories /usr/local/...), from the main package directory (the one that contains 
-the file CMakeLists.txt), do:
+To configure, compile and install the code and data files (in the CMake (not Linux! -
+see below) default system directories /usr/local/...), from the main package directory 
+(the one that contains the file CMakeLists.txt), do:
 
  $ mkdir build && cd build/
  $ cmake ..
@@ -49,7 +49,7 @@ on your system - for which you need root priveliges, hence the 'sudo' command.
 
 
 To install the package in a specific system directory, e.g. the Linux default /usr/...
-(recommended), do:
+(RECOMMENDED), do:
 
  $ mkdir build && cd build/
  $ cmake -DCMAKE_INSTALL_PREFIX:PATH=/usr ..
@@ -110,12 +110,12 @@ installation method and the compiler-specific method to install the library.
 DATA FILES:
 
 The data files are distributed in a separate tarball, named libthesky-data-<YYYYMMDD>.tar.bz2
-They will unpack into the data/ subdirectory of the package and the code will expect to find
-them in /usr/local/shared/libTheSky/ by default.  Hence, to install the data files manually,
-do e.g.:
+They will unpack into the data/ subdirectory of the package and the code will expect 
+to find them in /usr/shared/libTheSky/ by default.  Hence, to install the data 
+files manually, do e.g.:
   $ tar xfj libthesky-data-<YYYYMMDD>.tar.bz2
-  $ sudo mkdir /usr/local/shared/libTheSky/
-  $ sudo cp -vi data/* /usr/local/shared/libTheSky/
+  $ sudo mkdir /usr/shared/libTheSky/
+  $ sudo cp -vi data/* /usr/shared/libTheSky/
 
 Alternatively, you can use the libTheSky_data target in the CMake file of the source code,
 by copying the data files into that package's subdirectory before compiling it, and making

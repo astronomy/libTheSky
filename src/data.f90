@@ -76,6 +76,9 @@ contains
        do try= 1,ntrials
           write(0,'(I4,2x,A)') try, trim(trypaths(try))
        end do
+       write(0,'(A)') 'Please make sure you have the libTheSky data files installed.  They can be found in the'
+       write(0,'(A)') 'libthesky-data-<YYYYMMDD>.tar.bz2 tarball, which can be downloaded from libthesky.sf.net'
+       write(0,'(A)') 'or github.com/astronomy/libTheSky. See the libTheSky INSTALL file for details.'
        call quit_program_error('libTheSky: Data directory not found.', 1)
     end if
     
