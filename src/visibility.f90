@@ -726,7 +726,7 @@ contains
   !*********************************************************************************************************************************
   !> \brief  Calculate limiting magnitude based on Sun altitude and Moon phase
   !!
-  !! \param year       Year CE (for the solar cycle)
+  !! \param  year       Year CE (for the solar cycle)
   !!
   !! \param  objAlt     Altitude of the observed object (rad)
   !! \param  moonAlt    Moon altitude (rad)

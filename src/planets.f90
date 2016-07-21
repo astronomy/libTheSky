@@ -33,12 +33,23 @@ contains
   !! \param jd       Julian date of computation
   !! \param pl       Planet number: Moon=0, Merc=1,Nep=8,Plu=9 3=Sun, 0=Moon, >10 for other objects
   !!
+  !! \param lat      Latitude of the observer (rad, optional)
+  !! \param lon      Longitude of the observer (rad, optional)
+  !! \param hgt      Altitude/elevation of the observer above sea level (metres, optional)
+  !!
   !! \param LBaccur  Desired accuracy of the heliocentric L,B in VSOP87 (rad, optional)
   !! \param Raccur   Desired accuracy of the heliocentric R in VSOP87 (AU, optional)
   !!
   !! \param ltime    Set to .false. to disable light-time correction, and save ~50% in CPU time at the cost of some accuracy
+  !! 
+  !!
+  !! \note
+  !! - lat0 and lon0 can be provided through the module TheSky_local (rad, rad and m), or through the optional arguments.
+  !!   Note that using the latter will update the former!
+  !! - results are returned in the array planpos() in the module TheSky_planetdata
+  !!
   
-  subroutine planet_position(jd,pl, LBaccur,Raccur, ltime)
+  subroutine planet_position(jd,pl, lat,lon,hgt, LBaccur,Raccur, ltime)
     use SUFR_kinds, only: double
     use SUFR_constants, only: pi, au,earthr,pland, enpname, jd2000
     use SUFR_system, only: warn
@@ -46,7 +57,7 @@ contains
     use SUFR_dummy, only: dumdbl1,dumdbl2
     
     use TheSky_vsop, only: vsop_lbr
-    use TheSky_local, only: lon0, lat0, deltat
+    use TheSky_local, only: lon0,lat0,height, deltat
     use TheSky_coordinates, only: ecl_2_eq, eq2horiz, hc_spher_2_gc_rect, geoc2topoc_ecl, rect_2_spher
     use TheSky_coordinates, only: precess_ecl, fk5, aberration_ecl, refract
     use TheSky_nutation, only: nutation, nutation2000
@@ -61,11 +72,11 @@ contains
     implicit none
     real(double), intent(in) :: jd
     integer, intent(in) :: pl
-    real(double), intent(in), optional :: LBaccur,Raccur
+    real(double), intent(in), optional :: lat,lon,hgt, LBaccur,Raccur
     logical, intent(in), optional :: ltime
     
     integer :: j
-    real(double) :: tjm,jde,tjm0,  dpsi,eps0,deps,eps,tau,tau1,  lLBaccur,lRaccur
+    real(double) :: tjm,jde,tjm0,  lLBaccur,lRaccur,  dpsi,eps0,deps,eps,tau,tau1
     real(double) :: hcl0,hcb0,hcr0, hcl,hcb,hcr, hcl00,hcb00,hcr00, sun_gcl,sun_gcb, gcx,gcy,gcz, gcx0,gcy0,gcz0, dhcr
     real(double) :: gcl,gcb,delta,gcl0,gcb0,delta0
     real(double) :: ra,dec,gmst,agst,lst,hh,az,alt,elon,  topra,topdec,topl,topb,topdiam,topdelta,tophh,topaz,topalt
@@ -81,6 +92,12 @@ contains
     magn = 0.d0  ! Make sure magn is always defined
     
     pl0 = pl                           ! Remember which planet was computed last
+    
+    
+    ! Handle optional variables:
+    if(present(lat)) lat0 = lat
+    if(present(lon)) lon0 = lon
+    if(present(hgt)) height = hgt
     
     lLBaccur = 0.d0
     lRaccur = 0.d0

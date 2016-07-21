@@ -32,8 +32,8 @@ contains
   !! \param jd    Julian Day of computation
   !! \param calc  Calculate:  1: l,b,r,  2: & ra,dec,  3: & gmst,agst,  4: & az,alt,  5: & mag + p.a.,  99: & topo alt + refraction
   !!
-  !! \param lat   Latitude of the observer
-  !! \param lon   Longitude of the observer
+  !! \param lat   Latitude of the observer (rad, optional)
+  !! \param lon   Longitude of the observer (rad, optional)
   !!
   !!
   !! \note
@@ -41,7 +41,7 @@ contains
   !! - for 1900-2100, the terms greater than Tjc^2 can be neglected without loss of accuracy
   !! 
   !! \note
-  !! - lat0, lon0 and height can be provided through the module TheSky_local (rad, rad and m), or through the optional arguments.
+  !! - lat0 and lon0 can be provided through the module TheSky_local (rad, rad and m), or through the optional arguments.
   !!   Note that using the latter will update the former!
   !! - results are returned in the array planpos() in the module TheSky_planetdata
   !!
