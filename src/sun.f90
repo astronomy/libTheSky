@@ -41,7 +41,7 @@ contains
   !! - for 1900-2100, the terms greater than Tjc^2 can be neglected without loss of accuracy
   !! 
   !! \note
-  !! - lat0 and lon0 can be provided through the module TheSky_local (rad, rad and m), or through the optional arguments.
+  !! - lat0 and lon0 can be provided through the module TheSky_local (rad, rad), or through the optional arguments.
   !!   Note that using the latter will update the former!
   !! - results are returned in the array planpos() in the module TheSky_planetdata
   !!
@@ -178,7 +178,7 @@ contains
     
     
     
-    call eq2horiz(ra,dec,agst, hh,az,alt, llat,llon)
+    call eq2horiz(ra,dec,agst, hh,az,alt, lat=llat,lon=llon)
     planpos(8)  = rev(hh)  ! Geocentric hour angle
     planpos(9)  = rev(az)  ! Geocentric azimuth
     planpos(10) = alt      ! Geocentric altitude

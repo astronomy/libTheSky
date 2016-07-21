@@ -76,7 +76,7 @@ contains
     logical, intent(in), optional :: ltime
     
     integer :: j
-    real(double) :: tjm,jde,tjm0,  lLBaccur,lRaccur,  dpsi,eps0,deps,eps,tau,tau1
+    real(double) :: tjm,jde,tjm0,  llat,llon,lhgt, lLBaccur,lRaccur,  dpsi,eps0,deps,eps,tau,tau1
     real(double) :: hcl0,hcb0,hcr0, hcl,hcb,hcr, hcl00,hcb00,hcr00, sun_gcl,sun_gcb, gcx,gcy,gcz, gcx0,gcy0,gcz0, dhcr
     real(double) :: gcl,gcb,delta,gcl0,gcb0,delta0
     real(double) :: ra,dec,gmst,agst,lst,hh,az,alt,elon,  topra,topdec,topl,topb,topdiam,topdelta,tophh,topaz,topalt
@@ -95,9 +95,12 @@ contains
     
     
     ! Handle optional variables:
-    if(present(lat)) lat0 = lat
-    if(present(lon)) lon0 = lon
-    if(present(hgt)) height = hgt
+    llat = lat0
+    llon = lon0
+    lhgt = height
+    if(present(lat)) llat = lat
+    if(present(lon)) llon = lon
+    if(present(hgt)) lhgt = hgt
     
     lLBaccur = 0.d0
     lRaccur = 0.d0
@@ -237,7 +240,7 @@ contains
     ! Siderial time:
     gmst = calc_gmst(jd)                  ! Greenwich mean siderial time
     agst = rev(gmst + dpsi*cos(eps))      ! Correction for equation of the equinoxes -> Greenwich apparent siderial time
-    lst  = rev(agst + lon0)               ! Local apparent siderial time, lon0 > 0 for E
+    lst  = rev(agst + llon)               ! Local apparent siderial time, llon > 0 for E
     
     
     ! Apparent diameter:
@@ -260,14 +263,14 @@ contains
     end if
     
     ! Convert heliocentric to topocentric coordinates:
-    call geoc2topoc_ecl(gcl,gcb, delta,diam/2.d0, eps,lst,  topl,topb, topdiam)         ! Geocentric to topocentric: l, b, diam
-    if(pl.eq.-1) topdiam = rES2                                                         ! Earth penumbra radius at Moon distance
-    topdiam = 2*topdiam                                                                 ! Was radius, now diameter
+    call geoc2topoc_ecl(gcl,gcb, delta,diam/2.d0, eps,lst, topl,topb,topdiam, lat=llat,hgt=lhgt)  ! Geocentric to topoc: l, b, diam
+    if(pl.eq.-1) topdiam = rES2                                                            ! Earth penumbra radius at Moon distance
+    topdiam = 2*topdiam                                                                    ! Was radius, now diameter
     if(pl.ge.0.and.pl.lt.10) topdelta = pland(pl)/tan(topdiam)/au
     
     
     ! Convert equitorial to horizontal coordinates:
-    call eq2horiz(ra,dec,agst, hh,az,alt)
+    call eq2horiz(ra,dec,agst, hh,az,alt, lat=llat,lon=llon)
     
     
     ! Elongation:
@@ -277,7 +280,7 @@ contains
     ! Convert topocentric coordinates: ecliptical -> equatorial -> horizontal:
     !call geoc2topoc_eq(ra,dec,delta,hh,topra,topdec)                            ! Geocentric to topocentric
     call ecl_2_eq(topl,topb,eps, topra,topdec)                                   ! Topocentric l,b -> RA,dec - probably cheaper
-    call eq2horiz(topra,topdec,agst, tophh,topaz,topalt)
+    call eq2horiz(topra,topdec,agst, tophh,topaz,topalt, lat=llat,lon=llon)
     
     ! Phase angle:
     pa = 0.d0  ! Make sure pa is always defined
@@ -297,8 +300,8 @@ contains
     
     
     ! Parallactic angle:
-    !parang = atan2(sin(hh),tan(lat0)*cos(dec) - sin(dec)*cos(hh))              ! Parallactic angle: geocentric
-    parang = atan2(sin(tophh),tan(lat0)*cos(topdec) - sin(topdec)*cos(tophh))   ! Parallactic angle: topocentric
+    !parang = atan2(sin(hh),tan(llat)*cos(dec) - sin(dec)*cos(hh))              ! Parallactic angle: geocentric
+    parang = atan2(sin(tophh),tan(llat)*cos(topdec) - sin(topdec)*cos(tophh))   ! Parallactic angle: topocentric
     
     
     ! Horizontal parallax:

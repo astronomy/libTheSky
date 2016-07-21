@@ -772,11 +772,16 @@ contains
   !! \retval tcb   Topocentric latitude
   !! \retval tcs   Topocentric semi-diameter
   !!
-  !! \note lat0 and height are provided by the module TheSky_local
+  !!
+  !! \param lat   Latitude of the observer (rad, optional)
+  !! \param hgt   Altitude/elevation of the observer above sea level (metres, optional)
+  !!
+  !! \note lat/lat0 and hgt/height can be provided through the module TheSky_local (rad, and m), or through the optional arguments.
+  !!   Note that using the latter will update the former!
   !!
   !! \see  Meeus, Astronomical Algorithms, 1998, Ch. 11 and 40
   
-  subroutine geoc2topoc_ecl(gcl,gcb, gcr,gcs, eps,lst,  tcl,tcb, tcs)
+  subroutine geoc2topoc_ecl(gcl,gcb, gcr,gcs, eps,lst,  tcl,tcb, tcs, lat,hgt)
     use SUFR_kinds, only: double
     use SUFR_constants, only: earthr,au
     use SUFR_angles, only: rev
@@ -784,17 +789,24 @@ contains
     
     implicit none
     real(double), intent(in) :: gcl,gcb,gcr,gcs,eps,lst
+    real(double), intent(in), optional :: lat,hgt
     real(double), intent(out) :: tcl,tcb,tcs
-    real(double) :: ba,re,u,rs,rc,sinHp,n
+    real(double) :: llat,lhgt, ba,re,u,rs,rc,sinHp,n
+    
+    ! Handle optional variables:
+    llat = lat0
+    lhgt = height
+    if(present(lat)) llat = lat
+    if(present(hgt)) lhgt = hgt
     
     ! Meeus, Ch.11, p.82:
     ba = 0.996647189335d0  ! b/a = 1-f: flattening of the Earth - WGS84 ellipsoid 
     re = earthr*1.d-2      ! Equatorial radius of the Earth in metres
     !                        (http://earth-info.nga.mil/GandG/publications/tr8350.2/wgs84fin.pdf)
     
-    u  = atan(ba*tan(lat0))
-    rs = ba*sin(u) + height/re*sin(lat0)
-    rc = cos(u)    + height/re*cos(lat0)
+    u  = atan(ba*tan(llat))
+    rs = ba*sin(u) + lhgt/re*sin(llat)
+    rc = cos(u)    + lhgt/re*cos(llat)
     
     
     sinHp = sin(earthr/au)/gcr  ! Sine of the horizontal parallax, Meeus, Eq. 40.1
@@ -821,26 +833,40 @@ contains
   !! \retval tcra  Topocentric right ascension
   !! \retval tcd   Topocentric declination
   !!
+  !! \param lat   Latitude of the observer (rad, optional)
+  !! \param hgt   Altitude/elevation of the observer above sea level (metres, optional)
+  !!
+  !! \note lat/lat0 and hgt/height can be provided through the module TheSky_local (rad, and m), or through the optional arguments.
+  !!   Note that using the latter will update the former!
+  !!
+  !!
   !! \see  Meeus, Astronomical Algorithms, 1998, Ch. 11 and 40
   
-  subroutine geoc2topoc_eq(gcra,gcd,gcr,gch, tcra,tcd)
+  subroutine geoc2topoc_eq(gcra,gcd,gcr,gch, tcra,tcd, lat,hgt)
     use SUFR_kinds, only: double
     use SUFR_constants, only: earthr,au
     use TheSky_local, only: lat0, height
     
     implicit none
     real(double), intent(in) :: gcra,gcd,gcr,gch
+    real(double), intent(in), optional :: lat,hgt
     real(double), intent(out) :: tcra,tcd
-    real(double) :: ba,re,u,rs,rc,sinHp,dra
+    real(double) :: llat,lhgt, ba,re,u,rs,rc,sinHp,dra
+    
+    ! Handle optional variables:
+    llat = lat0
+    lhgt = height
+    if(present(lat)) llat = lat
+    if(present(hgt)) lhgt = hgt
     
     ! Meeus, Ch.11, p.82:
     ba = 0.996647189335d0  ! b/a = 1-f: flattening of the Earth - WGS84 ellipsoid 
     re = earthr*1.d-2      ! Equatorial radius of the Earth in metres
     !                        (http://earth-info.nga.mil/GandG/publications/tr8350.2/wgs84fin.pdf)
     
-    u  = atan(ba*tan(lat0))
-    rs = ba*sin(u) + height/re*sin(lat0)
-    rc = cos(u) + height/re*cos(lat0)
+    u  = atan(ba*tan(llat))
+    rs = ba*sin(u) + lhgt/re*sin(llat)
+    rc = cos(u) + lhgt/re*cos(llat)
     
     ! Meeus Ch.40:
     sinHp = sin(earthr/au)/gcr  ! Sine of the horizontal parallax, Meeus, Eq. 40.1
