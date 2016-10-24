@@ -28,6 +28,7 @@
 !  airmass:                      Compute the airmass for a celestial object with a given altitude
 !  airmass_la:                   Compute the airmass for a celestial object with given alt; low-accuracy alternative for airmass()
 !  extinction_magpam:            Compute the extinction in magnitudes per unit airmass for an observer with given elevation
+!  extinction_mag:               Compute the extinction in magnitudes for a given object altitude and observer elevation
 !
 !  limmag_full                   Calculate limiting magnitude, full function
 !  limmag_jd                     Calculate limiting magnitude based on JD and object altitude, wrapper for limmag_full()
@@ -575,6 +576,32 @@ contains
     extinction_magPam = Aoz + Aray + Aaer  ! Total extinction in magnitudes per unit air mass
     
   end function extinction_magPam
+  !*********************************************************************************************************************************
+  
+  
+  
+  !*********************************************************************************************************************************
+  !> \brief  Compute the extinction in magnitdes for an observer with given elevation and an object with given altitude
+  !!
+  !! \param alt  Altitude of object (radians)
+  !! \param ele  Evelation of the observer above sea level (metres; optional)
+  !!
+  !! \see  functions extinction_magPam() and airmass()
+  
+  function extinction_mag(alt, ele)
+    use SUFR_kinds, only: double
+    
+    implicit none
+    real(double), intent(in) :: alt
+    real(double), intent(in), optional :: ele
+    real(double):: extinction_mag, elel
+    
+    elel = 0.d0                  ! Observer is at sea level by default
+    if(present(ele)) elel = ele  ! User-specified observer elevation
+    
+    extinction_mag = extinction_magPam(elel) * airmass(alt) ! Total extinction in magnitudes per unit air mass x airmass
+    
+  end function extinction_mag
   !*********************************************************************************************************************************
   
   
