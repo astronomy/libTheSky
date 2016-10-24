@@ -26,7 +26,8 @@
 !  get_dra_obj:                  Compute the difference between a given right ascension and the RA of the Sun
 !
 !  airmass:                      Compute the airmass for a celestial object with a given altitude
-!  airmass_ext:                  Compute the extinction in magnitdes per unit airmass for an observer with given elevation
+!  airmass2:                     Compute the airmass for a celestial object with a given altitude; simple alternative for airmass()
+!  extinction_magpam:            Compute the extinction in magnitudes per unit airmass for an observer with given elevation
 !
 !  limmag_full                   Calculate limiting magnitude, full function
 !  limmag_jd                     Calculate limiting magnitude based on JD and object altitude, wrapper for limmag_full()
@@ -520,7 +521,7 @@ contains
   
    
   !*********************************************************************************************************************************
-  !> \brief  Compute the airmass for a celestial object with a given altitude; simpler alternative for airmass()
+  !> \brief  Compute the airmass for a celestial object with a given altitude; simple alternative for airmass()
   !!
   !! \param alt  Altitude of object (radians)
   !!
@@ -555,25 +556,25 @@ contains
   !!
   !! \param ele  Evelation of the observer above sea level (metres)
   !!
-  !! \note  The magnitude of an object corrected for airmass should be  m' = m + airmass_ext(ele) * airmass(alt)
+  !! \note  The magnitude of an object corrected for airmass should be  m' = m + extinction_magPam(ele) * airmass(alt)
   !!
   !! \see  Green, ICQ 14, 55 (1992),  http://www.icq.eps.harvard.edu/ICQExtinct.html, based on
   !!       Hayes & Latham, ApJ 197, 593 (1975): http://esoads.eso.org/abs/1975ApJ...197..593H
   
-  function airmass_ext(ele)
+  function extinction_magPam(ele)
     use SUFR_kinds, only: double
     
     implicit none
     real(double), intent(in) :: ele
-    real(double):: airmass_ext, Aoz,Aray,Aaer
+    real(double):: extinction_magPam, Aoz,Aray,Aaer
     
-    Aoz  = 0.016d0                       ! Ozone  (Schaefer 1992)
-    Aray = 0.1451d0 * exp(-ele/7996.d0)  ! Rayleigh scattering (for lambda=510 nm), Eq.2
-    Aaer = 0.120d0  * exp(-ele/1500.d0)  ! Aerosol scattering (for lambda = 0.51 micron), Eq.4
+    Aoz  = 0.016d0                         ! Ozone  (Schaefer 1992)
+    Aray = 0.1451d0 * exp(-ele/7996.d0)    ! Rayleigh scattering (for lambda=510 nm), Eq.2
+    Aaer = 0.120d0  * exp(-ele/1500.d0)    ! Aerosol scattering (for lambda = 0.51 micron), Eq.4
     
-    airmass_ext = Aoz + Aray + Aaer      ! Total extinction in magnitudes per unit air mass
+    extinction_magPam = Aoz + Aray + Aaer  ! Total extinction in magnitudes per unit air mass
     
-  end function airmass_ext
+  end function extinction_magPam
   !*********************************************************************************************************************************
   
   
@@ -1096,7 +1097,7 @@ contains
     implicit none
     real(double), intent(in) :: jd
     integer, intent(in) :: pl
-    real(double) :: pl_xsmag_la, airmass_ext, sunAlt
+    real(double) :: pl_xsmag_la, extinction_magPam, sunAlt
     
     call planet_position_la(jd,  3, 4,0)  ! Sun position
     sunAlt = planpos(31)                  ! Refracted
@@ -1106,8 +1107,8 @@ contains
     if(planpos(31).lt.0.d0) then  ! Object is below the horizon
        pl_xsmag_la = 99.d0 - planpos(31) ! Huge contrast, and worst if further below the horizon, for solvers
     else
-       airmass_ext = 0.2811d0  ! Extinction in magnitudes per unit airmass, at sea level
-       pl_xsmag_la = (planpos(13) + airmass_ext * airmass(planpos(31))) - limmag_sun(sunAlt)  ! (m + ext) - limmag
+       extinction_magPam = 0.2811d0  ! Extinction in magnitudes per unit airmass, at sea level
+       pl_xsmag_la = (planpos(13) + extinction_magPam * airmass(planpos(31))) - limmag_sun(sunAlt)  ! (m + ext) - limmag
     end if
     
   end function pl_xsmag_la

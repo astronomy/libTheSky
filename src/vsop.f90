@@ -75,7 +75,7 @@ contains
     !desired_accuracy = 0.d0  ! Use all available terms
     
     lbr = 0.d0
-    !$omp parallel do private(Nli,Nle,skip,li,pow,fac,nTerm)
+    !$omp parallel do private(Nli,Nle,skip,li,pow,fac,nTerm)  ! Loop body seems to small for any benefit
     do var=1,3  ! L,B,R
        Nli = 0
        if(var.ge.2) Nli = VSOPnls(1,pl)
