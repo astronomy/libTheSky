@@ -201,6 +201,75 @@ contains
   
   
   !*********************************************************************************************************************************
+  !> Compute the position of the Sun - very low accuracy routine (~0.18 degrees in az/alt)
+  !!
+  !! \param  Nday       Day of year
+  !! \param  hour       Hour of day
+  !!
+  !! \param  lon        Geographic longitunde (radians; >0=east)
+  !! \param  lat        Geographic latitunde (radians; >0=north)
+  !! \param  tz         Time zone (hours; >0=east)
+  !!
+  !! \retval ha         Hour angle of the Sun (radians)
+  !! \retval dec        Declination of the Sun (radians; >0=north)
+  !!
+  !! \retval az         Azimuth of the Sun (radians; 0=north, pi/2=east)
+  !! \retval alt        Altitude of the Sun (radians; >0 = up)
+  !!
+  !! \see Wenham, S.R.: Applied photovoltaics (2012; book), Appendix B
+  
+  subroutine sunpos_vla(Nday,hour, lon,lat,tz, ha,dec, az,alt)
+    use SUFR_kinds, only: double
+    use SUFR_constants, only: pi2, h2r,r2h
+    
+    implicit none
+    integer, intent(in) :: Nday
+    real(double), intent(in) :: hour, lon,lat,tz
+    real(double), intent(out) :: dec,ha, alt,az
+    real(double) :: eclon, Teq,Tdif,Tsol
+    
+    ! Declination of the Sun:
+    eclon = pi2/365.d0 * Nday  ! indication of the ecliptic longitude of the Sun (rad)
+    
+    dec = 5.80863d-3 - 0.401146d0 * cos(eclon) - 6.1069d-3  * cos(2 * eclon) - 2.43997d-3 * cos(3 * eclon) &
+         +             6.52264d-2 * sin(eclon) + 5.59378d-4 * sin(2 * eclon) + 1.25437d-3 * sin(3 * eclon)    ! Declination (rad)
+    ! Note: both 0.066099 and 0.065226 occur in the literature (as 3.7872 and 3.7372 degrees), but without any reference to an 
+    ! original paper. 0.065226 gives a ~2% better declination when compared to VSOP87.
+    
+    
+    ! Equation of time:
+    if(Nday .lt. 21) then
+       Teq = -2.6d0 - 0.44d0 * Nday
+    else if(Nday .lt. 136) then
+       Teq = -5.2d0 - 9.d0 * cos( (Nday -  43) * 0.0357d0 )
+    else if(Nday .lt. 241) then
+       Teq = -1.4d0 + 5.d0 * cos( (Nday - 135) * 0.0449d0 )
+    else if(Nday .lt. 336) then
+       Teq = 6.3d0 + 10.d0 * cos( (Nday - 306) * 0.036d0 )
+    else
+       Teq = 0.45d0 * (359 - Nday)
+    end if
+    
+    ! Time difference with UT:
+    Tdif = tz - lon*r2h - Teq/60.d0  ! tz = Tmet - Tgmt (hours)
+    
+    ! Solar time:
+    Tsol = hour - Tdif  ! (hours)
+    
+    ! Hour angle of the Sun:
+    ha = (Tsol - 12.d0)*h2r  ! (rad)
+    
+    ! Azimuth of the Sun:
+    az = atan2(sin(ha), cos(ha)*sin(lat) - tan(dec)*cos(lat))  ! (rad)
+    
+    ! Altitude of the Sun:
+    alt = asin( sin(dec) * sin(lat)  +  cos(dec) * cos(lat) * cos(ha))  ! (rad)
+    
+  end subroutine sunpos_vla
+  !*********************************************************************************************************************************
+  
+  
+  !*********************************************************************************************************************************
   !> \brief  Calculate Sun magnitude
   !!
   !! \param  dist     Distance (AU)

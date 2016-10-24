@@ -557,7 +557,8 @@ contains
   !!
   !! \param ele  Evelation of the observer above sea level (metres)
   !!
-  !! \note  The magnitude of an object corrected for airmass should be  m' = m + extinction_magPam(ele) * airmass(alt)
+  !! \note  The magnitude of an object corrected for airmass should be  m' = m + extinction_magPam(ele) * airmass(alt) 
+  !!        (see function extinction_mag())
   !!
   !! \see  Green, ICQ 14, 55 (1992),  http://www.icq.eps.harvard.edu/ICQExtinct.html, based on
   !!       Hayes & Latham, ApJ 197, 593 (1975): http://esoads.eso.org/abs/1975ApJ...197..593H
@@ -586,7 +587,9 @@ contains
   !! \param alt  Altitude of object (radians)
   !! \param ele  Evelation of the observer above sea level (metres; optional)
   !!
-  !! \see  functions extinction_magPam() and airmass()
+  !! \note  The magnitude of an object corrected for airmass should be  m' = m + extinction_mag(alt,ele)
+  !!
+  !! \see   Functions extinction_magPam() and airmass()
   
   function extinction_mag(alt, ele)
     use SUFR_kinds, only: double
@@ -609,7 +612,8 @@ contains
   !*********************************************************************************************************************************
   !> \brief  Compute the extinction factor for an observer with given elevation and an object with given altitude
   !!
-  !! \note extinction_fac = 1: no extinction, extinction_fac > 1 extinction
+  !! \note - extinction_fac = 1: no extinction, extinction_fac > 1 extinction.
+  !!       - Hence, the flux, corrected for extinction, should be  f' = f / extinction_fac(alt,ele)
   !!
   !! \param alt  Altitude of object (radians)
   !! \param ele  Evelation of the observer above sea level (metres; optional)
