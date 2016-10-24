@@ -26,7 +26,7 @@
 !  get_dra_obj:                  Compute the difference between a given right ascension and the RA of the Sun
 !
 !  airmass:                      Compute the airmass for a celestial object with a given altitude
-!  airmass2:                     Compute the airmass for a celestial object with a given altitude; simple alternative for airmass()
+!  airmass_la:                   Compute the airmass for a celestial object with given alt; low-accuracy alternative for airmass()
 !  extinction_magpam:            Compute the extinction in magnitudes per unit airmass for an observer with given elevation
 !
 !  limmag_full                   Calculate limiting magnitude, full function
@@ -521,7 +521,7 @@ contains
   
    
   !*********************************************************************************************************************************
-  !> \brief  Compute the airmass for a celestial object with a given altitude; simple alternative for airmass()
+  !> \brief  Compute the airmass for a celestial object with a given altitude; low-accuracy alternative for airmass()
   !!
   !! \param alt  Altitude of object (radians)
   !!
@@ -530,24 +530,24 @@ contains
   !!
   !! \see Kasten and Young (1989); http://en.wikipedia.org/wiki/Airmass#Interpolative_formulas
   
-  function airmass2(alt)
+  function airmass_la(alt)
     use SUFR_kinds, only: double
     use SUFR_constants, only: pio2, r2d
     
     implicit none
     real(double), intent(in) :: alt
-    real(double) :: airmass2,z,zdeg
+    real(double) :: airmass_la,z,zdeg
     
     if(alt.lt.0.d0) then
-       airmass2 = 1000.d0 * (0.15d0 + abs(alt))  ! Very bad (adds at least ~30 magnitudes due to extinction), 
+       airmass_la = 1000.d0 * (0.15d0 + abs(alt))  ! Very bad (adds at least ~30 magnitudes due to extinction), 
        !                                          but still worse when farther below the horizon - for solvers
     else
        z = min(pio2 - alt, pio2)  ! Zenith angle
        zdeg = z*r2d
-       airmass2 = max( 1.d0 / ( cos(z) + 0.50572d0*(96.07995d0-zdeg)**(-1.6364d0) ) ,  1.d0 )
+       airmass_la = max( 1.d0 / ( cos(z) + 0.50572d0*(96.07995d0-zdeg)**(-1.6364d0) ) ,  1.d0 )
     end if
     
-  end function airmass2
+  end function airmass_la
   !*********************************************************************************************************************************
   
   
