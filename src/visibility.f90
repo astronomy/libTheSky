@@ -599,9 +599,37 @@ contains
     elel = 0.d0                  ! Observer is at sea level by default
     if(present(ele)) elel = ele  ! User-specified observer elevation
     
-    extinction_mag = extinction_magPam(elel) * airmass(alt) ! Total extinction in magnitudes per unit air mass x airmass
+    extinction_mag = extinction_magPam(elel) * airmass(alt) ! Extinction in magnitudes per unit air mass x airmass
     
   end function extinction_mag
+  !*********************************************************************************************************************************
+  
+  
+  
+  !*********************************************************************************************************************************
+  !> \brief  Compute the extinction factor for an observer with given elevation and an object with given altitude
+  !!
+  !! \note extinction_fac = 1: no extinction, extinction_fac > 1 extinction
+  !!
+  !! \param alt  Altitude of object (radians)
+  !! \param ele  Evelation of the observer above sea level (metres; optional)
+  !!
+  !! \see  function extinction_mag()
+  
+  function extinction_fac(alt, ele)
+    use SUFR_kinds, only: double
+    
+    implicit none
+    real(double), intent(in) :: alt
+    real(double), intent(in), optional :: ele
+    real(double):: extinction_fac, elel
+    
+    elel = 0.d0                  ! Observer is at sea level by default
+    if(present(ele)) elel = ele  ! User-specified observer elevation
+    
+    extinction_fac = 10**( extinction_mag(alt,elel) / 2.5d0) ! Extinction in magnitudes -> factor
+    
+  end function extinction_fac
   !*********************************************************************************************************************************
   
   
