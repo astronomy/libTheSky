@@ -568,7 +568,7 @@ contains
     
     implicit none
     real(double), intent(in) :: ele
-    real(double):: extinction_magPam, Aoz,Aray,Aaer
+    real(double) :: extinction_magPam, Aoz,Aray,Aaer
     
     Aoz  = 0.016d0                         ! Ozone  (Schaefer 1992)
     Aray = 0.1451d0 * exp(-ele/7996.d0)    ! Rayleigh scattering (for lambda=510 nm), Eq.2
@@ -597,7 +597,7 @@ contains
     implicit none
     real(double), intent(in) :: alt
     real(double), intent(in), optional :: ele
-    real(double):: extinction_mag, elel
+    real(double) :: extinction_mag, elel
     
     elel = 0.d0                  ! Observer is at sea level by default
     if(present(ele)) elel = ele  ! User-specified observer elevation
@@ -612,11 +612,11 @@ contains
   !*********************************************************************************************************************************
   !> \brief  Compute the extinction factor for an observer with given elevation and an object with given altitude
   !!
-  !! \note - extinction_fac = 1: no extinction, extinction_fac > 1 extinction.
-  !!       - Hence, the flux, corrected for extinction, should be  f' = f / extinction_fac(alt,ele)
-  !!
   !! \param alt  Altitude of object (radians)
   !! \param ele  Evelation of the observer above sea level (metres; optional)
+  !!
+  !! \note - extinction_fac = 1: no extinction, extinction_fac > 1 extinction.
+  !!       - Hence, the flux, corrected for extinction, should be  f' = f / extinction_fac(alt,ele)
   !!
   !! \see  function extinction_mag()
   
@@ -626,7 +626,7 @@ contains
     implicit none
     real(double), intent(in) :: alt
     real(double), intent(in), optional :: ele
-    real(double):: extinction_fac, elel
+    real(double) :: extinction_fac, elel
     
     elel = 0.d0                  ! Observer is at sea level by default
     if(present(ele)) elel = ele  ! User-specified observer elevation
@@ -634,6 +634,41 @@ contains
     extinction_fac = 10**( extinction_mag(alt,elel) / 2.5d0) ! Extinction in magnitudes -> factor
     
   end function extinction_fac
+  !*********************************************************************************************************************************
+  
+  
+  
+  !*********************************************************************************************************************************
+  !> \brief  Compute the normal and horizontal beam (direct) solar radiation for a given altitude of the Sun and an observer with a
+  !!         given elevation, assuming a cloudless sky
+  !!
+  !! \param alt  Altitude of the Sun (radians)
+  !!
+  !! \retval beam_norm   Normal beam radiation, perpendicular to the position vector of the Sun (W/m2)
+  !! \retval beam_horiz  Beam radiation on a horizontal surface (W/m2)
+  !!
+  !! \param ele  Evelation of the observer above sea level (metres; optional)
+  !!
+  !! \see  function extinction_fac()
+  
+  subroutine solar_radiation(alt,  beam_norm, beam_horiz,  ele)
+    use SUFR_kinds, only: double
+    use SUFR_constants, only: solConst
+    
+    implicit none
+    real(double), intent(in) :: alt
+    real(double), intent(out) :: beam_norm
+    real(double), intent(out), optional :: beam_horiz
+    real(double), intent(in), optional :: ele
+    real(double) :: elel
+    
+    elel = 0.d0                  ! Observer is at sea level by default
+    if(present(ele)) elel = ele  ! User-specified observer elevation
+    
+    beam_norm  = solConst / extinction_fac(alt, elel)          ! Normal radiation
+    if(present(beam_horiz)) beam_horiz = beam_norm * sin(alt)  ! Radiation on a horizontal surface
+    
+  end subroutine solar_radiation
   !*********************************************************************************************************************************
   
   
