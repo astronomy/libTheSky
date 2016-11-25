@@ -33,6 +33,7 @@
 !  limmag_full                   Calculate limiting magnitude, full function
 !  limmag_jd                     Calculate limiting magnitude based on JD and object altitude, wrapper for limmag_full()
 !  limmag_jd_pl                  Calculate limiting magnitude based on JD and planet ID, wrapper for limmag_jd()
+!  limmag_sun_airmass            Calculate limiting magnitude based on Sun altitude and object altitude (airmass); assume New Moon
 !  limmag_sun                    Calculate limiting magnitude, based on the altitude of the Sun only
 !
 !  pl_xsmag:                     Compute the excess magnitude (mag-lim.mag) for planet pl at JD, considering Sun, Moon and airmass
@@ -41,7 +42,8 @@
 !  pl_xsmag_la_pl:               Compute the excess magnitude, wrapper for pl_xsmag_la() for solvers
 !
 !  aperture:                     Aperture needed to observe an object with given excess magnitude
-
+!  mlim2skybrightness:           Convert naked-eye limiting magnitude to sky surface brightness in magnitudes per square arcsecond
+!  skybrightness2mlim:           Convert sky surface brightness in magnitudes per square arcsecond to naked-eye limiting magnitude
 
 !***********************************************************************************************************************************
 !> \brief  Procedures to determine the visibility of objects
@@ -1061,6 +1063,60 @@ contains
     planpos = planpos0                     ! Restore
     
   end function limmag_jd_pl
+  !*********************************************************************************************************************************
+  
+  
+  !*********************************************************************************************************************************
+  !> \brief  Calculate limiting magnitude based on Sun altitude and object altitude (airmass).  Assumes New Moon.
+  !!
+  !! \param  month      Month of the year
+  !! \param  sunAlt     Altitude of the Sun (rad)
+  !! \param  sunAz      Azimuth of the Sun (rad)
+  !! \param  objAlt     Altitude of the observed object (rad)
+  !! \param  objAz      Azimuth of the observed object (rad)
+  !!
+  !! \param  lat        Latitude of the observer (optional; rad)
+  !! \param  height     Height/altitude of the observer above sea level (optional; metres)
+  !!
+  !! \retval limmag_sun_airmass  Limiting magnitude
+  !!
+  !! \note  Using observer's location from module TheSky_local; overruled by optional dummy variables lat and height
+  
+  function limmag_sun_airmass(month, sunAlt,sunAz, objAlt,objAz, lat,height)
+    use SUFR_kinds, only: double
+    use SUFR_constants, only: d2r
+    use SUFR_angles, only: asep
+    use SUFR_date_and_time, only: jd2cal
+    
+    use TheSky_local, only: lat0, height0=>height
+    
+    implicit none
+    integer, intent(in) :: month
+    real(double), intent(in), value :: sunAlt,sunAz, objAlt,objAz  ! Often called as planpos(i) -> pass by value
+    real(double), intent(in), optional :: lat,height
+    integer :: year
+    real(double) :: limmag_sun_airmass,  llat,lheight,  sunElon, moonPhase,moonAlt,moonElon
+    
+    ! Use values from TheSky_local by default:
+    llat = lat0
+    lheight = height0
+    
+    ! Overrule with values from optional arguments if present:
+    if(present(lat)) llat = lat
+    if(present(height)) lheight = height
+    
+    year = 1998  ! Average year for solar activity (1992+5.5)
+    
+    sunElon = asep(objAz, sunAz,  objAlt, sunAlt)        ! Sun elongation
+    
+    ! No Moon:
+    moonPhase = 0.d0
+    moonAlt   = -89*d2r
+    moonElon  = 179*d2r
+    
+    limmag_sun_airmass = limmag_full(year,month, lheight,llat, sunAlt,sunElon, moonPhase,moonAlt,moonElon, objAlt)
+    
+  end function limmag_sun_airmass
   !*********************************************************************************************************************************
   
   
