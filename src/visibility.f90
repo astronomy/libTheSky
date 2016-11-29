@@ -25,8 +25,8 @@
 !  best_obs_date_ra:             Compute the best date to observe an object with a given right ascension
 !  get_dra_obj:                  Compute the difference between a given right ascension and the RA of the Sun
 !
-!  airmass:                      Compute the airmass for a celestial object with a given altitude
-!  airmass_la:                   Compute the airmass for a celestial object with given alt; low-accuracy alternative for airmass()
+!  airmass:                      Compute the airmass for a celestial object with a given TRUE altitude
+!  airmass_la:                   Compute the airmass for a celestial object with given APP alt; low-accuracy alt. for airmass()
 !  extinction_magpam:            Compute the extinction in magnitudes per unit airmass for an observer with given elevation
 !  extinction_mag:               Compute the extinction in magnitudes for a given object altitude and observer elevation
 !
@@ -584,7 +584,7 @@ contains
   
   
   !*********************************************************************************************************************************
-  !> \brief  Compute the extinction in magnitdes for an observer with given elevation and an object with given altitude
+  !> \brief  Compute the extinction in magnitdes for an observer with given elevation and an object with given TRUE altitude
   !!
   !! \param alt  Altitude of object (radians)
   !! \param ele  Evelation of the observer above sea level (metres; optional)
@@ -604,7 +604,7 @@ contains
     elel = 0.d0                  ! Observer is at sea level by default
     if(present(ele)) elel = ele  ! User-specified observer elevation
     
-    extinction_mag = extinction_magPam(elel) * airmass(alt) ! Extinction in magnitudes per unit air mass x airmass
+    extinction_mag = extinction_magPam(elel) * airmass(alt)  ! Extinction in magnitudes per unit air mass x airmass
     
   end function extinction_mag
   !*********************************************************************************************************************************
@@ -769,8 +769,8 @@ contains
   !!
   !! \retval extCoef  Atmospheric extinction for UBVRI
   !! \retval extMag   Delta magnitude due to atmospheric extinction for UBVRI
- 
-
+  
+  
   
   subroutine limmag_extinction(month, obsLat,obsElev, objAlt, relHum,temp, band1,band2,  extCoef,extMag)
     use SUFR_kinds, only: double
@@ -1258,7 +1258,7 @@ contains
        pl_xsmag_la = 99.d0 - planpos(31) ! Huge contrast, and worst if further below the horizon, for solvers
     else
        extinction_magPam = 0.2811d0  ! Extinction in magnitudes per unit airmass, at sea level
-       pl_xsmag_la = (planpos(13) + extinction_magPam * airmass(planpos(31))) - limmag_sun(sunAlt)  ! (m + ext) - limmag
+       pl_xsmag_la = (planpos(13) + extinction_magPam * airmass(planpos(30))) - limmag_sun(sunAlt)  ! (m + ext) - limmag; TRUE alt!
     end if
     
   end function pl_xsmag_la
