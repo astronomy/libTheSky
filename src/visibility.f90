@@ -489,29 +489,29 @@ contains
   
   
   !*********************************************************************************************************************************
-  !> \brief  Compute the airmass for a celestial object with a given altitude
+  !> \brief  Compute the airmass for a celestial object with a given TRUE altitude
   !!
-  !! \param alt  Altitude of object (radians)
+  !! \param alt  TRUE altitude of object (radians)
   !!
   !! \note
-  !! - Results are 1 <= airmass <~ ??; return ~1000 for h<0
+  !! - Results are 1 <= airmass <~ 38.35; return ~1000 for h<-34'
   !! - Maximum supposed error (at the horizon) of 0.0037 air mass
   !!
   !! \see Young (1994); https://en.wikipedia.org/wiki/Air_mass_%28astronomy%29#Interpolative_formulas
   
   function airmass(alt)
     use SUFR_kinds, only: double
-    use SUFR_constants, only: pio2
+    use SUFR_constants, only: pio2, am2r
     
     implicit none
     real(double), intent(in) :: alt
     real(double) :: airmass,z,cosz,cosz2
     
-    if(alt.lt.0.d0) then
+    if(alt.lt.-34*am2r) then  ! h<-34' - true altitude can be <0
        airmass = 1000.d0 * (0.15d0 + abs(alt))  ! Very bad (adds at least ~30 magnitudes due to extinction), 
        !                                          but still worse when farther below the horizon - for solvers
     else
-       z = min(pio2 - alt, pio2)  ! Zenith angle
+       z = pio2 - alt  ! Zenith angle
        cosz = cos(z)
        cosz2 = cosz**2
        airmass = (1.002432d0*cosz2 + 0.148386d0*cosz + 0.0096467d0) / &
@@ -524,14 +524,14 @@ contains
   
    
   !*********************************************************************************************************************************
-  !> \brief  Compute the airmass for a celestial object with a given altitude; low-accuracy alternative for airmass()
+  !> \brief  Compute the airmass for a celestial object with a given apparent altitude; low-accuracy alternative for airmass()
   !!
-  !! \param alt  Altitude of object (radians)
+  !! \param alt  Apparent altitude of object (radians)
   !!
   !! \note
-  !! - Results are 1 <= airmass <~ 38; return ~1000 for h<0
+  !! - Results are 1 <= airmass <~ 37.92; return ~1000 for h<0
   !!
-  !! \see Kasten and Young (1989); http://en.wikipedia.org/wiki/Airmass#Interpolative_formulas
+  !! \see Kasten and Young (1989); http://en.wikipedia.org/wiki/Airmass_%28astronomy%29#Interpolative_formulas
   
   function airmass_la(alt)
     use SUFR_kinds, only: double
@@ -543,7 +543,7 @@ contains
     
     if(alt.lt.0.d0) then
        airmass_la = 1000.d0 * (0.15d0 + abs(alt))  ! Very bad (adds at least ~30 magnitudes due to extinction), 
-       !                                          but still worse when farther below the horizon - for solvers
+       !                                             but still worse when farther below the horizon - for solvers
     else
        z = min(pio2 - alt, pio2)  ! Zenith angle
        zdeg = z*r2d
