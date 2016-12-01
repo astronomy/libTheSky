@@ -548,6 +548,7 @@ contains
        z = min(pio2 - alt, pio2)  ! Zenith angle
        zdeg = z*r2d
        airmass_la = max( 1.d0 / ( cos(z) + 0.50572d0*(96.07995d0-zdeg)**(-1.6364d0) ) ,  1.d0 )
+       
     end if
     
   end function airmass_la
@@ -559,11 +560,14 @@ contains
   !!
   !! \param ele  Evelation of the observer above sea level (metres)
   !!
-  !! \note  The magnitude of an object corrected for airmass should be  m' = m + extinction_magPam(ele) * airmass(alt) 
-  !!        (see function extinction_mag())
+  !! \note  
+  !!   - The magnitude of an object corrected for airmass should be  m' = m + extinction_magPam(ele) * airmass(alt) 
+  !!     (see function extinction_mag())
+  !!   - This assumes night vision, using the rods in the human eye's retina.  Hence, this will not hold for the Sun!
+  !!     (There is some correspondence when only considering ~420-580 nm, which is roughly the sensitivity band of the rods.)
   !!
-  !! \see  Green, ICQ 14, 55 (1992),  http://www.icq.eps.harvard.edu/ICQExtinct.html, based on
-  !!       Hayes & Latham, ApJ 197, 593 (1975): http://esoads.eso.org/abs/1975ApJ...197..593H
+  !! \see  Green, ICQ 14, 55 (1992),  http://www.icq.eps.harvard.edu/ICQExtinct.html, (for lambda=510 nm!), based on
+  !!       Hayes & Latham, ApJ 197, 593 (1975): http://esoads.eso.org/abs/1975ApJ...197..593H (wavelength dependent, for Wega)
   
   function extinction_magPam(ele)
     use SUFR_kinds, only: double
@@ -576,7 +580,7 @@ contains
     Aray = 0.1451d0 * exp(-ele/7996.d0)    ! Rayleigh scattering (for lambda=510 nm), Eq.2
     Aaer = 0.120d0  * exp(-ele/1500.d0)    ! Aerosol scattering (for lambda = 0.51 micron), Eq.4
     
-    extinction_magPam = Aoz + Aray + Aaer  ! Total extinction in magnitudes per unit air mass
+    extinction_magPam = Aoz + Aray + Aaer  ! Total extinction in magnitudes per unit air mass (~0.2811 at sea level)
     
   end function extinction_magPam
   !*********************************************************************************************************************************
@@ -589,7 +593,8 @@ contains
   !! \param alt  Altitude of object (radians)
   !! \param ele  Evelation of the observer above sea level (metres; optional)
   !!
-  !! \note  The magnitude of an object corrected for airmass should be  m' = m + extinction_mag(alt,ele)
+  !! \note - The magnitude of an object corrected for airmass should be  m' = m + extinction_mag(alt,ele)
+  !!       - Assumed is the response of the rods in the human retina, hence night vision
   !!
   !! \see   Functions extinction_magPam() and airmass()
   
@@ -619,6 +624,7 @@ contains
   !!
   !! \note - extinction_fac = 1: no extinction, extinction_fac > 1 extinction.
   !!       - Hence, the flux, corrected for extinction, should be  f' = f / extinction_fac(alt,ele)
+  !!       - Assumed is the response of the rods in the human retina, hence night vision
   !!
   !! \see  function extinction_mag()
   
@@ -633,9 +639,68 @@ contains
     elel = 0.d0                  ! Observer is at sea level by default
     if(present(ele)) elel = ele  ! User-specified observer elevation
     
-    extinction_fac = 10**( extinction_mag(alt,elel) / 2.5d0) ! Extinction in magnitudes -> factor
+    extinction_fac = 10.d0**( extinction_mag(alt,elel) / 2.5d0)  ! Extinction in magnitudes -> factor
     
   end function extinction_fac
+  !*********************************************************************************************************************************
+  
+  
+  
+  !*********************************************************************************************************************************
+  !> \brief  Compute an approximation for the bolometric atmospheric extinction factor for the Sun with a given air mass
+  !!
+  !! \param airmass  Airmass for the position of the Sun
+  !!
+  !! \note  - extinction_fac = 1: no extinction, extinction_fac > 1 extinction.
+  !!        - Hence, the flux, corrected for extinction, should be  f' = f / extinction_fac(alt,ele)
+  !!        - Fit of the power extinction computed by the NREL SMARTS code:
+  !!          - Gueymard, C, Professional Paper FSEC-PF-270-95, 1995
+  !!          - Gueymard, C, Solar Energy, Vol. 71, No. 5, pp. 325-346, 2001
+  
+  function extinction_sun_airmass(airmass)
+    use SUFR_kinds, only: double
+    
+    implicit none
+    real(double), intent(in) :: airmass
+    integer, parameter :: ncoef = 11
+    integer :: iCoef
+    real(double) :: extinction_sun_airmass, coefs(ncoef), AMpow
+    
+    coefs = [ 9.1619283d-2, 2.6098406d-1,-3.6487512d-2, 6.4036283d-3,-8.1993861d-4, 6.9994043d-5,-3.8980993d-6, 1.3929599d-7, &
+         -3.0685834d-9, 3.7844273d-11,-1.9955057d-13]
+    
+    extinction_sun_airmass = coefs(1)
+    AMpow = 1.d0
+    do iCoef=2,ncoef
+       AMpow = AMpow * airmass                                                 ! AM^(i-1)
+       extinction_sun_airmass = extinction_sun_airmass + coefs(iCoef) * AMpow  ! + c*AM^(i-1)
+    end do
+    
+    extinction_sun_airmass = exp(extinction_sun_airmass)
+    
+  end function extinction_sun_airmass
+  !*********************************************************************************************************************************
+  
+  
+  
+  !*********************************************************************************************************************************
+  !> \brief  Compute an approximation for the bolometric atmospheric extinction factor for the Sun with a given air mass
+  !!
+  !! \param alt  TRUE altitude of object (radians)
+  !!
+  !! \note  - extinction_fac = 1: no extinction, extinction_fac > 1 extinction.
+  !!        - Hence, the flux, corrected for extinction, should be  f' = f / extinction_fac(alt,ele)
+  
+  function extinction_sun(alt)
+    use SUFR_kinds, only: double
+    
+    implicit none
+    real(double), intent(in) :: alt
+    real(double) :: extinction_sun
+    
+    extinction_sun = extinction_sun_airmass(airmass(alt))
+    
+  end function extinction_sun
   !*********************************************************************************************************************************
   
   
