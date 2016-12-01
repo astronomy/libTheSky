@@ -653,7 +653,7 @@ contains
   !!
   !! \note  - extinction_fac = 1: no extinction, extinction_fac > 1 extinction.
   !!        - Hence, the flux, corrected for extinction, should be  f' = f / extinction_fac(alt,ele)
-  !!        - Fit of the power extinction computed by the NREL SMARTS code:
+  !!        - Fit of the power extinction computed by the NREL SMARTS code (valid for airmass <= 38.2):
   !!          - Gueymard, C, Professional Paper FSEC-PF-270-95, 1995
   !!          - Gueymard, C, Solar Energy, Vol. 71, No. 5, pp. 325-346, 2001
   
@@ -666,17 +666,25 @@ contains
     integer :: iCoef
     real(double) :: extinction_sun_airmass, coefs(ncoef), AMpow
     
-    coefs = [ 9.1619283d-2, 2.6098406d-1,-3.6487512d-2, 6.4036283d-3,-8.1993861d-4, 6.9994043d-5,-3.8980993d-6, 1.3929599d-7, &
-         -3.0685834d-9, 3.7844273d-11,-1.9955057d-13]
-    
-    extinction_sun_airmass = coefs(1)
-    AMpow = 1.d0
-    do iCoef=2,ncoef
-       AMpow = AMpow * airmass                                                 ! AM^(i-1)
-       extinction_sun_airmass = extinction_sun_airmass + coefs(iCoef) * AMpow  ! + c*AM^(i-1)
-    end do
-    
-    extinction_sun_airmass = exp(extinction_sun_airmass)
+    if(airmass.gt.38.2d0) then
+       
+       extinction_sun_airmass = sqrt(huge(extinction_sun_airmass)) + airmass  ! Very bad, getting worse for higher AM for solvers
+       
+    else
+       
+       coefs = [ 9.1619283d-2, 2.6098406d-1,-3.6487512d-2, 6.4036283d-3,-8.1993861d-4, 6.9994043d-5,-3.8980993d-6, 1.3929599d-7, &
+            -3.0685834d-9, 3.7844273d-11,-1.9955057d-13]
+       
+       extinction_sun_airmass = coefs(1)
+       AMpow = 1.d0
+       do iCoef=2,ncoef
+          AMpow = AMpow * airmass                                                 ! AM^(i-1)
+          extinction_sun_airmass = extinction_sun_airmass + coefs(iCoef) * AMpow  ! + c*AM^(i-1)
+       end do
+       
+       extinction_sun_airmass = exp(extinction_sun_airmass)
+       
+    end if
     
   end function extinction_sun_airmass
   !*********************************************************************************************************************************
