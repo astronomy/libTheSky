@@ -686,7 +686,7 @@ contains
   !*********************************************************************************************************************************
   !> \brief  Compute an approximation for the bolometric atmospheric extinction factor for the Sun with a given air mass
   !!
-  !! \param alt  TRUE altitude of object (radians)
+  !! \param alt  TRUE altitude of the Sun (radians)
   !!
   !! \note  - extinction_fac = 1: no extinction, extinction_fac > 1 extinction.
   !!        - Hence, the flux, corrected for extinction, should be  f' = f / extinction_fac(alt,ele)
@@ -706,19 +706,17 @@ contains
   
   
   !*********************************************************************************************************************************
-  !> \brief  Compute the normal and horizontal beam (direct) solar radiation for a given altitude of the Sun and an observer with a
-  !!         given elevation, assuming a cloudless sky
+  !> \brief  Compute the normal and horizontal beam (direct) solar radiation for a given altitude of the Sun, 
+  !!         assuming a cloudless sky
   !!
-  !! \param alt  Altitude of the Sun (radians)
+  !! \param alt  TRUE altitude of the Sun (radians)
   !!
   !! \retval beam_norm   Normal beam radiation, perpendicular to the position vector of the Sun (W/m2)
   !! \retval beam_horiz  Beam radiation on a horizontal surface (W/m2)
   !!
-  !! \param ele  Evelation of the observer above sea level (metres; optional)
-  !!
   !! \see  function extinction_fac()
   
-  subroutine solar_radiation(alt,  beam_norm, beam_horiz,  ele)
+  subroutine solar_radiation(alt,  beam_norm, beam_horiz)
     use SUFR_kinds, only: double
     use SUFR_constants, only: solConst
     
@@ -726,13 +724,9 @@ contains
     real(double), intent(in) :: alt
     real(double), intent(out) :: beam_norm
     real(double), intent(out), optional :: beam_horiz
-    real(double), intent(in), optional :: ele
-    real(double) :: elel
     
-    elel = 0.d0                  ! Observer is at sea level by default
-    if(present(ele)) elel = ele  ! User-specified observer elevation
     
-    beam_norm  = solConst / extinction_fac(alt, elel)          ! Normal radiation
+    beam_norm  = solConst / extinction_sun(alt)                ! Normal radiation
     if(present(beam_horiz)) beam_horiz = beam_norm * sin(alt)  ! Radiation on a horizontal surface
     
   end subroutine solar_radiation
