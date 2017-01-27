@@ -158,6 +158,8 @@ contains
   !! - Date and time are obtained from year, month, day, hour, minute, second, through the module TheSky_local, assuming LOCAL time
   !! - DeltaT and TZ are returned through the module TheSky_local
   !! - Computed JD is in UNIVERSAL time
+  !!
+  !! \todo  Remove recomputation of 'UT JD'!!!
   
   subroutine calctime(ut,jd,jde)
     use SUFR_kinds, only: double
@@ -176,9 +178,9 @@ contains
     
     ! Determine the correct timezone from the JD, and recompute UT and JD:
     oldtz = tz
-    tz = gettz(jd)                                    ! NEW, good idea?  - perhaps not (when UT is needed!, 2009-03-31)
-    if(dne(tz, oldtz)) then
-       ut = lt - tz
+    tz = gettz(jd)
+    if(dne(tz, oldtz)) then                           ! CHECK - this may be a very stupid idea - provide UT hms and tz=0, and this
+       ut = lt - tz                                   ! will currently return a non-UT ut, jd if dsttp = 1,2 or tz0 != 0
        jd = cal2jd(year,month,day+ut/24.d0)           ! This is the 'UT JD'
     end if
     
@@ -639,10 +641,10 @@ contains
   !!
   !! \param jd      Julian day (UT?)
   !! \param ltz0    Default time zone for the current location ('winter time')
-  !! \param ldsttp  Daylight-savings time rules to use: 1 EU, 2: USA/Canada
-  !!
+  !! \param ldsttp  Daylight-savings time rules to use:  0: no DST (e.g. UT),  1: EU,  2: USA/Canada
+  !! 
   !! \note
-  !!  - currently implemented for EU (dsttp=1) and USA/Canada >2007 (dsttp=2) only
+  !!  - currently implemented for no DST (dsttp=0), EU (dsttp=1) and USA/Canada >2007 (dsttp=2) only
   !!  - tz0 and dsttp can be provided through the module TheSky_local, or using the optional arguments.  Note that using the
   !!    latter will update the former!
   
