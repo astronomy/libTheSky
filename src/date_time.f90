@@ -22,7 +22,7 @@
 !  set_date_and_time_to_jd2000:         Set global date/time variables (year, month, ..., minute, second) to JD2000.0
 
 !  calctime:                            Calculates ut, jd and jde
-!  calc_gmst:                           Calculate Greenwich Mean Siderial Time in RAD!
+!  calc_gmst:                           Calculate Greenwich Mean Sidereal Time in RAD!
 !  calc_deltat:                         Calculates deltat from jd: SLOW!
 !  calc_deltat_ymd:                     Calculates deltat from y,m,d, faster
 !  find_deltat_in_range:                Find a precise value for DeltaT through linear interpolation in tabulated values
@@ -192,10 +192,10 @@ contains
   
   
   !*********************************************************************************************************************************
-  !> \brief  Calculate Greenwich Mean Siderial Time for any instant, in radians
+  !> \brief  Calculate Greenwich Mean Sidereal Time for any instant, in radians
   !!
   !! \param  jd         Julian day of computation
-  !! \retval calc_gmst  Greenwich Mean Siderial Time in radians
+  !! \retval calc_gmst  Greenwich Mean Sidereal Time in radians
   !!
   !! \see Explanatory Supplement to the Astronomical Almanac, 3rd edition, Eq. 6.66 (2012)
   

@@ -606,7 +606,7 @@ contains
   !!
   !! \param  ra    Right ascension
   !! \param  dec   Declination
-  !! \param  agst  Greenwich siderial time
+  !! \param  agst  Greenwich sidereal time
   !!
   !! \retval hh    Local hour angle
   !! \retval az    Azimuth
@@ -655,7 +655,7 @@ contains
   !!
   !! \param  az    Azimuth
   !! \param  alt   Altitude
-  !! \param  agst  Greenwich siderial time
+  !! \param  agst  Greenwich sidereal time
   !!
   !! \retval hh    Local hour angle
   !! \retval ra    Right ascension
@@ -766,7 +766,7 @@ contains
   !! \param  gcs   Geocentric semi-diameter
   !!
   !! \param  eps  Obliquity of the ecliptic
-  !! \param  lst  Local siderial time
+  !! \param  lst  Local sidereal time
   !!
   !! \retval tcl   Topocentric longitude
   !! \retval tcb   Topocentric latitude

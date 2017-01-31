@@ -163,7 +163,10 @@ contains
   !! \param calc  Calculate: 1: l,b,r, 2: & ra,dec, 3: & gmst,agst, 4: & az,alt, nt: number of terms <=60
   !! \param nt    Number of terms to use
   !!
-  !! \see  Meeus, Astronomical Algorithms, 1998, Ch. 22 and 47
+  !! \see
+  !! - Meeus, Astronomical Algorithms, 1998, Ch. 22 and 47
+  !! - Simon et al, A&A, 282, p.663 (1994)
+  !! 
   !!
   !! \todo
   !! - Improve some parts (search for 'improve' below): use Meeus Ch.47/p.338 rather than Ch.22/p.144
@@ -200,12 +203,15 @@ contains
     ! These can be improved somewhat (by using Meeus Ch.47/p.338 rather than Ch.22/p.144):
     ! In fact, these values may be 'incompatible' with the periodic terms used
     lm = rev(3.8103417d0 + 8399.709113d0*t)                                                 ! Moon's mean longitude, Meeus p.144
-    d  = rev(5.19846946025d0 + 7771.37714617d0*t - 3.340909d-5*t2    + 9.2114446d-8*t3)     ! Moon's mean elongation, Meeus p.144
-    ms = rev(6.24003588115d0 + 628.301956024d0*t - 2.79776d-6*t2     - 5.8177641733d-8*t3)  ! Sun's mean anomaly, Meeus p.144
-    mm = rev(2.3555483693d0  + 8328.69142288d0*t + 1.517947757d-4*t2 + 3.102807559d-7*t3)   ! Moon's mean anomaly, Meeus p.144
-    f  = rev(1.62790192912d0 + 8433.46615832d0*t - 6.42717497d-5*t2  + 5.3329949d-8*t3)     ! Moon's argument of latit., Meeus p.144
+    
+    ! Delauney arguments [d, ms, mm, f] (Meeus p.144) = [D, l', l, F] in Simon et al. 1994, Sect. 3.5:
+    d  = rev(5.19846946025d0 + 7771.37714617d0*t - 3.340909d-5*t2    + 9.2114446d-8*t3)     ! Moon's mean elongation
+    ms = rev(6.24003588115d0 + 628.301956024d0*t - 2.79776d-6*t2     - 5.8177641733d-8*t3)  ! Sun's mean anomaly
+    mm = rev(2.3555483693d0  + 8328.69142288d0*t + 1.517947757d-4*t2 + 3.102807559d-7*t3)   ! Moon's mean anomaly
+    f  = rev(1.62790192912d0 + 8433.46615832d0*t - 6.42717497d-5*t2  + 5.3329949d-8*t3)     ! Moon's argument of latitute
+    args = [d,ms,mm,f]  ! Delauney arguments
+    
     e  = 1.d0 - 0.002516d0*t - 0.0000074*t2
-    args = (/d,ms,mm,f/)
     
     ! Meeus, p.338:
     a1 = rev(2.090032d0  + 2.301199d0 * t)
@@ -278,14 +284,14 @@ contains
     if(calc.eq.2) return
     
     
-    ! Siderial time:
-    gmst = calc_gmst(jd)                 ! Greenwich mean siderial time
+    ! Sidereal time:
+    gmst = calc_gmst(jd)                 ! Greenwich mean sidereal time
     agst = rev(gmst + dpsi*cos(eps))     ! Correction for equation of the equinoxes -> Gr. apparent sid. time
-    lst  = rev(agst + lon0)              ! Local apparent siderial time, lon0 > 0 for E
+    lst  = rev(agst + lon0)              ! Local apparent sidereal time, lon0 > 0 for E
     
-    planpos(44) = lst                    ! Local APPARENT siderial time
-    planpos(45) = agst                   ! Greenwich APPARENT siderial time (in radians)
-    planpos(49) = gmst                   ! Greenwich MEAN siderial time (in radians)
+    planpos(44) = lst                    ! Local APPARENT sidereal time
+    planpos(45) = agst                   ! Greenwich APPARENT sidereal time (in radians)
+    planpos(49) = gmst                   ! Greenwich MEAN sidereal time (in radians)
     
     if(calc.eq.3) return
     

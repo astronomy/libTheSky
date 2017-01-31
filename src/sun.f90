@@ -50,7 +50,7 @@ contains
   !! - Meeus, Astronomical Algorithms, 1998, Ch.25
   !! - Simon et al, A&A, 282, p.663 (1994)
   !!
-  !! \todo  odot is off by ~10" in Meeus, Example 25a.  Would need better L0 or C (or M?)
+  !! \todo  odot is off by ~10" (~0.003d) in Meeus, Example 25a.  Would need better L0 or C (or M?)
   
   subroutine sunpos_la(jd, calc, lat,lon)
     use SUFR_kinds, only: double
@@ -166,12 +166,12 @@ contains
     
     
     
-    gmst = calc_gmst(jd)              ! Greenwich mean siderial time
+    gmst = calc_gmst(jd)              ! Greenwich mean sidereal time
     agst = rev(gmst + dpsi*cos(eps))  ! Correction for equation of the equinoxes -> Gr. apparent sid. time
-    lst  = rev(agst + llon)           ! Local apparent siderial time, llon > 0 for E
+    lst  = rev(agst + llon)           ! Local apparent sidereal time, llon > 0 for E
     
-    planpos(44) = lst                 ! Local APPARENT siderial time
-    planpos(45) = rev(agst)           ! Greenwich mean siderial time
+    planpos(44) = lst                 ! Local APPARENT sidereal time
+    planpos(45) = rev(agst)           ! Greenwich mean sidereal time
     planpos(49) = rev(gmst)           ! Correction for equation of the equinoxes -> Gr. apparent sid. time
     
     if(calc.eq.3) return

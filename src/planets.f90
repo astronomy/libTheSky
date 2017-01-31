@@ -237,10 +237,10 @@ contains
     call ecl_2_eq(gcl,gcb,eps, ra,dec)    ! RA, Dec
     
     
-    ! Siderial time:
-    gmst = calc_gmst(jd)                  ! Greenwich mean siderial time
-    agst = rev(gmst + dpsi*cos(eps))      ! Correction for equation of the equinoxes -> Greenwich apparent siderial time
-    lst  = rev(agst + llon)               ! Local apparent siderial time, llon > 0 for E
+    ! Sidereal time:
+    gmst = calc_gmst(jd)                  ! Greenwich mean sidereal time
+    agst = rev(gmst + dpsi*cos(eps))      ! Correction for equation of the equinoxes -> Greenwich apparent sidereal time
+    lst  = rev(agst + llon)               ! Local apparent sidereal time, llon > 0 for E
     
     
     ! Apparent diameter:
@@ -371,12 +371,12 @@ contains
     planpos(41) = rev(hcl0+pi+dpsi) ! Geocentric, true L,B,R for the Sun, in FK5, corrected for nutation
     planpos(42) = rev2(-hcb0)
     planpos(43) = hcr0
-    planpos(44) = lst               ! Local APPARENT siderial time
-    planpos(45) = rev(agst)         ! Greenwich APPARENT siderial time (in radians)
+    planpos(44) = lst               ! Local APPARENT sidereal time
+    planpos(45) = rev(agst)         ! Greenwich APPARENT sidereal time (in radians)
     planpos(46) = tjm0 * 10.d0      ! Apparent dynamical time in Julian Centuries since 2000.0
     planpos(47) = dpsi              ! Nutation in longitude
     planpos(48) = eps               ! True obliquity of the ecliptic; corrected for nutation
-    planpos(49) = rev(gmst)         ! Greenwich MEAN siderial time (in radians)
+    planpos(49) = rev(gmst)         ! Greenwich MEAN sidereal time (in radians)
     planpos(50) = eps0              ! Mean obliquity of the ecliptic; without nutation
     
     ! Geocentric:
