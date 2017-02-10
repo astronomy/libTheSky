@@ -47,9 +47,10 @@ contains
   !!
   !! \see
   !! - Chapront-Touze, Chapront, A&A, 190, p.342, 1988, Table 6 (CTC88)
+  !! - Explanatory Supplement to the Astronimical Almanac (3rd Ed, 2012)
   !! - Meeus, Astronomical Algorithms, 1998, Ch.25
   !! - Simon et al, A&A, 282, p.663 (1994)
-  !!
+  !! 
   !! \todo  odot is off by ~10" (~0.003d) in Meeus, Example 25a.  Would need better L0 or C (or M?)
   
   subroutine sunpos_la(jd, calc, lat,lon)
@@ -97,7 +98,8 @@ contains
     e  = 0.0167086342d0 - 4.203654d-5 *tjc - 1.26734d-7 *tjc2  + 1.444d-10*tjc3 - 2.d-14*tjc4 + 3.d-15*tjc4*tjc
     
     ! Sun's equation of the centre := true - mean anomaly - https://en.wikipedia.org/wiki/Equation_of_the_center:
-    c = (2*e - 0.25d0*e**3)*sin(m) + 1.25d0*e**2*sin(2*m) + 13.d0/12.d0*e**3*sin(3*m)  ! Brown, 1896, Chap. III, Eq.7, up to e^3
+    c = (2*e - 0.25d0*e**3)*sin(m) + 1.25d0*e**2*sin(2*m) + 13.d0/12.d0*e**3*sin(3*m)  ! Brown, 1896, Chap. III, Eq.7, up to e^3,
+    !                                                                       and Expl. Supl. t.t. Astronimical Almanac 3rd Ed, Eq.9.1
     !c = (2*e - 0.25d0*e**3)*sin(m) + (1.25d0*e**2 - 11.d0/24.d0*e**4)*sin(2*m) + 13.d0/12.d0*e**3*sin(3*m) &
     !     + 103.d0/96.d0*e**4*sin(4*m) ! Brown, 1896, Chap. III, Eq.7, up to e^4
     

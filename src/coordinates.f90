@@ -560,6 +560,8 @@ contains
   !!
   !! \retval ra   Right ascension (rad)
   !! \retval dec  Declination (rad)
+  !!
+  !! \see Expl. Supl. t.t. Astronimical Almanac 3rd Ed, Eq.14.43
   
   subroutine ecl_2_eq(l,b,eps, ra,dec)
     use SUFR_kinds, only: double
@@ -585,6 +587,8 @@ contains
   !!
   !! \retval l    Longitude (rad)
   !! \retval b    Latitude (rad)
+  !!
+  !! \see Expl. Supl. t.t. Astronimical Almanac 3rd Ed, Eq.14.42
   
   subroutine eq_2_ecl(ra,dec,eps, l,b)
     use SUFR_kinds, only: double
@@ -614,6 +618,8 @@ contains
   !!
   !! \param  lat   Geographical latitude (rad), optional
   !! \param  lon   Geographical longitude (rad), optional
+  !!
+  !! \see Expl. Supl. t.t. Astronimical Almanac 3rd Ed, Eq.14.44, 14.45
   
   subroutine eq2horiz(ra,dec,agst, hh,az,alt, lat,lon)
     use SUFR_kinds, only: double
@@ -663,6 +669,8 @@ contains
   !!
   !! \param  lat   Geographical latitude (rad), optional
   !! \param  lon   Geographical longitude (rad), optional
+  !!
+  !! \see Expl. Supl. t.t. Astronimical Almanac 3rd Ed, Eq.14.46, 14.47
   
   subroutine horiz2eq(az,alt, agst,  hh,ra,dec,  lat,lon)
     use SUFR_kinds, only: double
