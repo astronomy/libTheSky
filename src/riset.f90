@@ -29,19 +29,21 @@ contains
   !*********************************************************************************************************************************
   !> \brief  Rise, transit and set times routine for Sun, Moon, planets and asteroids.
   !!         Based on riset_ipol(), but recomputes positions (low accuracy first, then full accuracy) rather than interpolating.
-  !!
+  !! 
   !! \param jd     Julian day number
   !! \param pl     Planet/object number  (-1 - 9: ES, Moon, Mer-Plu; >10000 asteroids)
   !! \param sa0    Altitude to return rise/set data for (degrees; 0. is actual rise/set).  sa0>90: compute transit only
-  !!
+  !! 
   !! \retval rt    Rise time (hours)
   !! \retval tt    Transit time (hours)
   !! \retval st    Set time (hours)
+  !! 
   !! \retval rh    Rising wind direction (rad)
   !! \retval ta    Transit altitude (rad)
   !! \retval sh    Setting wind direction (rad)
   !! 
-  !! \param ltime  Passed to planet_position(). If .true., include light time, doubling the CPU time while gaining a bit of accur.
+  !! \param ltime  Passed to planet_position(). If .true., include light time, doubling the CPU time while gaining a bit of 
+  !!                 accuracy
   !! \param cWarn  Warn upon convergence failure (optional; default: true)
   !!
   !! \note
@@ -50,11 +52,11 @@ contains
   !! - use sa0=-6,-12,-18 for the sun for twilight calculations (sa0 is expressed in degrees).
   !! - Returns times, rise/set azimuth and transit altitude
   !! - Moon transit error ~0.15s (?)
-  !!
+  !! 
   !! \todo
-  !! - This version sometimes finds the answer m(i)>1, which is the answer for the next day...
+  !! - This version sometimes finds the answer tmdy(i)>1, which is the answer for the next day...
   !!   - (only?) solution: use a solver on JD for az,alt
-  !!
+  !! 
   !! \note Speed wrt riset_ipol(), transit only, when using low-accuracy approximations:
   !! - Moon: 270x faster (used to be slowest by factor 3-5 wrt planets, factor 6.5 wrt Sun)
   !! - Sun:  340x faster - full accuracy (VSOP): ~2-3x SLOWER!
@@ -63,7 +65,7 @@ contains
   !! - Mar:   10% slower
   !! - Jup:   25% slower
   !! - Nep:   30% slower
-  !!
+  !! 
   !! \see
   !! - riset_ipol()
   !! - Meeus, Astronomical algorithms, Ch.15, but with geographic longitude east of Greenwich defined as > 0
@@ -87,8 +89,8 @@ contains
     logical, intent(in), optional :: ltime, cWarn
     
     integer :: mi,mj,yr,mnt,tc,mmax
-    real(double) :: dy,day0,  jd0,jd1,m(3),  ra,dec
-    real(double) :: sa,ch0,h0,agst,th0,dm,corr(3),accur,  ha,alt,azalt(3)
+    real(double) :: dy,day0,  jd0,jd1,tmdy(3),  ra,dec
+    real(double) :: sa,cosH0,h0,agst,th0,dtm,corr(3),accur,  ha,alt,azalt(3)
     character :: event(3)*(13)
     logical :: use_vsop, lltime, lcWarn
     
@@ -105,7 +107,7 @@ contains
     end if
     
     
-    alt = 0.d0;  ha = 0.d0;  h0 = 0.d0;  azalt = 0.d0;  m = 0.d0;  corr = 0.d0
+    alt = 0.d0;  ha = 0.d0;  h0 = 0.d0;  azalt = 0.d0;  tmdy = 0.d0;  corr = 0.d0
     tc = 0        ! 0: geocentric, 1: topocentric, seems to give wrong results (for the Moon), see also different sa
     event = (/'Transit time ','Rise time    ','Set time     '/)
     
@@ -139,19 +141,19 @@ contains
     
     
     if(mmax.eq.3) then  ! Computing transit, rise and set
-       ch0 = (sin(sa)-sin(lat0)*sin(dec)) / (cos(lat0)*cos(dec))
-       if(abs(ch0).gt.1.d0) then  ! Body never rises/sets
-          mmax = 1                ! Compute transit time and altitude only
+       cosH0 = (sin(sa)-sin(lat0)*sin(dec)) / (cos(lat0)*cos(dec))  ! Cosine of the hour angle of rise/set; Meeus, Eq.15.1
+       if(abs(cosH0).gt.1.d0) then  ! Body never rises/sets
+          mmax = 1                  ! Compute transit time and altitude only
        else
-          h0 = rev(2*acos(ch0))/2.d0
+          h0 = rev(2*acos(cosH0))/2.d0  ! Hour angle of rise/set
        end if
     end if
     
     
-    m(1) = rev(ra - lon0 - agst)/pi2 + corr(1)  ! Transit time in days; m(1)=m0, m(2)=m1, m(3)=m2 in Meeus, but lon0 > 0 for E
+    tmdy(1) = rev(ra - lon0 - agst)/pi2 + corr(1)  ! Transit time in days; tmdy(1)=m0, tmdy(2)=m1, tmdy(3)=m2 in Meeus, but lon0 > 0 for E
     if(mmax.eq.3) then
-       m(2) = rev(m(1)*pi2 - h0)/pi2 + corr(2)  ! Rise time in days
-       m(3) = rev(m(1)*pi2 + h0)/pi2 + corr(3)  ! Set time in days
+       tmdy(2) = rev(tmdy(1)*pi2 - h0)/pi2 + corr(2)  ! Rise time in days
+       tmdy(3) = rev(tmdy(1)*pi2 + h0)/pi2 + corr(3)  ! Set time in days
     end if
     
     
@@ -160,12 +162,12 @@ contains
        accur = 1.d-4       ! Accuracy.  Initially 1d-4, later 1d-6 ~ 0.1s. Don't make this smaller than 1d-16
        use_vsop = .false.  ! Initially
        
-       dm = huge(dm)
-       do while(abs(dm).ge.accur .or. .not.use_vsop)
-          th0 = agst + 6.300388092591991d0*m(mi)  ! (Solar day in sidereal days) * 2 pi; Meeus, p.103
-          jd1 = jd0 + m(mi) + deltat/86400.d0
+       dtm = huge(dtm)
+       do while(abs(dtm).ge.accur .or. .not.use_vsop)
+          th0 = agst + 6.300388092591991d0*tmdy(mi)  ! (Solar day in sidereal days) * 2 pi; Meeus, p.103
+          jd1 = jd0 + tmdy(mi) + deltat/86400.d0
           
-          if(abs(dm).le.accur) then
+          if(abs(dtm).le.accur) then
              use_vsop = .true.
              accur = 1.d-6  ! Changing this to 1.d-5 (~1s) speeds the code yearly_moon_table code up by ~30%
           end if
@@ -185,22 +187,22 @@ contains
           
           ! Correction to transit/rise/set times:
           if(mi.eq.1) then  ! Transit
-             dm = -ha/pi2
+             dtm = -ha/pi2
           else              ! Rise/set
-             dm = (alt-sa)/(pi2*cos(dec)*cos(lat0)*sin(ha))
+             dtm = (alt-sa)/(pi2*cos(dec)*cos(lat0)*sin(ha))
           end if
-          m(mi) = m(mi) + dm
+          tmdy(mi) = tmdy(mi) + dtm
           
           mj = mj+1
           if(mj.gt.30) exit  ! do-while loop
-       end do  ! do while(abs(dm).ge.accur .or. .not.use_vsop)
+       end do  ! do while(abs(dtm).ge.accur .or. .not.use_vsop)
        
        
        if(mj.gt.30) then  ! Convergence failed
           if(lcWarn .and. (pl.ne.3.or.nint(sa0).ne.-18)) write(0,'(A,F10.3,A)') '  * WARNING:  riset():  Riset failed to '// &
                'converge: '//trim(enpname(pl))//'  '//trim(event(mi)),sa0,'d *'
           
-          m(mi) = 0.d0
+          tmdy(mi) = 0.d0
           azalt(mi) = 0.d0
        else               ! Result converged, store it
           if(mi.eq.1) then
@@ -210,13 +212,13 @@ contains
           end if
        end if
        
-       if(pl.eq.0 .and. m(mi).gt.1.d0) then  ! Moon;  in case after m_i = m_i+1, m_f > 1
-          m(mi) = 0.d0
+       if(pl.eq.0 .and. tmdy(mi).gt.1.d0) then  ! Moon;  in case after m_i = m_i+1, m_f > 1
+          tmdy(mi) = 0.d0
           azalt(mi) = 0.d0
        end if
        
-       if(m(mi).lt.0.d0 .and. deq0(sa0)) then
-          m(mi) = 0.d0
+       if(tmdy(mi).lt.0.d0 .and. deq0(sa0)) then
+          tmdy(mi) = 0.d0
           azalt(mi) = 0.d0
        end if
        
@@ -224,9 +226,9 @@ contains
     
     
     ! Store results:
-    rt = m(2)*24  ! Rise time - days -> hours
-    tt = m(1)*24  ! Transit time - days -> hours
-    st = m(3)*24  ! Set time - days -> hours
+    rt = tmdy(2)*24  ! Rise time - days -> hours
+    tt = tmdy(1)*24  ! Transit time - days -> hours
+    st = tmdy(3)*24  ! Set time - days -> hours
     
     rh = azalt(2)  ! Rise azimuth
     ta = azalt(1)  ! Transit altitude
@@ -261,7 +263,7 @@ contains
   !! - for (sa0.ne.0), the routine calculates when alt=sa0 is reached
   !! - use sa0=-6,-12,-18 for the sun for twilight calculations (sa0 is expressed in degrees).
   !! - transit error for Moon <= ~10s (due to interpolation); typically ~4s?
-  !! - code gets confused around midnight - it sometimes returns a small negative m(i), which is on the day before(!)
+  !! - code gets confused around midnight - it sometimes returns a small negative tmdy(i), which is on the day before(!)
   !!
   !! \see
   !! - Meeus, Astronomical algorithms, Ch.15, but with geographic longitude east of Greenwich defined as > 0
@@ -286,8 +288,8 @@ contains
     logical, intent(in), optional :: cWarn
     
     integer :: mi,mj,yr,mnt,tc,mmax, indic
-    real(double) :: dy,day0,  jd0,jd1,jd2,m(3)
-    real(double) :: ra0,dec0,ra1,dec1,ra2,dec2,ra,dec, sa,ch0,h0,agst,th0,n,dm,corr(3),accur,  ha,alt,azalt(3)
+    real(double) :: dy,day0,  jd0,jd1,jd2,tmdy(3)
+    real(double) :: ra0,dec0,ra1,dec1,ra2,dec2,ra,dec, sa,cosH0,h0,agst,th0,n,dtm,corr(3),accur,  ha,alt,azalt(3)
     character :: event(3)*(13)
     logical :: lcWarn
     save :: indic
@@ -346,32 +348,32 @@ contains
        !write(6,'(A)') 'RA flipped'
     end if
     
-    ch0 = (sin(sa)-sin(lat0)*sin(dec2)) / (cos(lat0)*cos(dec2))  ! Meeus, Eq.15.1
+    cosH0 = (sin(sa)-sin(lat0)*sin(dec2)) / (cos(lat0)*cos(dec2))  ! Cosine of the hour angle of rise/set; Meeus, Eq.15.1
     
-    m = 0.
-    azalt = 0.
+    tmdy = 0.d0
+    azalt = 0.d0
     mmax = 3
-    if(abs(ch0).gt.1.d0) then  ! Body never rises/sets
-       mmax = 1                ! Compute transit time and altitude only
+    if(abs(cosH0).gt.1.d0) then  ! Body never rises/sets
+       mmax = 1                  ! Compute transit time and altitude only
     else
-       h0 = rev(2*acos(ch0))/2.d0  ! cos(H0) -> H0
+       h0 = rev(2*acos(cosH0))/2.d0  ! Hour angle of rise/set
     end if
     
     
-    m(1) = rev(ra2 - lon0 - agst)/pi2 + corr(1)  ! Transit time in days;  Meeus Eq. 15.2a, but lon0 > 0 for E
+    tmdy(1) = rev(ra2 - lon0 - agst)/pi2 + corr(1)  ! Transit time in days;  Meeus Eq. 15.2a, but lon0 > 0 for E
     if(mmax.eq.3) then
-       m(2) = rev(m(1)*pi2 - h0)/pi2 + corr(2)   ! Rise time in days;  Meeus Eq.15.2b
-       m(3) = rev(m(1)*pi2 + h0)/pi2 + corr(3)   ! Set time in days;  Meeus Eq.15.2c
+       tmdy(2) = rev(tmdy(1)*pi2 - h0)/pi2 + corr(2)   ! Rise time in days;  Meeus Eq.15.2b
+       tmdy(3) = rev(tmdy(1)*pi2 + h0)/pi2 + corr(3)   ! Set time in days;  Meeus Eq.15.2c
     end if
     
     mi = 1  ! i=1,mmax
     do while(mi.le.mmax)
        mj = 0
        
-       dm = huge(dm)
-       do while(abs(dm).ge.accur)
-          th0 = agst + 6.300388092591991d0*m(mi)  ! Meeus, p.103
-          n   = m(mi) + deltat/86400.d0
+       dtm = huge(dtm)
+       do while(abs(dtm).ge.accur)
+          th0 = agst + 6.300388092591991d0*tmdy(mi)  ! Meeus, p.103
+          n   = tmdy(mi) + deltat/86400.d0
           ra  = mipol(ra0,ra1,ra2,n)     ! Interpolate right ascension
           dec = mipol(dec0,dec1,dec2,n)  ! Interpolate declination
           
@@ -380,22 +382,22 @@ contains
           
           ! Correction to transit/rise/set times:
           if(mi.eq.1) then  ! Transit
-             dm = -ha/pi2
+             dtm = -ha/pi2
           else              ! Rise/set
-             dm = (alt-sa)/(pi2*cos(dec)*cos(lat0)*sin(ha))
+             dtm = (alt-sa)/(pi2*cos(dec)*cos(lat0)*sin(ha))
           end if
-          m(mi) = m(mi) + dm
+          tmdy(mi) = tmdy(mi) + dtm
           
           mj = mj+1
           if(mj.gt.30) exit  ! do-while loop
-       end do  ! do while(abs(dm).ge.accur)
+       end do  ! do while(abs(dtm).ge.accur)
        
        
        if(mj.gt.30) then  ! Convergence failed
           if(lcWarn .and. (pl.ne.3.or.nint(sa0).ne.-18)) write(0,'(A,F10.3,A)') '  * WARNING:  riset_ipol():  Riset failed to '// &
                'converge: '//trim(enpname(min(pl,19)))//'  '//trim(event(mi)),sa0,'d'
           
-          m(mi) = 0.d0
+          tmdy(mi) = 0.d0
           azalt(mi) = 0.d0
        else               ! Result converged, store it
           if(mi.eq.1) then
@@ -407,28 +409,28 @@ contains
        
        
        if(pl.eq.0) then
-          if(m(mi).lt.0.) then    ! Sometimes, (at least) the Moon doesn't r,t,s twice, because m_i slightly > 1, and rev(m_i) << 1,
+          if(tmdy(mi).lt.0.) then    ! Sometimes, (at least) the Moon doesn't r,t,s twice, because m_i slightly > 1, and rev(m_i) << 1,
              corr(mi) = corr(mi) + 1.d0     ! then initially m_f < 0, though if m_i = m_i + 1,  then 0 < m_f < 1
              
              ! Restart the do loop:
              mi = 1
-             m(1) = rev(ra2 - lon0 - agst)/pi2 + corr(1)  ! Transit; m(1)=m0, m(2)=m1, m(3)=m2 in Meeus, but lon0 > 0 for E
+             tmdy(1) = rev(ra2 - lon0 - agst)/pi2 + corr(1)  ! Transit; tmdy(1)=m0, tmdy(2)=m1, tmdy(3)=m2 in Meeus, but lon0 > 0 for E
              if(mmax.eq.3) then
-                m(2) = rev(m(1)*pi2 - h0)/pi2 + corr(2)   ! Rise
-                m(3) = rev(m(1)*pi2 + h0)/pi2 + corr(3)   ! Set
+                tmdy(2) = rev(tmdy(1)*pi2 - h0)/pi2 + corr(2)   ! Rise
+                tmdy(3) = rev(tmdy(1)*pi2 + h0)/pi2 + corr(3)   ! Set
              end if
              cycle  ! i
-          end if  ! if(m(mi).lt.0.)
+          end if  ! if(tmdy(mi).lt.0.)
           
-          if(m(mi).gt.1.d0) then  ! in case after m_i = m_i+1, m_f > 1
-             m(mi) = 0.d0
+          if(tmdy(mi).gt.1.d0) then  ! in case after m_i = m_i+1, m_f > 1
+             tmdy(mi) = 0.d0
              azalt(mi) = 0.d0
-          end if  ! if(m(mi).gt.1.d0)
+          end if  ! if(tmdy(mi).gt.1.d0)
        end if  ! if(pl.eq.0)
        
        
-       if(m(mi).lt.0. .and. deq0(sa0)) then
-          m(mi) = 0.d0
+       if(tmdy(mi).lt.0. .and. deq0(sa0)) then
+          tmdy(mi) = 0.d0
           azalt(mi) = 0.d0
        end if
        
@@ -437,9 +439,9 @@ contains
     
     
     ! Store results:
-    rt = m(2)*24  ! Rise time - days -> hours
-    tt = m(1)*24  ! Transit time - days -> hours
-    st = m(3)*24  ! Set time - days -> hours
+    rt = tmdy(2)*24  ! Rise time - days -> hours
+    tt = tmdy(1)*24  ! Transit time - days -> hours
+    st = tmdy(3)*24  ! Set time - days -> hours
     
     rh = azalt(2)  ! Rise azimuth
     ta = azalt(1)  ! Transit altitude
@@ -493,7 +495,7 @@ contains
     logical, intent(in), optional :: cWarn
     
     integer :: mi,mj,yr,mnt,mmax
-    real(double) :: dy,day0,jd1,m(3),  sa,ch0,h0,agst,th0,dm,accur,  ha,alt,azalt(3) !,n
+    real(double) :: dy,day0,jd1,tmdy(3),  sa,cosH0,h0,agst,th0,dtm,accur,  ha,alt,azalt(3) !,n
     character :: event(3)*(13)
     logical :: lcWarn
     
@@ -516,50 +518,50 @@ contains
     call planet_position(jd1,3)
     agst = planpos(45)
     
-    m = 0.
-    azalt = 0.
+    tmdy = 0.d0
+    azalt = 0.d0
     if(mmax.eq.3) then
-       ch0 = (sin(sa)-sin(lat0)*sin(dec))/(cos(lat0)*cos(dec))
-       if(abs(ch0).gt.1.d0) then  ! Body never rises/sets
-          mmax = 1                ! Compute transit time and altitude only
+       cosH0 = (sin(sa)-sin(lat0)*sin(dec))/(cos(lat0)*cos(dec))  ! Cosine of the hour angle of rise/set; Meeus, Eq.15.1
+       if(abs(cosH0).gt.1.d0) then  ! Body never rises/sets
+          mmax = 1                  ! Compute transit time and altitude only
        else
-          h0 = rev(2*acos(ch0))/2.d0
+          h0 = rev(2*acos(cosH0))/2.d0  ! Hour angle of rise/set
        end if
     end if
     
-    m(1) = rev(ra - lon0 - agst)/pi2  ! Transit;  m(1)=m0, m(2)=m1, m(3)=m2 in Meeus, but lon0 > 0 for E
+    tmdy(1) = rev(ra - lon0 - agst)/pi2  ! Transit;  tmdy(1)=m0, tmdy(2)=m1, tmdy(3)=m2 in Meeus, but lon0 > 0 for E
     if(mmax.eq.3) then
-       m(2) = rev(m(1)*pi2 - h0)/pi2  ! Rise
-       m(3) = rev(m(1)*pi2 + h0)/pi2  ! Set
+       tmdy(2) = rev(tmdy(1)*pi2 - h0)/pi2  ! Rise
+       tmdy(3) = rev(tmdy(1)*pi2 + h0)/pi2  ! Set
     end if
     
     
     do mi=1,mmax
        mj = 0
-       dm = huge(dm)
-       do while(abs(dm).ge.accur)
-          th0 = agst + 6.300388092591991d0*m(mi)  ! Meeus, p.103
+       dtm = huge(dtm)
+       do while(abs(dtm).ge.accur)
+          th0 = agst + 6.300388092591991d0*tmdy(mi)  ! Meeus, p.103
           
           ha = rev2(th0 + lon0 - ra)                                   ! Hour angle;  Meeus p.103
           alt = asin(sin(lat0)*sin(dec) + cos(lat0)*cos(dec)*cos(ha))  ! Altitude;  Meeus Eq. 13.6
           
           ! Correction on transit/rise/set times:
           if(mi.eq.1) then  ! Transit
-             dm = -ha/pi2
+             dtm = -ha/pi2
           else              ! Rise/set
-             dm = (alt-sa)/(pi2*cos(dec)*cos(lat0)*sin(ha))
+             dtm = (alt-sa)/(pi2*cos(dec)*cos(lat0)*sin(ha))
           end if
-          m(mi) = m(mi) + dm
+          tmdy(mi) = tmdy(mi) + dtm
           
           mj = mj+1
           if(mj.gt.30) exit  ! do-while loop
-       end do  ! do while(abs(dm).ge.accur)
+       end do  ! do while(abs(dtm).ge.accur)
        
        
        if(mj.gt.30) then  ! Convergence failed
           if(lcWarn) write(0,'(A,F10.3,A)') '  * WARNING:  riset_ad():  Riset failed to converge: '//trim(event(mi)),sa0,'d *'
           
-          m(mi) = 0.d0
+          tmdy(mi) = 0.d0
           azalt(mi) = 0.d0
        else               ! Result converged, store it
           if(mi.eq.1) then
@@ -569,8 +571,8 @@ contains
           end if
        end if
        
-       if(m(mi).lt.0. .and. deq0(sa0)) then
-          m(mi) = 0.d0
+       if(tmdy(mi).lt.0. .and. deq0(sa0)) then
+          tmdy(mi) = 0.d0
           azalt(mi) = 0.d0
        end if
        
@@ -578,9 +580,9 @@ contains
     
     
     ! Store results:
-    rt = m(2)*24  ! Rise time - days -> hours
-    tt = m(1)*24  ! Transit time - days -> hours
-    st = m(3)*24  ! Set time - days -> hours
+    rt = tmdy(2)*24  ! Rise time - days -> hours
+    tt = tmdy(1)*24  ! Transit time - days -> hours
+    st = tmdy(3)*24  ! Set time - days -> hours
     
     rh = azalt(2)  ! Rise azimuth
     ta = azalt(1)  ! Transit altitude
