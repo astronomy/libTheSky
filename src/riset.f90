@@ -73,8 +73,8 @@ contains
   
   subroutine riset(jd,pl,  rt,tt,st, rh,ta,sh,  rsAlt, ltime, cWarn)
     use SUFR_kinds, only: double
-    use SUFR_constants, only: pi,pi2, d2r,am2r, enpname, earthr,AU
-    use SUFR_angles, only: rev
+    use SUFR_constants, only: pi,pi2, d2r,am2r, r2h, enpname, earthr,AU
+    use SUFR_angles, only: rev, rev2
     use SUFR_date_and_time, only: cal2jd,jd2cal
     use SUFR_numerics, only: deq0
     
@@ -122,7 +122,7 @@ contains
     
     call jd2cal(jd, yr,mnt,dy)
     
-    day0 = dble(int(dy))-tz/24.d0  ! Midnight local time
+    day0 = dble(int(dy))-tz/24.d0  ! Midnight local time, needed for agst
     jd0  = cal2jd(yr,mnt,day0)
     
     call planet_position_la(jd0, pl, 3, 60)  ! Compute low-accuracy positions - calc=2 computes ra,dec, calc=3 computes agst
@@ -150,27 +150,27 @@ contains
     end if
     
     
-    tmdy(1) = rev(ra - lon0 - agst)/pi2  ! Transit time in days; tmdy(1)=m0, tmdy(2)=m1, tmdy(3)=m2 in Meeus, but lon0 > 0 for E
+    tmdy(1) = rev(ra - lon0 - agst)  ! Transit time in radians; tmdy(1)=m0, tmdy(2)=m1, tmdy(3)=m2 in Meeus, but lon0 > 0 for E
     if(evMax.eq.3) then
-       tmdy(2) = rev(tmdy(1)*pi2 - h0)/pi2  ! Rise time in days
-       tmdy(3) = rev(tmdy(1)*pi2 + h0)/pi2  ! Set time in days
+       tmdy(2) = rev(tmdy(1) - h0)  ! Rise time in radians
+       tmdy(3) = rev(tmdy(1) + h0)  ! Set time in radians
     end if
     
     
     do evi=1,evMax          ! Transit, rise, set
        iter = 0
-       accur = 1.d-4       ! Accuracy.  Initially 1d-4, later 1d-6 ~ 0.1s. Don't make this smaller than 1d-16
+       accur = 1.d-4*pi2   ! Accuracy.  Initially 1d-4, later 1d-6d ~ 0.1s. Don't make this smaller than 1d-16
        use_vsop = .false.  ! Initially
        
        
        dtm = huge(dtm)
        do while(abs(dtm).ge.accur .or. .not.use_vsop)
-          th0 = agst + 6.300388092591991d0*tmdy(evi)  ! (Solar day in sidereal days) * 2 pi; Meeus, p.103
-          jd1 = jd0 + tmdy(evi) + deltat/86400.d0
+          th0 = agst + 1.002737909350795d0*tmdy(evi)  ! Solar day in sidereal days in 2000; Expl.Suppl.tt.Astr.Almanac 3rdEd Eq.3.17
+          jd1 = jd0 + tmdy(evi)/pi2 + deltat/86400.d0   !                                                  (removed '...37...' typo)
           
           if(abs(dtm).le.accur) then
              use_vsop = .true.
-             accur = 1.d-6  ! ~0.1s.  Changing this to 1.d-5 (~1s) speeds the code yearly_moon_table code up by ~30%
+             accur = 1.d-6*pi2  ! 1d-6d~0.1s.  Changing this to 1.d-5 (~1s) speeds the code yearly_moon_table code up by ~30%
           end if
           
           if(use_vsop) then
@@ -188,9 +188,9 @@ contains
           
           ! Correction to transit/rise/set times:
           if(evi.eq.1) then  ! Transit
-             dtm = -ha/pi2
+             dtm = -rev2(ha)
           else              ! Rise/set
-             dtm = (alt-sa)/(pi2*cos(dec)*cos(lat0)*sin(ha))
+             dtm = (alt-sa)/(cos(dec)*cos(lat0)*sin(ha))
           end if
           tmdy(evi) = tmdy(evi) + dtm
           
@@ -214,7 +214,7 @@ contains
           end if
        end if
        
-       if(pl.eq.0 .and. tmdy(evi).gt.1.d0) then  ! Moon;  in case after m_i = m_i+1, m_f > 1
+       if(pl.eq.0 .and. tmdy(evi).gt.pi2) then  ! Moon;  in case after m_i = m_i+1, m_f > 1
           tmdy(evi) = 0.d0
           azalt(evi) = 0.d0
        end if
@@ -224,17 +224,17 @@ contains
           azalt(evi) = 0.d0
        end if
        
-       print*,evi,iter
     end do  ! evi
     
     
     ! Store results:
-    rt = tmdy(2)*24  ! Rise time - days -> hours
-    tt = tmdy(1)*24  ! Transit time - days -> hours
-    st = tmdy(3)*24  ! Set time - days -> hours
+    tmdy = tmdy * r2h  ! Times radians -> hours
+    tt = tmdy(1)       ! Transit time
+    rt = tmdy(2)       ! Rise time
+    st = tmdy(3)       ! Set time
     
-    rh = azalt(2)  ! Rise azimuth
     ta = azalt(1)  ! Transit altitude
+    rh = azalt(2)  ! Rise azimuth
     sh = azalt(3)  ! Set azimuth
     
   end subroutine riset
