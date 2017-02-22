@@ -30,21 +30,22 @@ contains
   !> \brief  Rise, transit and set times routine for Sun, Moon, planets and asteroids.
   !!         Based on riset_ipol(), but recomputes positions (low accuracy first, then full accuracy) rather than interpolating.
   !! 
-  !! \param jd     Julian day number
-  !! \param pl     Planet/object number  (-1 - 9: ES, Moon, Mer-Plu; >10000 asteroids)
-  !! \param rsAlt  Altitude to return rise/set data for (degrees; 0. is actual rise/set).  rsAlt>90: compute transit only
+  !! \param  jd        Julian day number
+  !! \param  pl        Planet/object number  (-1 - 9: ES, Moon, Mer-Plu; >10000 asteroids)
+  !! \param  rsAlt     Altitude to return rise/set data for (degrees; 0. is actual rise/set).  rsAlt>90: compute transit only
   !! 
-  !! \retval rt    Rise time (hours)
-  !! \retval tt    Transit time (hours)
-  !! \retval st    Set time (hours)
+  !! \retval rt        Rise time (hours)
+  !! \retval tt        Transit time (hours)
+  !! \retval st        Set time (hours)
   !! 
-  !! \retval rh    Rising wind direction (rad)
-  !! \retval ta    Transit altitude (rad)
-  !! \retval sh    Setting wind direction (rad)
+  !! \retval rh        Rising wind direction (rad)
+  !! \retval ta        Transit altitude (rad)
+  !! \retval sh        Setting wind direction (rad)
   !! 
-  !! \param ltime  Passed to planet_position(). If .true., include light time, doubling the CPU time while gaining a bit of 
-  !!                 accuracy
-  !! \param cWarn  Warn upon convergence failure (optional; default: true)
+  !! \param  ltime     Passed to planet_position(). If .true., include light time, doubling the CPU time while gaining a bit of 
+  !!                     accuracy
+  !! \param  cWarn     Warn upon convergence failure (optional; default: true)
+  !! \retval converge  Number of iterations needed to converge (optional)
   !!
   !! \note
   !! - for rsAlt = 0.d0, rise and set times are computed
@@ -71,7 +72,7 @@ contains
   !! - Meeus, Astronomical algorithms, Ch.15, but with geographic longitude east of Greenwich defined as > 0
   
   
-  subroutine riset(jd,pl,  rt,tt,st, rh,ta,sh,  rsAlt, ltime, cWarn)
+  subroutine riset(jd,pl,  rt,tt,st, rh,ta,sh,  rsAlt, ltime, cWarn, converge)
     use SUFR_kinds, only: double
     use SUFR_constants, only: pi,pi2, d2r,am2r, r2h, enpname, earthr,AU
     use SUFR_angles, only: rev, rev2
@@ -87,10 +88,11 @@ contains
     real(double), intent(in) :: jd, rsAlt
     real(double), intent(out) :: rt,tt,st,rh,ta,sh
     logical, intent(in), optional :: ltime, cWarn
+    integer, intent(out), optional :: converge(3)
     
-    integer :: evi,iter,yr,mnt,tc,evMax
-    real(double) :: dy,day0,  jd0,jd1,tmdy(3),dTmdy(3),  ra,dec
-    real(double) :: sa,cosH0,h0,agst,th0,dtm,accur,  ha,alt,azalt(3)
+    integer :: evi,iter,yr,mnt,tc,evMax, lconverge(3)
+    real(double) :: dy,day0,  jd0,jd1,tmdy(3),  ra,dec
+    real(double) :: rsa,cosH0,h0,agst,th0,dTmdy,accur,  ha,alt,azalt(3)
     character :: event(3)*(13)
     logical :: use_vsop, lltime, lcWarn
     
@@ -107,15 +109,15 @@ contains
     end if
     
     
-    alt=0.d0; ha=0.d0; h0=0.d0; azalt=0.d0; tmdy=0.d0; dTmdy=0.d0
-    tc = 0        ! 0: geocentric, 1: topocentric, seems to give wrong results (for the Moon), see also different sa
+    alt=0.d0; ha=0.d0; h0=0.d0; azalt=0.d0; tmdy=0.d0
+    tc = 0        ! 0: geocentric, 1: topocentric, seems to give wrong results (for the Moon), see also different rsa
     event = ['Transit time ','Rise time    ','Set time     ']
     
-    sa = -0.5667d0*d2r                      ! Standard altitude for planets
-    if(pl.eq.3) sa = sa - 16.d0*am2r        ! Compensate for radius of Sun, -16 arcminutes  ! sa = -0.8333d0*d2r - default for Sun
-    if(pl.eq.0) sa = 0.125d0*d2r            ! Approximate standard altitude for Moon
+    rsa = -0.5667d0*d2r                      ! Standard rise/set altitude for planets
+    if(pl.eq.3) rsa = rsa - 16.d0*am2r       ! Compensate for radius of Sun, -16 arcminutes  ! rsa = -0.8333d0*d2r - default for Sun
+    if(pl.eq.0) rsa = 0.125d0*d2r            ! Approximate standard rise/set altitude for Moon
     
-    if(abs(rsAlt).gt.1.d-9) sa = rsAlt*d2r  ! Use a user-specified altitude
+    if(abs(rsAlt).gt.1.d-9) rsa = rsAlt*d2r  ! Use a user-specified altitude
     
     evMax = 3                     ! 'Maximum' event to compute: transit only: evMax=1, +rise/set: evMax=3
     if(rsAlt.gt.90.d0) evMax = 1  ! Compute transit time and altitude only
@@ -133,15 +135,15 @@ contains
     
     if(pl.eq.0) then
        if(tc.eq.0) then
-          sa = asin(earthr/(planpos(4)*AU))*0.7275d0-0.5667d0*d2r  ! Exact altitude for Moon, ~0.1-0.2deg, for geocentric coord.
+          rsa = asin(earthr/(planpos(4)*AU))*0.7275d0-0.5667d0*d2r  ! Exact altitude for Moon, ~0.1-0.2deg, for geocentric coord.
        else  !tc.eq.1:
-          sa = -0.8333d0*d2r  ! For Moon, in combination with topocentric coordinates
+          rsa = -0.8333d0*d2r  ! For Moon, in combination with topocentric coordinates
        end if
     end if
     
     
     if(evMax.eq.3) then  ! Computing transit, rise and set
-       cosH0 = (sin(sa)-sin(lat0)*sin(dec)) / (cos(lat0)*cos(dec))  ! Cosine of the hour angle of rise/set; Meeus, Eq.15.1
+       cosH0 = (sin(rsa)-sin(lat0)*sin(dec)) / (cos(lat0)*cos(dec))  ! Cosine of the hour angle of rise/set; Meeus, Eq.15.1
        if(abs(cosH0).gt.1.d0) then  ! Body never rises/sets
           evMax = 1                 ! Compute transit time and altitude only
        else
@@ -162,13 +164,12 @@ contains
        accur = 1.d-4*pi2   ! Accuracy.  Initially 1d-4, later 1d-6d ~ 0.1s. Don't make this smaller than 1d-16
        use_vsop = .false.  ! Initially
        
-       
-       dtm = huge(dtm)
-       do while(abs(dtm).ge.accur .or. .not.use_vsop)
+       dTmdy = huge(dTmdy)
+       do while(abs(dTmdy).ge.accur .or. .not.use_vsop)
           th0 = agst + 1.002737909350795d0*tmdy(evi)  ! Solar day in sidereal days in 2000; Expl.Suppl.tt.Astr.Almanac 3rdEd Eq.3.17
           jd1 = jd0 + tmdy(evi)/pi2 + deltat/86400.d0   !                                                  (removed '...37...' typo)
           
-          if(abs(dtm).le.accur) then
+          if(abs(dTmdy).le.accur) then
              use_vsop = .true.
              accur = 1.d-6*pi2  ! 1d-6d~0.1s.  Changing this to 1.d-5 (~1s) speeds the code yearly_moon_table code up by ~30%
           end if
@@ -188,16 +189,15 @@ contains
           
           ! Correction to transit/rise/set times:
           if(evi.eq.1) then  ! Transit
-             dtm = -rev2(ha)
+             dTmdy = -rev2(ha)
           else              ! Rise/set
-             dtm = (alt-sa)/(cos(dec)*cos(lat0)*sin(ha))
+             dTmdy = (alt-rsa)/(cos(dec)*cos(lat0)*sin(ha))
           end if
-          tmdy(evi) = tmdy(evi) + dtm
+          tmdy(evi) = tmdy(evi) + dTmdy
           
           iter = iter+1
           if(iter.gt.30) exit  ! do-while loop
-       end do  ! do while(abs(dtm).ge.accur .or. .not.use_vsop)
-       
+       end do  ! do while(abs(dTmdy).ge.accur .or. .not.use_vsop)
        
        
        if(iter.gt.30) then  ! Convergence failed
@@ -224,6 +224,8 @@ contains
           azalt(evi) = 0.d0
        end if
        
+       lconverge(evi) = iter  ! Number of iterations needed to converge
+       
     end do  ! evi
     
     
@@ -236,6 +238,8 @@ contains
     ta = azalt(1)  ! Transit altitude
     rh = azalt(2)  ! Rise azimuth
     sh = azalt(3)  ! Set azimuth
+    
+    if(present(converge)) converge = lconverge  ! Number of iterations needed to converge
     
   end subroutine riset
   !*********************************************************************************************************************************
@@ -292,7 +296,7 @@ contains
     
     integer :: evi,iter,yr,mnt,tc,evMax, indic
     real(double) :: dy,day0,  jd0,jd1,jd2,tmdy(3),dTmdy(3)
-    real(double) :: ra0,dec0,ra1,dec1,ra2,dec2,ra,dec, sa,cosH0,h0,agst,th0,n,dtm,accur,  ha,alt,azalt(3)
+    real(double) :: ra0,dec0,ra1,dec1,ra2,dec2,ra,dec, rsa,cosH0,h0,agst,th0,n,dtm,accur,  ha,alt,azalt(3)
     character :: event(3)*(13)
     logical :: lcWarn
     save :: indic
@@ -307,16 +311,16 @@ contains
     
     rt=0.d0; tt=0.d0; st=0.d0;  rh=0.d0; ta=0.d0; sh=0.d0
     alt = 0.d0;  ha = 0.d0;  dTmdy = 0.d0;  h0 = 0.d0;  dec = 0.d0
-    tc = 0        ! 0: geocentric, 1: topocentric, seems to give wrong results (for the Moon), see also different sa
+    tc = 0        ! 0: geocentric, 1: topocentric, seems to give wrong results (for the Moon), see also different rsa
     event = ['Transit time ','Rise time    ','Set time     ']
     accur = 1.d-6          ! Accuracy.  1d-6 ~ 0.1s. Don't make this smaller than 1d-16
     
     
-    sa = -0.5667d0*d2r                      ! Standard altitude for planets
-    if(pl.eq.3) sa = sa - 16.0d0*am2r       ! Compensate for radius of Sun, -16 arcminutes  ! sa = -0.8333d0*d2r - default for Sun
-    if(pl.eq.0) sa = 0.125d0*d2r            ! Approximate standard altitude for Moon
+    rsa = -0.5667d0*d2r                     ! Standard rise/set altitude for planets
+    if(pl.eq.3) rsa = rsa - 16.0d0*am2r     ! Compensate for radius of Sun, -16 arcminutes  ! rsa = -0.8333d0*d2r - default for Sun
+    if(pl.eq.0) rsa = 0.125d0*d2r           ! Approximate standard altitude for Moon
     
-    if(abs(rsAlt).gt.1.d-9) sa = rsAlt*d2r
+    if(abs(rsAlt).gt.1.d-9) rsa = rsAlt*d2r
     
     call jd2cal(jd,yr,mnt,dy)
     
@@ -336,9 +340,9 @@ contains
     
     if(pl.eq.0) then
        if(tc.eq.0) then
-          sa = asin(earthr/(planpos(4)*AU))*0.7275d0-0.5667d0*d2r  ! Exact altitude for Moon, ~0.1-0.2deg, for geocentric coord.
+          rsa = asin(earthr/(planpos(4)*AU))*0.7275d0-0.5667d0*d2r  ! Exact altitude for Moon, ~0.1-0.2deg, for geocentric coord.
        else  !tc.eq.1:
-          sa = -0.8333d0*d2r  ! For Moon, in combination with topocentric coordinates
+          rsa = -0.8333d0*d2r  ! For Moon, in combination with topocentric coordinates
        end if
     end if
     
@@ -354,7 +358,7 @@ contains
        !write(6,'(A)') 'RA flipped'
     end if
     
-    cosH0 = (sin(sa)-sin(lat0)*sin(dec2)) / (cos(lat0)*cos(dec2))  ! Cosine of the hour angle of rise/set; Meeus, Eq.15.1
+    cosH0 = (sin(rsa)-sin(lat0)*sin(dec2)) / (cos(lat0)*cos(dec2))  ! Cosine of the hour angle of rise/set; Meeus, Eq.15.1
     
     tmdy = 0.d0
     azalt = 0.d0
@@ -390,7 +394,7 @@ contains
           if(evi.eq.1) then  ! Transit
              dtm = -ha/pi2
           else              ! Rise/set
-             dtm = (alt-sa)/(pi2*cos(dec)*cos(lat0)*sin(ha))
+             dtm = (alt-rsa)/(pi2*cos(dec)*cos(lat0)*sin(ha))
           end if
           tmdy(evi) = tmdy(evi) + dtm
           
@@ -493,7 +497,7 @@ contains
     
     use TheSky_planets, only: planet_position
     use TheSky_planetdata, only: planpos
-    use TheSky_local, only: tz, lat0,lon0 !,deltat
+    use TheSky_local, only: tz, lat0,lon0
     
     implicit none
     real(double), intent(in) :: jd, ra,dec, rsAlt
@@ -501,7 +505,7 @@ contains
     logical, intent(in), optional :: cWarn
     
     integer :: evi,iter,yr,mnt,evMax
-    real(double) :: dy,day0,jd1,tmdy(3),  sa,cosH0,h0,agst,th0,dtm,accur,  ha,alt,azalt(3) !,n
+    real(double) :: dy,day0,jd1,tmdy(3),  rsa,cosH0,h0,agst,th0,dtm,accur,  ha,alt,azalt(3) !,n
     character :: event(3)*(13)
     logical :: lcWarn
     
@@ -514,7 +518,7 @@ contains
     
     event = ['Transit time ','Rise time    ','Set time     ']
     
-    sa = rsAlt*d2r
+    rsa = rsAlt*d2r
     evMax = 3                     ! 'Maximum' event to compute: transit only: evMax=1, +rise/set: evMax=3
     if(rsAlt.gt.90.d0) evMax = 1  ! Compute transit time and altitude only
     
@@ -527,7 +531,7 @@ contains
     tmdy = 0.d0
     azalt = 0.d0
     if(evMax.eq.3) then
-       cosH0 = (sin(sa)-sin(lat0)*sin(dec))/(cos(lat0)*cos(dec))  ! Cosine of the hour angle of rise/set; Meeus, Eq.15.1
+       cosH0 = (sin(rsa)-sin(lat0)*sin(dec))/(cos(lat0)*cos(dec))  ! Cosine of the hour angle of rise/set; Meeus, Eq.15.1
        if(abs(cosH0).gt.1.d0) then  ! Body never rises/sets
           evMax = 1                 ! Compute transit time and altitude only
        else
@@ -555,7 +559,7 @@ contains
           if(evi.eq.1) then  ! Transit
              dtm = -ha/pi2
           else              ! Rise/set
-             dtm = (alt-sa)/(pi2*cos(dec)*cos(lat0)*sin(ha))
+             dtm = (alt-rsa)/(pi2*cos(dec)*cos(lat0)*sin(ha))
           end if
           tmdy(evi) = tmdy(evi) + dtm
           
