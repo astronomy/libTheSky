@@ -74,7 +74,7 @@ contains
   
   subroutine riset(jd,pl,  rt,tt,st, rh,ta,sh,  rsAlt, ltime, cWarn, converge)
     use SUFR_kinds, only: double
-    use SUFR_constants, only: pi,pi2, d2r,am2r, r2h, enpname, earthr,AU
+    use SUFR_constants, only: pi2, d2r,am2r, r2h, enpname, earthr,AU
     use SUFR_angles, only: rev, rev2
     use SUFR_date_and_time, only: cal2jd,jd2cal
     use SUFR_numerics, only: deq0
@@ -161,7 +161,7 @@ contains
     
     do evi=1,evMax          ! Transit, rise, set
        iter = 0
-       accur = 1.d-4*pi2   ! Accuracy.  Initially 1d-4, later 1d-6d ~ 0.1s. Don't make this smaller than 1d-16
+       accur = 1.d-3       ! Accuracy.  Initially 1d-3, later 1d-5 ~ 0.1s. Don't make this smaller than 1d-16
        use_vsop = .false.  ! Initially
        
        dTmdy = huge(dTmdy)
@@ -171,7 +171,7 @@ contains
           
           if(abs(dTmdy).le.accur) then
              use_vsop = .true.
-             accur = 1.d-6*pi2  ! 1d-6d~0.1s.  Changing this to 1.d-5 (~1s) speeds the code yearly_moon_table code up by ~30%
+             accur = 1.d-5  ! 1d-5~0.1s.  Changing this to 1.d-4 (~1s) speeds the code yearly_moon_table code up by ~30%
           end if
           
           if(use_vsop) then
@@ -184,13 +184,13 @@ contains
           ra  = planpos(5+tc*20)  ! Right ascension
           dec = planpos(6+tc*20)  ! Declination
           
-          ha  = rev(th0 + lon0 - ra + pi) - pi                         ! Hour angle
+          ha  = rev2(th0 + lon0 - ra)                                  ! Hour angle
           !ha  = planpos(8+tc*20)                                       ! Hour angle -/- DeltaT
           alt = asin(sin(lat0)*sin(dec) + cos(lat0)*cos(dec)*cos(ha))  ! Altitude;  Meeus, Eq.13.6
           
           ! Correction to transit/rise/set times:
           if(evi.eq.1) then  ! Transit
-             dTmdy = -rev2(ha)
+             dTmdy = -ha
           else              ! Rise/set
              dTmdy = (alt-rsa)/(cos(dec)*cos(lat0)*sin(ha))
           end if
@@ -280,7 +280,7 @@ contains
     use SUFR_kinds, only: double
     use SUFR_constants, only: pi,pi2, d2r,am2r, enpname, earthr,AU
     use SUFR_system, only: warn
-    use SUFR_angles, only: rev
+    use SUFR_angles, only: rev, rev2
     use SUFR_date_and_time, only: cal2jd,jd2cal
     use SUFR_numerics, only: deq0
     
@@ -388,7 +388,7 @@ contains
           ra  = rsIpol(ra0,ra1,ra2,n)     ! Interpolate right ascension
           dec = rsIpol(dec0,dec1,dec2,n)  ! Interpolate declination
           
-          ha = rev(th0 + lon0 - ra + pi) - pi                          ! Hour angle;  Meeus p.103
+          ha = rev2(th0 + lon0 - ra)                                   ! Hour angle;  Meeus p.103
           alt = asin(sin(lat0)*sin(dec) + cos(lat0)*cos(dec)*cos(ha))  ! Meeus, Eq.13.6
           
           ! Correction to transit/rise/set times:
