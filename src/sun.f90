@@ -205,7 +205,7 @@ contains
   !*********************************************************************************************************************************
   !> Compute the position of the Sun - very low accuracy routine (~0.18 degrees in az/alt)
   !!
-  !! \param  Nday       Day of year
+  !! \param  DoY        Day of year
   !! \param  hour       Hour of day
   !!
   !! \param  lon        Geographic longitunde (radians; >0=east)
@@ -220,18 +220,18 @@ contains
   !!
   !! \see Wenham, S.R.: Applied photovoltaics (2012; book), Appendix B
   
-  subroutine sunpos_vla(Nday,hour, lon,lat,tz, ha,dec, az,alt)
+  subroutine sunpos_vla(DoY,hour, lon,lat,tz, ha,dec, az,alt)
     use SUFR_kinds, only: double
     use SUFR_constants, only: pi2, h2r,r2h
     
     implicit none
-    integer, intent(in) :: Nday
+    integer, intent(in) :: DoY
     real(double), intent(in) :: hour, lon,lat,tz
     real(double), intent(out) :: dec,ha, alt,az
     real(double) :: eclon, Teq,Tdif,Tsol
     
     ! Declination of the Sun:
-    eclon = pi2/365.d0 * Nday  ! indication of the ecliptic longitude of the Sun (rad)
+    eclon = pi2/365.d0 * DoY  ! indication of the ecliptic longitude of the Sun (rad)
     
     dec = 5.80863d-3 - 0.401146d0 * cos(eclon) - 6.1069d-3  * cos(2 * eclon) - 2.43997d-3 * cos(3 * eclon) &
          +             6.52264d-2 * sin(eclon) + 5.59378d-4 * sin(2 * eclon) + 1.25437d-3 * sin(3 * eclon)    ! Declination (rad)
@@ -240,16 +240,16 @@ contains
     
     
     ! Equation of time:
-    if(Nday .lt. 21) then
-       Teq = -2.6d0 - 0.44d0 * Nday
-    else if(Nday .lt. 136) then
-       Teq = -5.2d0 - 9.d0 * cos( (Nday -  43) * 0.0357d0 )
-    else if(Nday .lt. 241) then
-       Teq = -1.4d0 + 5.d0 * cos( (Nday - 135) * 0.0449d0 )
-    else if(Nday .lt. 336) then
-       Teq = 6.3d0 + 10.d0 * cos( (Nday - 306) * 0.036d0 )
+    if(DoY .lt. 21) then
+       Teq = -2.6d0 - 0.44d0 * DoY
+    else if(DoY .lt. 136) then
+       Teq = -5.2d0 - 9.d0 * cos( (DoY -  43) * 0.0357d0 )
+    else if(DoY .lt. 241) then
+       Teq = -1.4d0 + 5.d0 * cos( (DoY - 135) * 0.0449d0 )
+    else if(DoY .lt. 336) then
+       Teq = 6.3d0 + 10.d0 * cos( (DoY - 306) * 0.036d0 )
     else
-       Teq = 0.45d0 * (359 - Nday)
+       Teq = 0.45d0 * (359 - DoY)
     end if
     
     ! Time difference with UT:
@@ -295,7 +295,7 @@ contains
   !*********************************************************************************************************************************
   !> \brief  Compute diffuse radiation on an inclined surface using the Perez 1987 model
   !!
-  !! \param  Nday       Day of year
+  !! \param  DoY        Day of year (Nday)
   !! \param  alt        Altitude of the Sun (radians)
   !!
   !! \param  surfIncl   Surface inclination wrt horizontal (radians) - 0 = horizontal, pi/2 = vertical
@@ -309,12 +309,12 @@ contains
   !! \see Perez et al. Solar Energy Vol. 39, Nr. 3, p. 221 (1987) - references to equations and tables are to this paper
   !! Most equations can be found in the Nomenclature section at the end of the paper (p.230).  We use a and c here, not b and d.
   
-  subroutine diffuse_radiation_Perez87(Nday, alt, surfIncl, theta, Gbeam_n,Gdif_hor,  Gdif_inc)
+  subroutine diffuse_radiation_Perez87(DoY, alt, surfIncl, theta, Gbeam_n,Gdif_hor,  Gdif_inc)
     use SUFR_kinds, only: double
     use SUFR_constants, only: pi2,pio2, d2r,r2d
     
     implicit none
-    integer, intent(in) :: Nday
+    integer, intent(in) :: DoY
     real(double), intent(in) :: alt, surfIncl, theta, Gbeam_n,Gdif_hor
     real(double), intent(out) :: Gdif_inc
     integer :: f11,f12,f13, f21,f22,f23
@@ -324,7 +324,7 @@ contains
     ! *** Compute the brightness coefficients for the circumsolar (F1) and horizon (F2) regions ***
     
     ! 'External' (AM0) radiation:
-    AM0rad = 1370.d0 * (1.d0 + 0.00333d0 * cos(pi2/365.d0 * Nday))
+    AM0rad = 1370.d0 * (1.d0 + 0.00333d0 * cos(pi2/365.d0 * DoY))
     
     ! Air mass:
     if(alt .lt. -3.885d0*d2r) then

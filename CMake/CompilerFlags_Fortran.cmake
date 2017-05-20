@@ -46,8 +46,8 @@ if( Fortran_COMPILER_NAME MATCHES "gfortran" )
     set( CMAKE_Fortran_FLAGS_ALL "${CMAKE_Fortran_FLAGS_ALL} -fwhole-file" )  # >= v.4.5
   endif( COMPILER_VERSION VERSION_GREATER "4.4.99" )
   
-  set( CMAKE_Fortran_FLAGS "-pipe -funroll-all-loops" )
-  set( CMAKE_Fortran_FLAGS_RELEASE "-pipe -funroll-all-loops" )
+  set( CMAKE_Fortran_FLAGS "-pipe -funroll-loops" )
+  set( CMAKE_Fortran_FLAGS_RELEASE "-pipe -funroll-loops" )
   set( CMAKE_Fortran_FLAGS_DEBUG "-g -ffpe-trap=zero,invalid -fsignaling-nans -fbacktrace" )
   set( CMAKE_Fortran_FLAGS_PROFILE "-g -gp" )
   
@@ -58,6 +58,7 @@ if( Fortran_COMPILER_NAME MATCHES "gfortran" )
   
   if( WANT_OPENMP )
     set( OPENMP_FLAGS "-fopenmp" )
+    message( STATUS "Compiling with OpenMP support" )
   endif( WANT_OPENMP )
   
   if( WANT_STATIC )
@@ -75,6 +76,7 @@ if( Fortran_COMPILER_NAME MATCHES "gfortran" )
     set( OPT_FLAGS "-O0" )
   else( WANT_CHECKS )
     set( OPT_FLAGS "-O2" )
+    #set( OPT_FLAGS "-Ofast" )
   endif( WANT_CHECKS )
   
   if( WANT_WARNINGS )
@@ -169,7 +171,7 @@ elseif( Fortran_COMPILER_NAME MATCHES "ifort" )
   
   if( WANT_OPENMP )
     set( OPENMP_FLAGS "-openmp -openmp-report0" )
-    message( STATUS "Linking with OpenMP support" )
+    message( STATUS "Compiling with OpenMP support" )
   endif( WANT_OPENMP )
   
   if( WANT_STATIC )
