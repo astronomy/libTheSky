@@ -295,21 +295,24 @@ contains
   !*********************************************************************************************************************************
   !> \brief  Compute diffuse radiation on an inclined surface using the Perez 1987 model
   !!
-  !! \param  DoY        Day of year (Nday)
-  !! \param  alt        Altitude of the Sun (radians)
+  !! \param  DoY          Day of year (Nday)
+  !! \param  alt          Altitude of the Sun (radians)
   !!
-  !! \param  surfIncl   Surface inclination wrt horizontal (radians) - 0 = horizontal, pi/2 = vertical
-  !! \param  theta      Angle between surface normal vector and Sun position vector (radians)
+  !! \param  surfIncl     Surface inclination wrt horizontal (radians) - 0 = horizontal, pi/2 = vertical
+  !! \param  theta        Angle between surface normal vector and Sun position vector (radians)
   !!
-  !! \param  Gbeam_n    Beam (direct) normal radiation (W/m2; in the direction of the Sun)
-  !! \param  Gdif_hor   Diffuse radiation on a horizontal surface (W/m2)
+  !! \param  Gbeam_n      Beam (direct) normal radiation (W/m2; in the direction of the Sun)
+  !! \param  Gdif_hor     Diffuse radiation on a horizontal surface (W/m2)
   !!
-  !! \retval Gdif_inc   Diffuse irradiation on the inclined surface (W/m2)
+  !! \retval Gdif_inc     Diffuse irradiation on the inclined surface (W/m2)
   !!
-  !! \see Perez et al. Solar Energy Vol. 39, Nr. 3, p. 221 (1987) - references to equations and tables are to this paper
+  !! \retval Gdif_inc_cs  Diffuse irradiation on the inclined surface - circumsolar part (optional; W/m2)
+  !! \retval Gdif_inc_hz  Diffuse irradiation on the inclined surface - horizon-band part (optional; W/m2)
+  !!
+  !! \see Perez et al. Solar Energy Vol. 39, Nr. 3, p. 221 (1987) - references to equations and tables are to this paper.
   !! Most equations can be found in the Nomenclature section at the end of the paper (p.230).  We use a and c here, not b and d.
   
-  subroutine diffuse_radiation_Perez87(DoY, alt, surfIncl, theta, Gbeam_n,Gdif_hor,  Gdif_inc)
+  subroutine diffuse_radiation_Perez87(DoY, alt, surfIncl, theta, Gbeam_n,Gdif_hor,  Gdif_inc,   Gdif_inc_cs, Gdif_inc_hz)
     use SUFR_kinds, only: double
     use SUFR_constants, only: pi2,pio2, d2r,r2d
     
@@ -317,8 +320,9 @@ contains
     integer, intent(in) :: DoY
     real(double), intent(in) :: alt, surfIncl, theta, Gbeam_n,Gdif_hor
     real(double), intent(out) :: Gdif_inc
+    real(double), intent(out), optional :: Gdif_inc_cs, Gdif_inc_hz
     integer :: f11,f12,f13, f21,f22,f23
-    real(double) :: zeta, AM0rad, Mair,Delta,epsilon, alpha, psiC,psiH, chiC,chiH, F(6),F1,F2, A,C
+    real(double) :: zeta, AM0rad, Mair,Delta,epsilon, alpha, psiC,psiH, chiC,chiH, F(6),F1,F2, A,C,  Gdif_inc_csl, Gdif_inc_hzl
     
     
     ! *** Compute the brightness coefficients for the circumsolar (F1) and horizon (F2) regions ***
@@ -419,10 +423,17 @@ contains
     
     
     
-    ! Diffuse radiation from circumsolar (F1) and horizon (F2) regions on the inclined surface:
-    Gdif_inc = Gdif_hor * ( 0.5d0 * (1.d0 + cos(surfIncl)) * (1.d0 - F1)  +  F1 * A/C  +  F2 * sin(surfIncl) )  ! Eq.8
-    Gdif_inc = max(Gdif_inc, 0.d0)
+    ! Diffuse radiation from circumsolar (F1) and horizon (F2) regions on the inclined surface (Eq.8):
+    Gdif_inc_csl = Gdif_hor * ( 0.5d0 * (1.d0 + cos(surfIncl)) * (1.d0 - F1)  +  F1 * A/C )  ! Circumsolar
+    Gdif_inc_hzl = Gdif_hor * ( F2 * sin(surfIncl) )                                         ! Horizon band
     
+    Gdif_inc_csl = max(Gdif_inc_csl, 0.d0)  ! Components are sometimes negative
+    Gdif_inc_hzl = max(Gdif_inc_hzl, 0.d0)
+    Gdif_inc = Gdif_inc_csl + Gdif_inc_hzl
+    
+    ! Assign optional return values:
+    if(present(Gdif_inc_cs)) Gdif_inc_cs = Gdif_inc_csl
+    if(present(Gdif_inc_hz)) Gdif_inc_hz = Gdif_inc_hzl
     
   end subroutine diffuse_radiation_Perez87
   !*********************************************************************************************************************************
