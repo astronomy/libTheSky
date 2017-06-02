@@ -148,7 +148,7 @@ elseif( Fortran_COMPILER_NAME MATCHES "ifort" )
     COMPILER_VERSION ${_compiler_output})
   
   
-  set( CMAKE_Fortran_FLAGS_ALL "-nogen-interfaces -heap-arrays 1024" )
+  set( CMAKE_Fortran_FLAGS_ALL "-free -nogen-interfaces -heap-arrays 1024" )
   set( CMAKE_Fortran_FLAGS "-vec-guard-write -fpconstant -funroll-loops -align all -ip" )
   if( LINUX )
     set( CMAKE_Fortran_FLAGS_ALL "${CMAKE_Fortran_FLAGS_ALL} -mcmodel=large" )  # -mcmodel exists for Linux only...
@@ -186,7 +186,7 @@ elseif( Fortran_COMPILER_NAME MATCHES "ifort" )
   endif( WANT_CHECKS )
   
   if( WANT_WARNINGS )
-    set( WARN_FLAGS "-warn all -std08 -diag-disable 6894,8290,8291" )   # 8290,8291: format for F,ES: too many decimal places (for negative numbers)
+    set( WARN_FLAGS "-warn all -std08 -diag-disable 6894,8290,8291,5268" )   # 8290,8291: format for F,ES: too many decimal places (for negative numbers), 5268: don't complain about lines longer than 132 chars
   endif( WANT_WARNINGS )
   
   if( STOP_ON_WARNING )

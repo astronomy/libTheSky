@@ -27,14 +27,21 @@
 !
 !  airmass:                      Compute the airmass for a celestial object with a given TRUE altitude
 !  airmass_la:                   Compute the airmass for a celestial object with given APP alt; low-accuracy alt. for airmass()
-!  extinction_magpam:            Compute the extinction in magnitudes per unit airmass for an observer with given elevation
+!  extinction_magPam:            Compute the extinction in magnitudes per unit airmass for an observer with given elevation
 !  extinction_mag:               Compute the extinction in magnitudes for a given object altitude and observer elevation
+!  extinction_fac:               Compute the extinction factor for an observer with given elevation and object with given altitude
+!  extinction_sun_airmass:       Compute an approximation for the bolometric atmospheric extinction for the Sun with a given AM
+!  extinction_sun:               Compute an approximation for the bolometric atmospheric extinction for the Sun with a given alt
+!  solar_radiation:              Compute the normal and horizontal beam (direct) solar radiation for a given altitude of the Sun
 !
-!  limmag_full                   Calculate limiting magnitude, full function
-!  limmag_jd                     Calculate limiting magnitude based on JD and object altitude, wrapper for limmag_full()
-!  limmag_jd_pl                  Calculate limiting magnitude based on JD and planet ID, wrapper for limmag_jd()
-!  limmag_sun_airmass            Calculate limiting magnitude based on Sun altitude and object altitude (airmass); assume New Moon
-!  limmag_sun                    Calculate limiting magnitude, based on the altitude of the Sun only
+!  limmag_full:                  Calculate limiting magnitude, full function
+!  limmag_extinction:            Calculate limiting magnitude based on Sun altitude and Moon phase
+!  limmag_skyBrightness:         Calculate sky brightness based on Sun altitude and Moon phase
+!  limmag_jd:                    Calculate limiting magnitude based on JD and object altitude, wrapper for limmag_full()
+!  limmag_zenith_jd:             Calculate limiting magnitude for the local zenith, based on JD and object altitude
+!  limmag_jd_pl:                 Calculate limiting magnitude based on JD and planet ID, wrapper for limmag_jd()
+!  limmag_sun_airmass:           Calculate limiting magnitude based on Sun altitude and object altitude (airmass); assume New Moon
+!  limmag_sun:                   Calculate limiting magnitude, based on the altitude of the Sun only
 !
 !  pl_xsmag:                     Compute the excess magnitude (mag-lim.mag) for planet pl at JD, considering Sun, Moon and airmass
 !  pl_xsmag_pl:                  Compute the excess magnitude at JD, wrapper for pl_xsmag() for solvers
@@ -692,7 +699,7 @@ contains
   
   
   !*********************************************************************************************************************************
-  !> \brief  Compute an approximation for the bolometric atmospheric extinction factor for the Sun with a given air mass
+  !> \brief  Compute an approximation for the bolometric atmospheric extinction factor for the Sun with a given altitude
   !!
   !! \param alt  TRUE altitude of the Sun (radians)
   !!
@@ -715,7 +722,7 @@ contains
   
   !*********************************************************************************************************************************
   !> \brief  Compute the normal and horizontal beam (direct) solar radiation for a given altitude of the Sun, 
-  !!         assuming a cloudless sky
+  !!         assuming a cloudless sky (and sea level)
   !!
   !! \param alt  TRUE altitude of the Sun (radians)
   !!
@@ -836,8 +843,9 @@ contains
   !!
   !! \retval extCoef  Atmospheric extinction for UBVRI
   !! \retval extMag   Delta magnitude due to atmospheric extinction for UBVRI
-  
-  
+  !!
+  !! \see BASIC program VISLIMIT.BAS by Bradley E. Schaefer, Sky and Telescope, May 1998, p.57,
+  !!      in turn based on Schaefer Sky&Tel 78, 522 (1989).
   
   subroutine limmag_extinction(month, obsLat,obsElev, objAlt, relHum,temp, band1,band2,  extCoef,extMag)
     use SUFR_kinds, only: double
@@ -888,7 +896,7 @@ contains
   
   
   !*********************************************************************************************************************************
-  !> \brief  Calculate limiting magnitude based on Sun altitude and Moon phase
+  !> \brief  Calculate sky brightness based on Sun altitude and Moon phase
   !!
   !! \param  year       Year CE (for the solar cycle)
   !!
@@ -906,6 +914,9 @@ contains
   !! \param  extCoef    Extinction for UBVRI
   !!
   !! \retval skyBr      Sky brightness for UBVRI
+  !!
+  !! \see BASIC program VISLIMIT.BAS by Bradley E. Schaefer, Sky and Telescope, May 1998, p.57,
+  !!      in turn based on Schaefer Sky&Tel 78, 522 (1989).
   
   subroutine limmag_skyBrightness(year, sunAlt,sunElon, moonPhase,moonAlt,moonElon, objAlt, band1,band2, extCoef,  skyBr)
     use SUFR_kinds, only: double

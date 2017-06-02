@@ -907,12 +907,16 @@ contains
   !! 
   !! \param jd    Julian Day of computation
   !! \param pl    Planet number:  0: Moon,  1-2: Mer-Ven,  3: Sun,  4-9: Mar-Plu
+  !!
   !! \param calc  Calculate  1: l,b,r,diam, 2: + ra,dec, 3: + gmst,agst, 4: + az,alt, 5: + elon, mag, k, pa, parang, hp, GC LBR,
   !!                         6: + topocentric positions (Sun and Moon only, optional - default = 5)
   !! \param nt    Number of terms to use for the calculation (has an effect for Moon only; nt<=60); 
   !!              a smaller nt gives faster, but less accurate results (optional, default=60)
+  !!
+  !! \param lat   Latitude of the observer (rad, optional)
+  !! \param lon   Longitude of the observer (rad, optional)
   
-  subroutine planet_position_la(jd, pl, calc,nt)
+  subroutine planet_position_la(jd, pl, calc,nt, lat,lon)
     use SUFR_kinds, only: double
     use SUFR_angles, only: rev,rev2
     
@@ -920,18 +924,23 @@ contains
     use TheSky_moon, only: moonpos_la
     use TheSky_sun, only: sunpos_la
     use TheSky_coordinates, only: geoc2topoc_ecl, geoc2topoc_eq, eq2horiz, refract
-    use TheSky_local, only: lat0
+    use TheSky_local, only: lat0,lon0
     
     implicit none
     real(double), intent(in) :: jd
     integer, intent(in) :: pl
     integer, intent(in), optional :: calc,nt
+    real(double), intent(in), optional :: lat,lon
     
     integer :: lcalc,lnt
     real(double) :: dh_ref, parAng, dRA_ref
     
     lcalc = 5
     if(present(calc)) lcalc = calc
+    
+    if(present(lat)) lat0 = lat
+    if(present(lon)) lon0 = lon
+    
     
     planpos = 0.d0
     planpos(39) = dble(pl)
