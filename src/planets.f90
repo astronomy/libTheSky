@@ -334,7 +334,7 @@ contains
     planpos(9)  = rev(az)           ! Azimuth
     planpos(10) = alt               ! Altitude
     planpos(11) = rev(elon)         ! Elongation
-    planpos(12) = diam              ! Apparent diameter
+    planpos(12) = diam              ! Apparent diameter            
     
     planpos(13) = magn              ! Apparent visual magnitude
     planpos(14) = illfr             ! Illuminated fraction

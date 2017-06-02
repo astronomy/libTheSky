@@ -71,9 +71,86 @@ module TheSky_planetdata
   integer :: pluc(43,3),plul(43,2),plub(43,2),plur(43,2), pl0
   integer :: moonla_arg(8,60), VSOPnls(3,8), vsopNblk(0:5,3,8)
   
-  real(double) :: VSOPdat(4,6827,10), planpos(nplanpos), VSOPtruncs(3,8)
+  real(double) :: VSOPdat(4,6827,10), VSOPtruncs(3,8)
   real(double) :: plelems(8,6),plelems2000(8,6),plelemdata(2,8,6,0:3)
   real(double) :: asterelems(nasteroids,9)
+  
+  !> \brief  Planpos[] is an array with many different types of coordinates and related variables:
+  !!
+  !! Geocentric (mostly) coordinates:
+  !! - 1   =  gcl             =  Apparent geocentric ecliptic longitude
+  !! - 2   =  gcb             =  Apparent geocentric ecliptic latitude
+  !! - 3   =  r               =  True heliocentric distance
+  !! - 4   =  delta           =  Apparent geocentric distance
+  !! - 5   =  ra              =  Apparent geocentric R.A.
+  !! - 6   =  dec             =  Apparent geocentric declination
+  !! - 7   =  tau             =  Geocentric light time in days
+  !! - 8   =  hh              =  Apparent geocentric hour angle
+  !! - 9   =  az              =  Apparent geocentric azimuth
+  !! - 10  =  alt             =  Apparent geocentric altitude
+  !! - 11  =  elon            =  Apparent TOPOCENTRIC elongation, using topocentric altitude and correcting for refraction
+  !! - 12  =  diam            =  Apparent geocentric apparent diameter
+  !! 
+  !! Magnitude, phase, parallax:
+  !! - 13  =  magn            =  Apparent visual magnitude
+  !! - 14  =  k               =  Illuminated fraction
+  !! - 15  =  pa              =  Phase angle
+  !! - 16  =  parang          =  Topocentric parallactic angle
+  !! - 17  =  hp              =  Horizontal parallax
+  !! 
+  !! Topocentric (mostly) coordinates:
+  !! - 21  =  topl            =  Apparent topocentric ecliptic longitude
+  !! - 22  =  topb            =  Apparent topocentric ecliptic latitude
+  !! - 23  =  delta0          =  True geocentric distance
+  !! - 24  =  topdelta        =  Apparent topocentric distance
+  !! - 25  =  topra           =  Apparent topocentric R.A.
+  !! - 26  =  topdec          =  Apparent topocentric declination
+  !!
+  !! - 28 = tophh             =  Apparent topocentric hour angle
+  !! - 29 = topaz             =  Apparent topocentric azimuth
+  !! - 30 = topalt            =  Apparent topocentric altitude
+  !! - 31 = topalt + refract  =  Apparent topocentric altitude, corrected for refraction
+  !! - 32 = topdiam           =  Apparent topocentric apparent diameter
+  !! 
+  !! Heliocentric coordinates:
+  !! - 33  =  l               =  Apparent heliocentric ecliptic longitude
+  !! - 34  =  b               =  Apparent heliocentric ecliptic latitude
+  !! - 35  =  r               =  Apparent heliocentric distance
+  !! - 36  =  hcl00           =  True heliocentric ecliptic longitude, FK5
+  !! - 37  =  hcb00           =  True heliocentric ecliptic latitude, FK5
+  !! - 38  =  hcr00           =  True heliocentric distance
+  !! 
+  !! Other variables:
+  !! - 39  =  pl              =  Planet for which data were computed
+  !! - 40  =  jde             =  JDE for the instance of calculation
+  !! - 41  =  l0+pi           =  True geocentric ecliptic longitude for the Sun, in FK5
+  !! - 42  =  -b0             =  True geocentric ecliptic latitude for the Sun, in FK5
+  !! - 43  =  r0              =  True geocentric distance for the Sun
+  !! - 44  =  lst             =  Local APPARENT siderial time (radians)
+  !! - 45  =  agst            =  Greenwich APPARENT siderial time (radians)
+  !! - 46  =  t0 * 10.d0      =  Apparent dynamical time in Julian Centuries since 2000.0
+  !! - 47  =  dpsi            =  Nutation in longitude
+  !! - 48  =  eps             =  True obliquity of the ecliptic, corrected for nutation
+  !! - 49  =  gmst            =  Greenwich MEAN siderial time (radians)
+  !! - 50  =  eps0            =  Mean obliquity of the ecliptic, without nutation
+  !! 
+  !! More geocentric coordinates:
+  !! - 51 = sun_gcl,b         =  Apparent geocentric longitude of the Sun (variable was treated as if pl.eq.3)
+  !! - 52 = sun_gcl,b         =  Apparent geocentric latitude of the Sun (variable was treated as if pl.eq.3)
+  !! 
+  !! - 61 = gcx               =  Apparent geocentric x
+  !! - 62 = gcy               =  Apparent geocentric y
+  !! - 63 = gcz               =  Apparent geocentric z
+  !! 
+  !! - 64 = gcx0              =  True geocentric x
+  !! - 65 = gcy0              =  True geocentric y
+  !! - 66 = gcz0              =  True geocentric z
+  !!
+  !! - 67 = gcl0              =  True geocentric ecliptic longitude
+  !! - 68 = gcb0              =  True geocentric ecliptic latitude
+  !! - 69 = delta0            =  True geocentric distance
+  
+  real(double) :: planpos(nplanpos)
   
   character :: plcon(0:19)*(3),asternames(nasteroids)*(18)
   

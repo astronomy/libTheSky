@@ -722,7 +722,7 @@ contains
   !! \retval beam_norm   Normal beam radiation, perpendicular to the position vector of the Sun (W/m2)
   !! \retval beam_horiz  Beam radiation on a horizontal surface (W/m2)
   !!
-  !! \see  function extinction_fac()
+  !! \see  function extinction_sun()
   
   subroutine solar_radiation(alt,  beam_norm, beam_horiz)
     use SUFR_kinds, only: double
