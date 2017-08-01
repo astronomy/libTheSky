@@ -30,9 +30,6 @@
 !  extinction_magPam:            Compute the extinction in magnitudes per unit airmass for an observer with given elevation
 !  extinction_mag:               Compute the extinction in magnitudes for a given object altitude and observer elevation
 !  extinction_fac:               Compute the extinction factor for an observer with given elevation and object with given altitude
-!  extinction_sun_airmass:       Compute an approximation for the bolometric atmospheric extinction for the Sun with a given AM
-!  extinction_sun:               Compute an approximation for the bolometric atmospheric extinction for the Sun with a given alt
-!  solar_radiation:              Compute the normal and horizontal beam (direct) solar radiation for a given altitude of the Sun
 !
 !  limmag_full:                  Calculate limiting magnitude, full function
 !  limmag_extinction:            Calculate limiting magnitude based on Sun altitude and Moon phase
@@ -649,102 +646,6 @@ contains
     extinction_fac = 10.d0**( extinction_mag(alt,elel) / 2.5d0)  ! Extinction in magnitudes -> factor
     
   end function extinction_fac
-  !*********************************************************************************************************************************
-  
-  
-  
-  !*********************************************************************************************************************************
-  !> \brief  Compute an approximation for the bolometric atmospheric extinction factor for the Sun with a given air mass
-  !!
-  !! \param airmass  Airmass for the position of the Sun
-  !!
-  !! \note  - extinction_fac = 1: no extinction, extinction_fac > 1 extinction.
-  !!        - Hence, the flux, corrected for extinction, should be  f' = f / extinction_fac(alt,ele)
-  !!        - Fit of the power extinction computed by the NREL SMARTS code (valid for airmass <= 38.2):
-  !!          - Gueymard, C, Professional Paper FSEC-PF-270-95, 1995
-  !!          - Gueymard, C, Solar Energy, Vol. 71, No. 5, pp. 325-346, 2001
-  
-  function extinction_sun_airmass(airmass)
-    use SUFR_kinds, only: double
-    
-    implicit none
-    real(double), intent(in) :: airmass
-    integer, parameter :: ncoef = 11
-    integer :: iCoef
-    real(double) :: extinction_sun_airmass, coefs(ncoef), AMpow
-    
-    if(airmass.gt.38.2d0) then
-       
-       extinction_sun_airmass = sqrt(huge(extinction_sun_airmass)) + airmass  ! Very bad, getting worse for higher AM for solvers
-       
-    else
-       
-       coefs = [ 9.1619283d-2, 2.6098406d-1,-3.6487512d-2, 6.4036283d-3,-8.1993861d-4, 6.9994043d-5,-3.8980993d-6, 1.3929599d-7, &
-            -3.0685834d-9, 3.7844273d-11,-1.9955057d-13]
-       
-       extinction_sun_airmass = coefs(1)
-       AMpow = 1.d0
-       do iCoef=2,ncoef
-          AMpow = AMpow * airmass                                                 ! AM^(i-1)
-          extinction_sun_airmass = extinction_sun_airmass + coefs(iCoef) * AMpow  ! + c*AM^(i-1)
-       end do
-       
-       extinction_sun_airmass = exp(extinction_sun_airmass)
-       
-    end if
-    
-  end function extinction_sun_airmass
-  !*********************************************************************************************************************************
-  
-  
-  
-  !*********************************************************************************************************************************
-  !> \brief  Compute an approximation for the bolometric atmospheric extinction factor for the Sun with a given altitude
-  !!
-  !! \param alt  TRUE altitude of the Sun (radians)
-  !!
-  !! \note  - extinction_fac = 1: no extinction, extinction_fac > 1 extinction.
-  !!        - Hence, the flux, corrected for extinction, should be  f' = f / extinction_fac(alt,ele)
-  
-  function extinction_sun(alt)
-    use SUFR_kinds, only: double
-    
-    implicit none
-    real(double), intent(in) :: alt
-    real(double) :: extinction_sun
-    
-    extinction_sun = extinction_sun_airmass(airmass(alt))
-    
-  end function extinction_sun
-  !*********************************************************************************************************************************
-  
-  
-  
-  !*********************************************************************************************************************************
-  !> \brief  Compute the normal and horizontal beam (direct) solar radiation for a given altitude of the Sun, 
-  !!         assuming a cloudless sky (and sea level)
-  !!
-  !! \param alt  TRUE altitude of the Sun (radians)
-  !!
-  !! \retval beam_norm   Normal beam radiation, perpendicular to the position vector of the Sun (W/m2)
-  !! \retval beam_horiz  Beam radiation on a horizontal surface (W/m2)
-  !!
-  !! \see  function extinction_sun()
-  
-  subroutine solar_radiation(alt,  beam_norm, beam_horiz)
-    use SUFR_kinds, only: double
-    use SUFR_constants, only: solConst
-    
-    implicit none
-    real(double), intent(in) :: alt
-    real(double), intent(out) :: beam_norm
-    real(double), intent(out), optional :: beam_horiz
-    
-    
-    beam_norm  = solConst / extinction_sun(alt)                ! Normal radiation
-    if(present(beam_horiz)) beam_horiz = beam_norm * sin(alt)  ! Radiation on a horizontal surface
-    
-  end subroutine solar_radiation
   !*********************************************************************************************************************************
   
   
