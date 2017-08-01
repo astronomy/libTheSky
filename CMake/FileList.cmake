@@ -16,4 +16,5 @@ set(SRC_FILES
   src/riset.f90
   src/date_time.f90
   src/visibility.f90
+  src/daylight.f90
   )
