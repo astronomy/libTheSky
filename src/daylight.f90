@@ -128,6 +128,132 @@ contains
   !*********************************************************************************************************************************
   
   
+  !***************************************************************************************************
+  !> \brief  A simplified clear-sky model for direct and diffuse insolation on horizontal surfaces (a.k.a. as the Bird model)
+  !!
+  !! \param   alt    Sun altitude above the horizon (rad)
+  !!
+  !! \param   Io     Solar 'constant' (W/m^2 - optional, default: 1361.5)
+  !! \param   Rsun   Sun distance (AU - optional, default: 1)
+  !! \param   Press  Air pressure at the observer's site, corrected for altitude (hPa - optional, default: 1013)
+  !!
+  !! \param   Uo     Ozone abundance in a vertical column (cm - optional, default: 0.34)
+  !! \param   Uw     Percipitable water-vapor abundance in a vertical column (cm - optional, default: 1.42)
+  !!
+  !! \param   Ta5    Aerosol optical depth from surface in vertical path at 500 nm (optional, default: 0.2661)
+  !! \param   Ta3    Aerosol optical depth from surface in vertical path at 380 nm (optional, default: 0.3538)
+  !! \param   Ba     Aerosol forward-scattering ratio  (optional, 0.82-0.86, default: 0.84)
+  !! \param   K1     Aerosol-absorptance constant (optional, rural: 0.0933, urban: 0.385, default: 0.1)
+  !!
+  !! \param   Rg     Ground albedo (fraction - default: 0.2)
+  !!
+  !!
+  !! \retval  Itot   Total insolation on a horizontal surface (W/m^2 - optional)
+  !! \retval  Idir   Direct (beam) insolation on a horizontal surface (W/m^2 - optional)
+  !! \retval  Idif   Diffuse insolation on a horizontal surface (W/m^2 - optional)
+  !! \retval  Igr    Ground-reflection insolation from a horizontal surface (W/m^2 - optional)
+  !!
+  !!
+  !! \see  Bird & Hulstrom, A simplified clear-sky model for direct and diffuse insolation on horizontal surfaces, SERI/TR-642-761 (1981)
+  !!
+  !! \note The value of Taa does not agree with tabulated values from the paper, and hence neither do dependent values (except for AM~1).
+  !!       When I substitute their values for Taa, everything matches perfectly.  Error in their formula, or (hopefully!) in their table?
+  
+  subroutine clearsky_bird(alt, Io,Rsun,Press, Uo,Uw, Ta5,Ta3,Ba,K1, Rg, Itot,Idir,Idif,Igr)
+    use SUFR_kinds, only: double
+    use SUFR_constants, only: pio2, r2d  !, solConst
+    
+    implicit none
+    real(double), intent(in) :: alt
+    real(double), intent(in), optional :: Io,Rsun,Press, Uo,Uw, Ta5,Ta3,Ba,K1, Rg
+    real(double), intent(out), optional :: Itot, Idir, Idif, Igr
+    
+    real(double) :: Z,cosZ, AM,AMp, Tr, Xo,To, Tum, Xw,Tw, Tau,Ta,Taa,Tas, Rs, tmpVar
+    real(double) :: RsunL,IoL,PressL, UoL,UwL, Ta5L,Ta3L,BaL,K1L, RgL,   ItotL,IdirL,IdifL
+    
+    ! Assign optional variables to local variables:
+    RsunL = 1.d0      ! Default Sun distance: 1 AU
+    if(present(Rsun)) RsunL = Rsun
+    IoL = 1353.d0     ! solConst    ! Default solar "constant": 1353 (1361.5) W/m^2
+    if(present(Io)) IoL = Io
+    PressL = 1013.d0  ! Default air pressure: 1013 hPa
+    if(present(Press)) PressL = Press
+    
+    UoL = 0.34d0      ! Default ozone abundance: 0.34
+    if(present(Uo)) UoL = Uo
+    UwL = 1.42d0      ! Default water-vapor abundance: 1.42
+    if(present(Uw)) UwL = Uw
+    
+    Ta5L = 0.2661d0   ! Default aerosol vertical optical depth at 500nm: 0.2661 cm
+    if(present(Ta5)) Ta5L = Ta5
+    Ta3L = 0.3538d0   ! Default aerosol vertical optical depth at 500nm: 0.3538 cm
+    if(present(Ta3)) Ta3L = Ta3
+    BaL = 0.84d0      ! Default aerosol forward-scattering ratio: 0.84
+    if(present(Ba))  BaL = Ba
+    K1L = 0.1d0       ! Default aerosol-absorptance constant  (rural: 0.0933, urban: 0.385, adviced: 0.1)
+    if(present(K1))  K1L = K1
+    
+    RgL = 0.2d0       ! Default ground albedo: 0.2
+    if(present(Rg)) RgL = Rg
+    
+    
+    
+    Z = pio2 - alt  ! Solar zenith angle
+    cosZ = cos(Z)   ! Save a few CPU cycles
+    
+    
+    ! Relative air mass for the solar vector:
+    AM  = 1.d0/(cosZ + 0.15d0 * (93.885-Z*r2d)**(-1.25d0))  ! Air mass
+    AMp = AM * PressL / 1013.d0                               ! Pressure-corrected air mass
+    
+    ! TRANSMISSION EQUATIONS:
+    ! Rayleigh scattering:
+    Tr = exp( -0.0903d0 * AMp**0.84d0 * (1.d0 + AMp - AMp**1.01d0) )
+    
+    ! Ozone:
+    Xo = UoL*AM  ! Amount of ozone in the direction of the Sun
+    To = 1.d0  -  0.1611d0 * Xo * (1.d0+139.48d0*Xo)**(-0.3035d0)  -  0.002715 * Xo / (1.d0 + 0.044d0*Xo + 0.0003d0*Xo**2)  ! Transmittance of ozone absorptance
+    
+    ! Uniformly mixed gases (CO2, O2):
+    Tum = exp(-0.0127d0 * AMp**0.26d0)  ! Transmittance of mixed-gas absorptance
+    
+    ! Water vapor:
+    Xw = AM*UwL  ! Amount of water vapor in the direction of the Sun
+    Tw = 1.d0 - 2.4959d0 * Xw / ((1.d0 + 79.034d0*Xw)**0.6828d0 + 6.385d0*Xw)     ! Transmittance of water-vapor absorptance - Tw = 1-Aw
+    
+    ! Daily turbidity:
+    Tau = 0.2758d0*Ta3L + 0.35d0*Ta5L                                             ! Broadband turbidity: aerosol optical depth from surface in a vertical column
+    Ta  = exp( -Tau**0.873d0  *  (1.d0 + Tau - Tau**0.7088d0)  *  AM**0.9108d0 )  ! Transmittance of aerosol absorptance and scattering
+    Taa = 1.d0 - K1L * (1.d0 - AM + AM**1.06d0) * (1.d0-Ta)                       ! Transmittance of aerosol absorptance - this does not agree with tabulated values from the paper (except for AM~1).  When I substitute their values for Taa, everything matches perfectly.  Error in their formula, or in their table?
+    Tas = Ta/Taa                                                                  ! Transmittance of aerosol scattering
+    Rs  = 0.0685d0 + (1.d0-BaL) * (1.d0-Tas)                                      ! Sky albedo
+    
+    
+    ! IRRADIANCE EQUATIONS - Itot, Idir, Idif are always computed, Igr only if desired:
+    
+    ! Direct radiation on a horizontal surface:
+    tmpVar = IoL * cosZ  *  To * Tum * Tw  ! Save a few CPU cycles
+    IdirL = 0.9662d0 * tmpVar  *  Tr * Ta  /  RsunL**2
+    
+    ! Diffuse (scattered) radiation on a horizontal surface:
+    IdifL  = 0.79d0 *  tmpVar        * Taa *  (0.5d0*(1.d0-Tr) + BaL*(1.d0-Tas)) / (1.d0 - AM + AM**1.02d0)
+    
+    ! Total (direct+diffuse) radiation on a horizontal surface:
+    ItotL = (IdirL+IdifL) / (1.d0 - RgL*Rs)
+    
+    
+    ! Copy local variables to optional output variables:
+    if(present(Itot)) Itot = ItotL
+    if(present(Idir)) Idir = IdirL
+    if(present(Idif)) Idif = IdifL
+    if(present(Igr))  Igr  = ItotL - (IdirL+IdifL)  ! Ground-reflected radiation from a horizontal surface
+    
+  end subroutine clearsky_bird
+  !***************************************************************************************************
+  
+  
+  
+  
   
   !*********************************************************************************************************************************
   !> \brief  Compute diffuse radiation on an inclined surface using the Perez 1987 model
