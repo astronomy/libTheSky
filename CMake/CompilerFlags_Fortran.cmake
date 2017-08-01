@@ -3,11 +3,11 @@
 ##  Currently, specific flags for gfortran, g95 and ifort are provided
 ##  Make sure to choose the correct ~last line (printing of the compiler options)
 ##  
-##  Copyright 2010-2013 Marc van der Sluys - marc.vandersluys.nl
-##   
+##  Copyright 2010-2017 Marc van der Sluys - marc.vandersluys.nl
+##  
 ##  This file is part of the CMakeFiles package, 
 ##  see: http://cmakefiles.sf.net/
-##   
+##  
 ##  This is free software: you can redistribute it and/or modify it under the terms of the GNU General Public License as published
 ##  by the Free Software Foundation, either version 3 of the License, or (at your option) any later version.
 ##  
@@ -80,7 +80,7 @@ if( Fortran_COMPILER_NAME MATCHES "gfortran" )
   endif( WANT_CHECKS )
   
   if( WANT_WARNINGS )
-    set( WARN_FLAGS "-Wall -Wextra" )
+    set( WARN_FLAGS "-Wall -Wextra -Wno-conversion -ffree-line-length-0" )
   endif( WANT_WARNINGS )
   if( STOP_ON_WARNING )
     set( WARN_FLAGS "${WARN_FLAGS} -Werror" )
@@ -121,7 +121,7 @@ elseif( Fortran_COMPILER_NAME MATCHES "g95" )
   
   if( WANT_WARNINGS )
     set( WARN_FLAGS "-Wall -Wextra" )
-    set( WARN_FLAGS "-std=f2003 ${WARN_FLAGS}" )
+    set( WARN_FLAGS "-std=f2003 -ffree-line-length-huge ${WARN_FLAGS}" )
   endif( WANT_WARNINGS )
   if( STOP_ON_WARNING )
     set( WARN_FLAGS "${WARN_FLAGS} -Werror" )
@@ -148,7 +148,7 @@ elseif( Fortran_COMPILER_NAME MATCHES "ifort" )
     COMPILER_VERSION ${_compiler_output})
   
   
-  set( CMAKE_Fortran_FLAGS_ALL "-free -nogen-interfaces -heap-arrays 1024" )
+  set( CMAKE_Fortran_FLAGS_ALL "-nogen-interfaces -heap-arrays 1024" )
   set( CMAKE_Fortran_FLAGS "-vec-guard-write -fpconstant -funroll-loops -align all -ip" )
   if( LINUX )
     set( CMAKE_Fortran_FLAGS_ALL "${CMAKE_Fortran_FLAGS_ALL} -mcmodel=large" )  # -mcmodel exists for Linux only...
