@@ -44,6 +44,7 @@ contains
     use SUFR_constants, only: nlpname,enpname, jd2000
     use SUFR_numerics, only: deq
     
+    use TheSky_constants, only: TheSky_verbosity
     use TheSky_nutation, only: nutation
     use TheSky_cometdata, only: cometNames, cometElems, comepoche
     
@@ -154,7 +155,7 @@ contains
                 
                 if(j.eq.1000) j1 = j1+1
                 if(j1.eq.100) then
-                   write(6,*) "COMETS: j1-iteration didn't converge"
+                   if(TheSky_verbosity.gt.0) write(0,*) "COMETS: j1-iteration didn't converge"
                    return
                 end if
              end do  j1loop  ! j
@@ -166,7 +167,7 @@ contains
                 
                 if(j.eq.1000) j2 = j2+1
                 if(j2.eq.100) then
-                   write(6,*) "COMETS: j2-iteration didn't converge",abs(s-s1)
+                   if(TheSky_verbosity.gt.0) write(0,*) "COMETS: j2-iteration didn't converge",abs(s-s1)
                    return
                 end if
              end do  j2loop  ! j
@@ -177,7 +178,7 @@ contains
              end if
              
              if(i.ge.nint(1e7)) then
-                write(6,*) "COMETS: i-Iteration didn't converge: ",abs(s-s1)
+                if(TheSky_verbosity.gt.0) write(0,*) "COMETS: i-Iteration didn't converge: ",abs(s-s1)
                 return
              end if
              

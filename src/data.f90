@@ -28,12 +28,12 @@ contains
 
 
   !*********************************************************************************************************************************
-  !> \brief Set the values of the constants used in this package
+  !> \brief Set the initial values of the variables and constants used in this package
   
   subroutine set_TheSky_constants()
     use SUFR_constants, only: set_SUFR_constants, homedir
     use SUFR_system, only: error,quit_program_error
-    use TheSky_constants, only: library_name, TheSkydir
+    use TheSky_constants, only: library_name, TheSky_verbosity, TheSkydir
     
     implicit none
     integer, parameter :: ntrials = 11
@@ -45,6 +45,7 @@ contains
     
     library_name = 'libTheSky (libthesky.sourceforge.net)'
     
+    TheSky_verbosity = 99  ! 99: print all messages - 0: be quiet
     
     ! Find the libTheSky path:
     trypaths(1)  = trim(TheSkydir)  ! Predefined?
