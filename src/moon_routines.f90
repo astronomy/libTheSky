@@ -29,43 +29,55 @@ contains
   !*********************************************************************************************************************************
   !> \brief  Get physical data for the Moon: librations, position angles, selenographic position of the Sun
   !!
-  !! \param  jd    Julian day for computation
+  !! \param  jd      Julian day for computation (epoch)
   !!
-  !! \retval libl  Libration (physical+optical) in longitude
-  !! \retval libb  Libration (physical+optical) in latitude
+  !! \retval libl    Libration (physical+optical) in longitude
+  !! \retval libb    Libration (physical+optical) in latitude
   !!
-  !! \retval pa    Position angle of the Moon's axis/north pole
-  !! \retval blpa  Position angle of the Moon's bright limb
+  !! \retval pa      Position angle of the Moon's axis/north pole
+  !! \retval blpa    Position angle of the Moon's bright limb
   !!
-  !! \retval sunl  Selenographic longitude of the Sun
-  !! \retval sunb  Selenographic latitude of the Sun
+  !! \retval sunl    Selenographic longitude of the Sun
+  !! \retval sunb    Selenographic latitude of the Sun
+  !!
+  !! \param  jdEqnx  Julian day for equinox (optional; default: jd = JD of epoch)
   !!
   !!
   !! \see  Meeus, Astronomical Algorithms, 1998, Ch. 53
   !!
   !! \note  This routine does NOT save Moon data in planpos !!!
   
-  subroutine moonphys(jd, libl,libb, pa,blpa, sunl,sunb)
+  subroutine moonphys(jd, libl,libb, pa,blpa, sunl,sunb, jdEqnx)
     use SUFR_kinds, only: double
     use SUFR_constants, only: pi, d2r
     use SUFR_angles, only: rev, rev2
     
     use TheSky_planets, only: planet_position
     use TheSky_planetdata, only: planpos, nplanpos
+    use TheSky_coordinates, only: precess_eq, precess_ecl
     
     implicit none
     real(double), intent(in) :: jd
+    real(double), intent(in), optional :: jdEqnx
     real(double), intent(out) :: libl,libb, pa,blpa, sunl,sunb
-    real(double) :: moonpos(nplanpos),storepos(nplanpos), tjc,tjc2,tjc3,tjc4, dpsi,eps,lm,bm,  omg,mal,mem,mas,mam,ee,k1,k2,in,ww,aa
-    real(double) :: rho,sig,tau,libl2,libb2,vv,xx,yy,om,  a0,d0,l0,r0,lh,bh,sunl2,sunb2
+    real(double) :: moonpos(nplanpos),storepos(nplanpos), tjc,tjc2,tjc3,tjc4, dpsi,eps, lm,bm, ram,decm,  omg,mal,mem,mas,mam,ee,k1,k2,in,ww,aa
+    real(double) :: rho,sig,tau,libl2,libb2,vv,xx,yy,om,  ras,decs, ls,bs,rs, lhc,bhc, sunl2,sunb2
+    
     
     storepos = planpos   ! Store current data
     
     call planet_position(jd,0)  ! Moon
     moonpos = planpos
     
-    lm = moonpos(1)      ! Geocentric longitude
-    bm = moonpos(2)      ! Geocentric latitude
+    lm   = moonpos(1)    ! Geocentric longitude of the Moon
+    bm   = moonpos(2)    ! Geocentric latitude of the Moon
+    ram  = moonpos(5)    ! Geocentric right ascension of the Moon
+    decm = moonpos(6)    ! Geocentric declination of the Moon
+    
+    if(present(jdEqnx)) then  ! Precess from EoD -> selected equinox
+       call precess_ecl(jd,jdEqnx, lm,bm)
+       call precess_eq(jd, jdEqnx, ram,decm)
+    end if
     
     tjc    = moonpos(46)   ! Apparent dynamical time in Julian Centuries since 2000.0
     tjc2   = tjc**2        ! t^2
@@ -141,31 +153,37 @@ contains
     xx = sin(in+rho) * sin(vv)
     yy = sin(in+rho) * cos(vv) * cos(eps)  -  cos(in+rho) * sin(eps)
     om = atan2(xx,yy)
-    pa = asin( sqrt(xx*xx+yy*yy) * cos(moonpos(5)-om) / cos(libb) )
+    pa = asin( sqrt(xx*xx+yy*yy) * cos(ram-om) / cos(libb) )
     
     
     call planet_position(jd,3)  ! Sun - CHECK - need full accuracy?
-    l0 = planpos(1)  ! Geocentric ecliptic longitude of the Sun
-    r0 = planpos(3)  ! Geocentric distance of the Sun
-    a0 = planpos(5)  ! Geocentric right ascension of the Sun
-    d0 = planpos(6)  ! Geocentric declination of the Sun
+    ls   = planpos(1)  ! Geocentric ecliptic longitude of the Sun
+    bs   = planpos(2)  ! Geocentric ecliptic latitude of the Sun
+    rs   = planpos(3)  ! Geocentric distance of the Sun
+    ras  = planpos(5)  ! Geocentric right ascension of the Sun
+    decs = planpos(6)  ! Geocentric declination of the Sun
+    
+    if(present(jdEqnx)) then  ! Precess from EoD -> selected equinox
+       call precess_ecl(jd,jdEqnx, ls,bs)
+       call precess_eq(jd, jdEqnx, ras,decs)
+    end if
     
     ! Position angle of the bright limb:
-    blpa = atan2( cos(d0)*sin(a0-moonpos(5)),  sin(d0)*cos(moonpos(6)) - cos(d0)*sin(moonpos(6))*cos(a0-moonpos(5)) )
+    blpa = atan2( cos(decs)*sin(ras-ram),  sin(decs)*cos(decm) - cos(decs)*sin(decm)*cos(ras-ram) )
     
     
     ! Selenographic position of the Sun:
     ! Meeus, p.376:
     
     ! Heliocentric l,b:
-    lh = l0 + pi + moonpos(4)/r0*cos(bm)*sin(l0-lm)
-    bh = moonpos(4)/r0*bm
-    ww  = lh - dpsi - omg
-    aa  = atan2( sin(ww)*cos(bh)*cos(in) - sin(bh)*sin(in),  cos(ww)*cos(bh) )
+    lhc = ls + pi + moonpos(4)/rs*cos(bm)*sin(ls-lm)
+    bhc = moonpos(4)/rs*bm
+    ww  = lhc - dpsi - omg
+    aa  = atan2( sin(ww)*cos(bhc)*cos(in) - sin(bhc)*sin(in),  cos(ww)*cos(bhc) )
     
     ! Selenographic coordinates of the Sun:
     sunl  = aa - mal
-    sunb  = asin( -sin(ww) * cos(bh) * sin(in)  -  sin(bh) * cos(in))
+    sunb  = asin( -sin(ww) * cos(bhc) * sin(in)  -  sin(bhc) * cos(in))
     sunl2 = -tau + (rho*cos(aa) + sig*sin(aa)) * tan(sunb)
     sunb2 = sig*cos(aa) - rho*sin(aa)
     sunl  = rev(sunl + sunl2)
