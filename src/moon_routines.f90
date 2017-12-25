@@ -56,79 +56,79 @@ contains
     implicit none
     real(double), intent(in) :: jd
     real(double), intent(out) :: libl,libb, pa,blpa, sunl,sunb
-    real(double) :: moonpos(nplanpos),storepos(nplanpos), t,t2,t3,t4, dpsi,eps,l,b,  omg,f,d,ms,mm,e,k1,k2,in,w,a
-    real(double) :: rho,sig,tau,libl2,libb2,v,xx,yy,om,  a0,d0,l0,r0,lh,bh,sunl2,sunb2
+    real(double) :: moonpos(nplanpos),storepos(nplanpos), tjc,tjc2,tjc3,tjc4, dpsi,eps,lm,bm,  omg,mal,mem,mas,mam,ee,k1,k2,in,ww,aa
+    real(double) :: rho,sig,tau,libl2,libb2,vv,xx,yy,om,  a0,d0,l0,r0,lh,bh,sunl2,sunb2
     
     storepos = planpos   ! Store current data
     
     call planet_position(jd,0)  ! Moon
     moonpos = planpos
     
-    l = moonpos(1)       ! Geocentric longitude
-    b = moonpos(2)       ! Geocentric latitude
+    lm = moonpos(1)      ! Geocentric longitude
+    bm = moonpos(2)      ! Geocentric latitude
     
-    t    = moonpos(46)   ! Apparent dynamical time in Julian Centuries since 2000.0
-    t2   = t*t           ! t^2
-    t3   = t2*t          ! t^3
-    t4   = t2*t2         ! t^4
+    tjc    = moonpos(46)   ! Apparent dynamical time in Julian Centuries since 2000.0
+    tjc2   = tjc**2        ! t^2
+    tjc3   = tjc2*tjc      ! t^3
+    tjc4   = tjc2**2       ! t^4
     
     dpsi = moonpos(47)   ! Nutation in longitude
     eps  = moonpos(48)   ! True obliquity of the ecliptic, corrected for nutation
     
     
-    omg = 2.1824390725d0  - 33.7570464271d0    *t  + 3.622256d-5   *t2  + 3.7337958d-8 *t3  - 2.879321d-10  *t4
-    f   = 1.62790515798d0 + 8433.46615806092d0 *t  - 6.37725855d-5 *t2  - 4.9498844d-9 *t3  + 2.0216715d-11 *t4
+    omg = 2.1824390725d0  - 33.7570464271d0    *tjc  + 3.622256d-5   *tjc2   + 3.7337958d-8 *tjc3  - 2.879321d-10  *tjc4  ! Moon's longitude of mean ascending node
+    mal = 1.62790515798d0 + 8433.46615806092d0 *tjc  - 6.37725855d-5 *tjc2   - 4.9498844d-9 *tjc3  + 2.0216715d-11 *tjc4  ! Moon's argument of latitude (F)
     
     ! Lower accuracy(?) from Meeus Ch. 22:
-    d  = 5.19846946025d0  + 7771.37714617d0 *t  - 3.340909d-5    *t2  + 9.2114446d-8    *t3
-    ms = 6.24003588115d0  + 628.301956024d0 *t  - 2.79776d-6     *t2  - 5.8177641733d-8 *t3
-    mm = 2.3555483693d0   + 8328.69142288d0 *t  + 1.517947757d-4 *t2  + 3.102807559d-7  *t3
-    e  = 1.d0  - 0.002516d0 *t  - 0.0000074 *t2
-    k1 = 2.09003d0  + 2.301199d0 *t
-    k2 = 1.2664d0   + 0.352312d0 *t
+    mem = 5.19846946025d0  + 7771.37714617d0 *tjc    - 3.340909d-5    *tjc2  + 9.2114446d-8    *tjc3  ! Mean elongation of the Moon
+    mas = 6.24003588115d0  + 628.301956024d0 *tjc    - 2.79776d-6     *tjc2  - 5.8177641733d-8 *tjc3  ! Mean anomaly of the Sun (or Earth)
+    mam = 2.3555483693d0   + 8328.69142288d0 *tjc    + 1.517947757d-4 *tjc2  + 3.102807559d-7  *tjc3  ! Mean anomaly of the Moon
+    ee  = 1.d0  - 0.002516d0 *tjc  - 0.0000074 *tjc2
+    k1  = 2.09003d0  + 2.301199d0 *tjc
+    k2  = 1.2664d0   + 0.352312d0 *tjc
     
     
     ! Optical librations:
     in = 2.69203d-2         ! Moon equator inclination to ecliptic, Meeus p.372
     
     ! Meeus, Eq. 53.1:
-    w  = l - dpsi - omg
-    a  = atan2( sin(w)*cos(b)*cos(in) - sin(b)*sin(in),  cos(w)*cos(b) )
+    ww  = lm - dpsi - omg
+    aa  = atan2( sin(ww)*cos(bm)*cos(in) - sin(bm)*sin(in),  cos(ww)*cos(bm) )
     
-    libl = a - f   ! Along with AA: - = W on celestial sphere, E in selenographic coordinates - opposed to Sterrengids
-    libb = asin( -sin(w)*cos(b)*sin(in) - sin(b)*cos(in) )
+    libl = aa - mal   ! Along with AA: - = W on celestial sphere, E in selenographic coordinates - opposed to Sterrengids
+    libb = asin( -sin(ww)*cos(bm)*sin(in) - sin(bm)*cos(in) )
     
     
     ! Physical librations:
     ! Meeus, p.373, in degrees:
     rho = &
-         - 2.752d-2*cos(mm)  - 2.245d-2*sin(f)      + 6.84d-3*cos(mm-2*f) &
-         - 2.93d-3*cos(2*f)  - 8.5d-4*cos(2*(f-d))  - 5.4d-4*cos(mm-2*d)  &
-         - 2.d-4*sin(mm+f)   - 2.d-4*cos(mm+2*f)    - 2.d-4*cos(mm-f)     &
-         + 1.4d-4*cos(mm+2*(f-d))
+         - 2.752d-2*cos(mam)    - 2.245d-2*sin(mal)        + 6.84d-3*cos(mam-2*mal) &
+         - 2.93d-3*cos(2*mal)   - 8.5d-4*cos(2*(mal-mem))  - 5.4d-4*cos(mam-2*mem)  &
+         - 2.d-4*sin(mam+mal)   - 2.d-4*cos(mam+2*mal)     - 2.d-4*cos(mam-mal)     &
+         + 1.4d-4*cos(mam+2*(mal-mem))
     
     sig = &
-         - 2.816d-2*sin(mm)  + 2.244d-2*cos(f)      - 6.82d-3*sin(mm-2*f) &
-         - 2.79d-3*sin(2*f)  - 8.3d-4*sin(2*(f-d))  + 6.9d-4*sin(mm-2*d)  &
-         + 4.d-4*cos(mm+f)   - 2.5d-4*sin(2*mm)     - 2.3d-4*sin(mm+2*f)  &
-         + 2.d-4*cos(mm-f)   + 1.9d-4*sin(mm-f)                           &
-         + 1.3d-4*sin(mm+2*(f-d))                   - 1.d-4*cos(mm-3*f)
+         - 2.816d-2*sin(mam)    + 2.244d-2*cos(mal)        - 6.82d-3*sin(mam-2*mal) &
+         - 2.79d-3*sin(2*mal)   - 8.3d-4*sin(2*(mal-mem))  + 6.9d-4*sin(mam-2*mem)  &
+         + 4.d-4*cos(mam+mal)   - 2.5d-4*sin(2*mam)        - 2.3d-4*sin(mam+2*mal)  &
+         + 2.d-4*cos(mam-mal)   + 1.9d-4*sin(mam-mal)                               &
+         + 1.3d-4*sin(mam+2*(mal-mem))                     - 1.d-4*cos(mam-3*mal)
     
-    tau =  2.520d-2*e*sin(ms)       + 4.74d-3*sin(2*(mm-f))  - 4.67d-3*sin(mm)     &
-         + 3.96d-3*sin(k1)          + 2.76d-3*sin(2*(mm-d))  + 1.96d-3*sin(omg)    &
-         - 1.83d-3*cos(mm-f)        + 1.15d-3*sin(mm-2*d)    - 9.6d-4*sin(mm-d)    &
-         + 4.6d-4*sin(2*(f-d))      - 3.9d-4*sin(mm-f)       - 3.2d-4*sin(mm-ms-d) &
-         + 2.7d-4*sin(2*(mm-d)-ms)  + 2.3d-4*sin(k2)         - 1.4d-4*sin(2*d)     &
-         + 1.4d-4*cos(2*(mm-f))     - 1.2d-4*sin(mm-2*f)     - 1.2d-4*sin(2*mm)    &
-         + 1.1d-4*sin(2*(mm-ms-d))
+    tau =  2.520d-2*ee*sin(mas)         + 4.74d-3*sin(2*(mam-mal))  - 4.67d-3*sin(mam)        &
+         + 3.96d-3*sin(k1)              + 2.76d-3*sin(2*(mam-mem))  + 1.96d-3*sin(omg)        &
+         - 1.83d-3*cos(mam-mal)         + 1.15d-3*sin(mam-2*mem)    - 9.6d-4*sin(mam-mem)     &
+         + 4.6d-4*sin(2*(mal-mem))      - 3.9d-4*sin(mam-mal)       - 3.2d-4*sin(mam-mas-mem) &
+         + 2.7d-4*sin(2*(mam-mem)-mas)  + 2.3d-4*sin(k2)            - 1.4d-4*sin(2*mem)       &
+         + 1.4d-4*cos(2*(mam-mal))      - 1.2d-4*sin(mam-2*mal)     - 1.2d-4*sin(2*mam)       &
+         + 1.1d-4*sin(2*(mam-mas-mem))
     
     rho = rho*d2r
     sig = sig*d2r
     tau = tau*d2r
     
     ! Meeus, Eq. 53.2:
-    libl2 = -tau + (rho*cos(a) + sig*sin(a)) * tan(libb)
-    libb2 = sig*cos(a) - rho*sin(a)
+    libl2 = -tau + (rho*cos(aa) + sig*sin(aa)) * tan(libb)
+    libb2 = sig*cos(aa) - rho*sin(aa)
     
     ! Total librations:
     libl = libl + libl2  ! Along with AA ( - = W on celestial sphere, E in selenographic coordinates)
@@ -137,9 +137,9 @@ contains
     
     ! Position Angle of the axis:
     ! Meeus, p.374:
-    v  = omg + dpsi + sig/sin(in)
-    xx = sin(in+rho) * sin(v)
-    yy = sin(in+rho) * cos(v) * cos(eps)  -  cos(in+rho) * sin(eps)
+    vv = omg + dpsi + sig/sin(in)
+    xx = sin(in+rho) * sin(vv)
+    yy = sin(in+rho) * cos(vv) * cos(eps)  -  cos(in+rho) * sin(eps)
     om = atan2(xx,yy)
     pa = asin( sqrt(xx*xx+yy*yy) * cos(moonpos(5)-om) / cos(libb) )
     
@@ -158,16 +158,16 @@ contains
     ! Meeus, p.376:
     
     ! Heliocentric l,b:
-    lh = l0 + pi + moonpos(4)/r0*cos(b)*sin(l0-l)
-    bh = moonpos(4)/r0*b
-    w  = lh - dpsi - omg
-    a  = atan2( sin(w)*cos(bh)*cos(in) - sin(bh)*sin(in),  cos(w)*cos(bh) )
+    lh = l0 + pi + moonpos(4)/r0*cos(bm)*sin(l0-lm)
+    bh = moonpos(4)/r0*bm
+    ww  = lh - dpsi - omg
+    aa  = atan2( sin(ww)*cos(bh)*cos(in) - sin(bh)*sin(in),  cos(ww)*cos(bh) )
     
     ! Selenographic coordinates of the Sun:
-    sunl  = a - f
-    sunb  = asin( -sin(w) * cos(bh) * sin(in)  -  sin(bh) * cos(in))
-    sunl2 = -tau + (rho*cos(a) + sig*sin(a)) * tan(sunb)
-    sunb2 = sig*cos(a) - rho*sin(a)
+    sunl  = aa - mal
+    sunb  = asin( -sin(ww) * cos(bh) * sin(in)  -  sin(bh) * cos(in))
+    sunl2 = -tau + (rho*cos(aa) + sig*sin(aa)) * tan(sunb)
+    sunb2 = sig*cos(aa) - rho*sin(aa)
     sunl  = rev(sunl + sunl2)
     sunb  = rev2(sunb + sunb2)
     
@@ -218,7 +218,7 @@ contains
     !return
     
     ! Correction parameters:
-    ee = 1.0d0      + t * (-0.002516d0 - 0.0000074d0 * t)  ! Meeus, Eq. 47.6
+    ee  = 1.0d0      + t * (-0.002516d0 - 0.0000074d0 * t)  ! Meeus, Eq. 47.6
     
     ! Mean anomaly of the Sun, Meeus, Eq. 49.4:
     mas = 2.5534d0   + 29.10535669d0  * k  +  t2 * (-0.0000218d0 - 0.00000011d0 * t)
@@ -230,7 +230,7 @@ contains
     ff  = 160.7108d0 + 390.67050274d0 * k  +  t2 * (-0.0016341d0*t * (-0.00000227d0 + 0.000000011d0 * t))
     
     ! Longitude of ascending node of lunar orbit, Meeus, Eq. 49.7:
-    omg  = 124.7746d0 - 1.56375580d0   * k  +  t2 * (0.0020691d0 + 0.00000215d0 * t)
+    omg = 124.7746d0 - 1.56375580d0   * k  +  t2 * (0.0020691d0 + 0.00000215d0 * t)
     
     
     ! Planetary arguments:
