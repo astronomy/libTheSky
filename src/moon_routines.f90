@@ -45,7 +45,7 @@ contains
   !!
   !! \note  This routine does NOT save Moon data in planpos !!!
   
-  subroutine moonphys(jd,libl,libb,pa,blpa,sunl,sunb)
+  subroutine moonphys(jd, libl,libb, pa,blpa, sunl,sunb)
     use SUFR_kinds, only: double
     use SUFR_constants, only: pi, d2r
     use SUFR_angles, only: rev, rev2
@@ -80,12 +80,12 @@ contains
     f   = 1.62790515798d0 + 8433.46615806092d0 *t  - 6.37725855d-5 *t2  - 4.9498844d-9 *t3  + 2.0216715d-11 *t4
     
     ! Lower accuracy(?) from Meeus Ch. 22:
-    d  = 5.19846946025d0 + 7771.37714617d0 *t - 3.340909d-5    *t2  + 9.2114446d-8    *t3
-    ms = 6.24003588115d0 + 628.301956024d0 *t - 2.79776d-6     *t2  - 5.8177641733d-8 *t3
-    mm = 2.3555483693d0  + 8328.69142288d0 *t + 1.517947757d-4 *t2  + 3.102807559d-7  *t3
-    e  = 1.d0 - 0.002516d0 *t  - 0.0000074 *t2
-    k1 = 2.09003d0 + 2.301199d0 *t
-    k2 = 1.2664d0  + 0.352312d0 *t
+    d  = 5.19846946025d0  + 7771.37714617d0 *t  - 3.340909d-5    *t2  + 9.2114446d-8    *t3
+    ms = 6.24003588115d0  + 628.301956024d0 *t  - 2.79776d-6     *t2  - 5.8177641733d-8 *t3
+    mm = 2.3555483693d0   + 8328.69142288d0 *t  + 1.517947757d-4 *t2  + 3.102807559d-7  *t3
+    e  = 1.d0  - 0.002516d0 *t  - 0.0000074 *t2
+    k1 = 2.09003d0  + 2.301199d0 *t
+    k2 = 1.2664d0   + 0.352312d0 *t
     
     
     ! Optical librations:
@@ -102,25 +102,25 @@ contains
     ! Physical librations:
     ! Meeus, p.373, in degrees:
     rho = &
-         - 2.752d-2*cos(mm)    - 2.245d-2*sin(f)        + 6.84d-3*cos(mm-2.d0*f) &
-         - 2.93d-3*cos(2.d0*f) - 8.5d-4*cos(2.d0*(f-d)) - 5.4d-4*cos(mm-2.d0*d)  &
-         - 2.d-4*sin(mm+f)     - 2.d-4*cos(mm+2.d0*f)   - 2.d-4*cos(mm-f)        &
-         + 1.4d-4*cos(mm+2.d0*(f-d))
+         - 2.752d-2*cos(mm)  - 2.245d-2*sin(f)      + 6.84d-3*cos(mm-2*f) &
+         - 2.93d-3*cos(2*f)  - 8.5d-4*cos(2*(f-d))  - 5.4d-4*cos(mm-2*d)  &
+         - 2.d-4*sin(mm+f)   - 2.d-4*cos(mm+2*f)    - 2.d-4*cos(mm-f)     &
+         + 1.4d-4*cos(mm+2*(f-d))
     
     sig = &
-         - 2.816d-2*sin(mm)    + 2.244d-2*cos(f)        - 6.82d-3*sin(mm-2.d0*f) &
-         - 2.79d-3*sin(2.d0*f) - 8.3d-4*sin(2.d0*(f-d)) + 6.9d-4*sin(mm-2.d0*d)  &
-         + 4.d-4*cos(mm+f)     - 2.5d-4*sin(2.d0*mm)    - 2.3d-4*sin(mm+2.d0*f)  &
-         + 2.d-4*cos(mm-f)     + 1.9d-4*sin(mm-f)                                &
-         + 1.3d-4*sin(mm+2.d0*(f-d))                    - 1.d-4*cos(mm-3.d0*f)
+         - 2.816d-2*sin(mm)  + 2.244d-2*cos(f)      - 6.82d-3*sin(mm-2*f) &
+         - 2.79d-3*sin(2*f)  - 8.3d-4*sin(2*(f-d))  + 6.9d-4*sin(mm-2*d)  &
+         + 4.d-4*cos(mm+f)   - 2.5d-4*sin(2*mm)     - 2.3d-4*sin(mm+2*f)  &
+         + 2.d-4*cos(mm-f)   + 1.9d-4*sin(mm-f)                           &
+         + 1.3d-4*sin(mm+2*(f-d))                   - 1.d-4*cos(mm-3*f)
     
-    tau =  2.520d-2*e*sin(ms)         + 4.74d-3*sin(2.d0*(mm-f))  - 4.67d-3*sin(mm) &
-         + 3.96d-3*sin(k1)            + 2.76d-3*sin(2.d0*(mm-d))  + 1.96d-3*sin(omg) &
-         - 1.83d-3*cos(mm-f)          + 1.15d-3*sin(mm-2.d0*d)    - 9.6d-4*sin(mm-d) &
-         + 4.6d-4*sin(2.d0*(f-d))     - 3.9d-4*sin(mm-f)          - 3.2d-4*sin(mm-ms-d) &
-         + 2.7d-4*sin(2.d0*(mm-d)-ms) + 2.3d-4*sin(k2)            - 1.4d-4*sin(2.d0*d) &
-         + 1.4d-4*cos(2.d0*(mm-f))    - 1.2d-4*sin(mm-2.d0*f)     - 1.2d-4*sin(2.d0*mm) &
-         + 1.1d-4*sin(2.d0*(mm-ms-d))
+    tau =  2.520d-2*e*sin(ms)       + 4.74d-3*sin(2*(mm-f))  - 4.67d-3*sin(mm)     &
+         + 3.96d-3*sin(k1)          + 2.76d-3*sin(2*(mm-d))  + 1.96d-3*sin(omg)    &
+         - 1.83d-3*cos(mm-f)        + 1.15d-3*sin(mm-2*d)    - 9.6d-4*sin(mm-d)    &
+         + 4.6d-4*sin(2*(f-d))      - 3.9d-4*sin(mm-f)       - 3.2d-4*sin(mm-ms-d) &
+         + 2.7d-4*sin(2*(mm-d)-ms)  + 2.3d-4*sin(k2)         - 1.4d-4*sin(2*d)     &
+         + 1.4d-4*cos(2*(mm-f))     - 1.2d-4*sin(mm-2*f)     - 1.2d-4*sin(2*mm)    &
+         + 1.1d-4*sin(2*(mm-ms-d))
     
     rho = rho*d2r
     sig = sig*d2r
@@ -144,7 +144,7 @@ contains
     pa = asin( sqrt(xx*xx+yy*yy) * cos(moonpos(5)-om) / cos(libb) )
     
     
-    call planet_position(jd,3)  ! Sun - CHECK - full accuracy?
+    call planet_position(jd,3)  ! Sun - CHECK - need full accuracy?
     l0 = planpos(1)  ! Geocentric ecliptic longitude of the Sun
     r0 = planpos(3)  ! Geocentric distance of the Sun
     a0 = planpos(5)  ! Geocentric right ascension of the Sun
@@ -271,14 +271,14 @@ contains
             + 0.00739d0 * ee * sin(mam-mas)   -  0.00514d0 * ee * sin(mam+mas)        &
             + 0.00208d0 * ee**2 * sin(2*mas)  -  0.00111d0 * sin(mam-2*ff)            &
             - 0.00057d0 * sin(mam+2*ff)       +  0.00056d0 * ee * sin(2*mam+mas)      &
-            - 0.00042d0 * sin(3.d0*mam)       +  0.00042d0 * ee * sin(mas+2*ff)       &
+            - 0.00042d0 * sin(3*mam)          +  0.00042d0 * ee * sin(mas+2*ff)       &
             + 0.00038d0 * ee * sin(mas-2*ff)  -  0.00024d0 * ee * sin(2*mam-mas)      &
             - 0.00017d0 * sin(omg)            -  0.00007d0 * sin(mam+2*mas)           &
-            + 0.00004d0 * sin(2*mam-2*ff)     +  0.00004d0 * sin(3.d0*mas)            &
+            + 0.00004d0 * sin(2*mam-2*ff)     +  0.00004d0 * sin(3*mas)               &
             + 0.00003d0 * sin(mam+mas-2*ff)   +  0.00003d0 * sin(2*mam+2*ff)          &
             - 0.00003d0 * sin(mam+mas+2*ff)   +  0.00003d0 * sin(mam-mas+2*ff)        &
-            - 0.00002d0 * sin(mam-mas-2*ff)   -  0.00002d0 * sin(3.d0*mam+mas)        &
-            + 0.00002d0 * sin(4.d0*mam)
+            - 0.00002d0 * sin(mam-mas-2*ff)   -  0.00002d0 * sin(3*mam+mas)           &
+            + 0.00002d0 * sin(4*mam)
     end if
     
     
@@ -291,14 +291,14 @@ contains
             + 0.00734d0 * ee * sin(mam-mas)   -  0.00515d0 * ee * sin(mam+mas)        &
             + 0.00209d0 * ee**2 * sin(2*mas)  -  0.00111d0 * sin(mam-2*ff)            &
             - 0.00057d0 * sin(mam+2*ff)       +  0.00056d0 * ee * sin(2*mam+mas)      &
-            - 0.00042d0 * sin(3.d0*mam)       +  0.00042d0 * ee * sin(mas+2*ff)       &
+            - 0.00042d0 * sin(3*mam)          +  0.00042d0 * ee * sin(mas+2*ff)       &
             + 0.00038d0 * ee * sin(mas-2*ff)  -  0.00024d0 * ee * sin(2*mam-mas)      &
             - 0.00017d0 * sin(omg)            -  0.00007d0 * sin(mam+2*mas)           &
-            + 0.00004d0 * sin(2*mam-2*ff)     +  0.00004d0 * sin(3.d0*mas)            &
+            + 0.00004d0 * sin(2*mam-2*ff)     +  0.00004d0 * sin(3*mas)               &
             + 0.00003d0 * sin(mam+mas-2*ff)   +  0.00003d0 * sin(2*mam+2*ff)          &
             - 0.00003d0 * sin(mam+mas+2*ff)   +  0.00003d0 * sin(mam-mas+2*ff)        &
-            - 0.00002d0 * sin(mam-mas-2*ff)   -  0.00002d0 * sin(3.d0*mam+mas)        &
-            + 0.00002d0 * sin(4.d0*mam)
+            - 0.00002d0 * sin(mam-mas-2*ff)   -  0.00002d0 * sin(3*mam+mas)           &
+            + 0.00002d0 * sin(4*mam)
     end if
     
     
@@ -310,15 +310,15 @@ contains
             - 0.01183d0 * ee * sin(mam+mas)    +  0.00862d0 * sin(2*mam)              &
             + 0.00804d0 * sin(2*ff)            +  0.00454d0 * ee * sin(mam-mas)       &
             + 0.00204d0 * ee**2 * sin(2*mas)   -  0.00180d0 * sin(mam-2*ff)           &
-            - 0.00070d0 * sin(mam+2*ff)        -  0.00040d0 * sin(3.d0*mam)           &
+            - 0.00070d0 * sin(mam+2*ff)        -  0.00040d0 * sin(3*mam)              &
             - 0.00034d0 * ee * sin(2*mam-mas)  +  0.00032d0 * ee * sin(mas+2*ff)      &
             + 0.00032d0 * ee * sin(mas-2*ff)   -  0.00028d0 * ee**2 * sin(mam+2*mas)  &
             + 0.00027d0 * ee * sin(2*mam+mas)  -  0.00017d0 * sin(omg)                &
             - 0.00005d0 * sin(mam-mas-2*ff)                                           &
             + 0.00004d0 * sin(2*mam+2*ff)      -  0.00004d0 * sin(mam+mas+2*ff)       &
             + 0.00004d0 * sin(mam-2*mas)       +  0.00003d0 * sin(mam+mas-2*ff)       &
-            + 0.00003d0 * sin(3.d0*mas)        +  0.00002d0 * sin(2*mam-2*ff)         &
-            + 0.00002d0 * sin(mam-mas+2*ff)    -  0.00002d0 * sin(3.d0*mam+mas)
+            + 0.00003d0 * sin(3*mas)           +  0.00002d0 * sin(2*mam-2*ff)         &
+            + 0.00002d0 * sin(mam-mas+2*ff)    -  0.00002d0 * sin(3*mam+mas)
        
        ww = 0.00306 &
             - 0.00038d0 * ee * cos(mas)        +  0.00026d0 * cos(mam)                &
