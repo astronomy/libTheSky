@@ -47,24 +47,24 @@ contains
     implicit none
     real(double), intent(in) :: t
     real(double), intent(out) :: dpsi,eps0,deps
-    real(double) :: tt,tt2,tt3,u, d,ms,mm,f,o,tmpvar, nu(9,63), conv
+    real(double) :: tt,tt2,tt3,u, d,ms,mm,f,omg,tmpvar, nu(9,63), conv
     integer :: i
     
     tt  = t*10.d0  ! Julian Centuries since 2000.0 in dynamical time
-    tt2 = tt*tt
+    tt2 = tt**2
     tt3 = tt*tt2
     
-    d  = 5.19846946025d0  +  7771.37714617d0 *tt  -  3.340909d-5    *tt2  +  9.2114446d-8     *tt3  ! D in Meeus, p.144
-    ms = 6.24003588115d0  +  628.301956024d0 *tt  -  2.79776d-6     *tt2  -  5.8177641733d-8  *tt3  ! M in Meeus, p.144
-    mm = 2.3555483693d0   +  8328.69142288d0 *tt  +  1.517947757d-4 *tt2  +  3.102807559d-7   *tt3  ! M' in Meeus, p.144
-    f  = 1.62790192912d0  +  8433.46615832d0 *tt  -  6.42717497d-5  *tt2  +  5.3329949d-8     *tt3  ! F in Meeus, p.144
-    o  = 2.18243858558d0  -  33.7570459367d0 *tt  +  3.6142278d-5   *tt2  +  3.87850944888d-8 *tt3  ! Omega in Meeus, p.144
+    d   = 5.19846946025d0  +  7771.37714617d0 *tt  -  3.340909d-5    *tt2  +  9.2114446d-8     *tt3  ! D in Meeus, p.144
+    ms  = 6.24003588115d0  +  628.301956024d0 *tt  -  2.79776d-6     *tt2  -  5.8177641733d-8  *tt3  ! M in Meeus, p.144
+    mm  = 2.3555483693d0   +  8328.69142288d0 *tt  +  1.517947757d-4 *tt2  +  3.102807559d-7   *tt3  ! M' in Meeus, p.144
+    f   = 1.62790192912d0  +  8433.46615832d0 *tt  -  6.42717497d-5  *tt2  +  5.3329949d-8     *tt3  ! F in Meeus, p.144
+    omg = 2.18243858558d0  -  33.7570459367d0 *tt  +  3.6142278d-5   *tt2  +  3.87850944888d-8 *tt3  ! Omega in Meeus, p.144
     
     dpsi=0.d0
     deps=0.d0
     nu = nutationdat
     do i=1,63  ! Use data from Meeus' Table 22.A, p.145 (see nutation.dat)
-       tmpvar = nu(1,i)*d + nu(2,i)*ms + nu(3,i)*mm + nu(4,i)*f + nu(5,i)*o
+       tmpvar = nu(1,i)*d + nu(2,i)*ms + nu(3,i)*mm + nu(4,i)*f + nu(5,i)*omg
        dpsi = dpsi + (nu(6,i) + nu(7,i)*tt) * sin(tmpvar)
        deps = deps + (nu(8,i) + nu(9,i)*tt) * cos(tmpvar)
     end do

@@ -44,7 +44,7 @@ contains
     real(double), intent(in) :: jd
     
     integer :: i
-    real(double) :: jd1,t,dpsi,eps0,deps,eps,  ra(nstars),dec(nstars),pma(nstars),pmd(nstars)
+    real(double) :: t,dpsi,eps0,deps,eps,  ra(nstars),dec(nstars),pma(nstars),pmd(nstars)
     real(double) :: da1(nstars),dd1(nstars),da2(nstars),dd2(nstars),  l(nstars),b(nstars)
     
     
@@ -82,10 +82,9 @@ contains
     dec = dec + pmd*t
     
     
-    ! Precession = change of equinox:
-    jd1 = jd2000  !from J2000.0    
+    ! Precession = change of equinox (from J2000.0 to EoD):
     do i=1,nstars
-       call precess_eq(jd1,jd,ra(i),dec(i))
+       call precess_eq(jd2000,jd,ra(i),dec(i))
     end do
     
     

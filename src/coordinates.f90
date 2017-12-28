@@ -489,8 +489,7 @@ contains
        mas   =  6.240035881d0 + 628.301956024d0 * tjc - 2.79776d-6 * tjc2 - 5.817764d-8 * tjc**3
        
        ! Sun's equation of the centre, Meeus p.164:
-       sec   =  (3.3416109d-2 - 8.40725d-5*tjc - 2.443d-7*tjc2)*sin(mas) + (3.489437d-4-1.763d-6*tjc)*sin(2*mas) &
-            + 5.044d-6*sin(3*mas)
+       sec   =  (3.3416109d-2 - 8.40725d-5*tjc - 2.443d-7*tjc2)*sin(mas) + (3.489437d-4-1.763d-6*tjc)*sin(2*mas) + 5.044d-6*sin(3*mas)
        odot  =  rev(l0 + sec)  ! Sun's true longitude
        
        ! Meeus, p.151:
