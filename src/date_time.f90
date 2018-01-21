@@ -578,17 +578,23 @@ contains
   !*********************************************************************************************************************************
   !> \brief  Prints date/time of a given Julian day (UT) to standard output
   !!
-  !! \param jd  Julian day (UT)
+  !! \param jd   Julian day (UT)
+  !! \param jde  Julian day ephemeris time (dynamical time)
   !!
   !! \note
   !! - calls printdate1()
   
-  subroutine printdate(jd)
+  subroutine printdate(jd, jde)
     use SUFR_kinds, only: double
     implicit none
     real(double), intent(in) :: jd
-    
-    call printdate1(jd)
+    real(double), intent(in), optional :: jde
+
+    if(present(jde)) then
+       call printdate1(jd, jde)
+    else
+       call printdate1(jd)
+    end if
     write(*,*)''
     
   end subroutine printdate
@@ -597,15 +603,16 @@ contains
   !*********************************************************************************************************************************
   !> \brief  Prints date/time of a given Julian day (UT) to standard output, but without a newline
   !!
-  !! \param jd  Julian day (UT)
+  !! \param jd   Julian day (UT)
+  !! \param jde  Julian day ephemeris time (dynamical time)
   
-  subroutine printdate1(jd) 
+  subroutine printdate1(jd, jde)
     use SUFR_kinds, only: double
     use SUFR_date_and_time, only: jd2cal
-    use TheSky_local, only: tz
     
     implicit none
     real(double), intent(in) :: jd
+    real(double), intent(in), optional :: jde
     real(double) :: dd,tm,s
     integer :: d,mm,yy,h,m
     
@@ -631,7 +638,9 @@ contains
        d = d + 1
     end if
     
-    write(*,'(2x,F0.6,I6,2I3,2x,2I3,F7.3,A7,I2)', advance='no') jd,yy,mm,d,h,m,s,'tz:',nint(tz)
+    write(*,'(A,F0.6)', advance='no') '  JD:  ', jd
+    if(present(jde)) write(*,'(A,F0.6)', advance='no') '  JDE:  ', jde
+    write(*,'(A,I0,2I3.2, A,2I3.2,F7.3,A)', advance='no') '   date:  ',yy,mm,d, '   time:  ',h,m,s,'  UT'
     
   end subroutine printdate1
   !*********************************************************************************************************************************
