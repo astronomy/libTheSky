@@ -772,8 +772,8 @@ contains
   !! \param  gcr   Geocentric distance
   !! \param  gcs   Geocentric semi-diameter
   !!
-  !! \param  eps  Obliquity of the ecliptic
-  !! \param  lst  Local sidereal time
+  !! \param  eps   Obliquity of the ecliptic
+  !! \param  lst   Local sidereal time
   !!
   !! \retval tcl   Topocentric longitude
   !! \retval tcb   Topocentric latitude

@@ -207,7 +207,7 @@ contains
     
     ! Correct for nutation:
     call nutation(tjm, dpsi,eps0,deps)  ! dpsi: nutation in longitude, deps: in obliquity
-    call nutation2000(jd, dpsi,deps)    ! IAU 2000 Nutation model, doesn't provide eps0(?)
+    call nutation2000(jd, dpsi,deps)    ! IAU 2000 Nutation model, doesn't provide eps0
     eps = eps0 + deps                   ! Correct for nutation: mean -> true obliquity of the ecliptic
     
     
