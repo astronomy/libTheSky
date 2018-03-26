@@ -330,11 +330,12 @@ contains
   !*********************************************************************************************************************************
   !> \brief  Compute DeltaT for a given JD
   !!
-  !! \param jd  Julian day
+  !! \param jd               Julian day
+  !! \param force_recompute  Force recomputation of DeltaT, even if the year is the same as in the last call (done in calc_deltat_ymd())
   !! 
   !! \note VERY SLOW, use calc_deltat_ymd() if y,m,d are known
   
-  function calc_deltat(jd)
+  function calc_deltat(jd, force_recompute)
     use SUFR_kinds, only: double
     use SUFR_date_and_time, only: jd2cal
     use SUFR_numerics, only: deq0
@@ -342,8 +343,15 @@ contains
     
     implicit none
     real(double), intent(in) :: jd
+    logical, intent(in), optional :: force_recompute
+    
     real(double) :: calc_deltat,d
     integer :: y,m
+    logical :: force_recompute_l
+    
+    ! Optional variable:
+    force_recompute_l = .false.
+    if(present(force_recompute)) force_recompute_l = force_recompute
     
     if(deq0(jd)) then  ! Use variables from module local
        y = year
@@ -353,7 +361,7 @@ contains
        call jd2cal(jd, y,m,d)  ! SLOW!
     end if
     
-    calc_deltat = calc_deltat_ymd(y,m,d)
+    calc_deltat = calc_deltat_ymd(y,m,d, force_recompute_l)
     
   end function calc_deltat
   !*********************************************************************************************************************************
@@ -363,14 +371,16 @@ contains
   !*********************************************************************************************************************************
   !> \brief  Compute DeltaT for given y,m,d
   !!
-  !! \param y  Year
-  !! \param m  Month
-  !! \param d  Day
+  !! \param y                Year
+  !! \param m                Month
+  !! \param d                Day
+  !! 
+  !! \param force_recompute  Force recomputation of DeltaT, even if the year is the same as in the last call
   !! 
   !! \note
   !! - Faster than calc_deltat. Use this routine rather than calc_deltat() if y,m,d are known
   
-  function calc_deltat_ymd(y,m,d)
+  function calc_deltat_ymd(y,m,d, force_recompute)
     use SUFR_kinds, only: double
     use SUFR_numerics, only: deq
     use TheSky_constants, only: deltat_0, deltat_accel, deltat_change, deltat_minyr, deltat_maxyr, deltat_years, deltat_values
@@ -378,18 +388,24 @@ contains
     implicit none
     integer, intent(in) :: y,m
     real(double), intent(in) :: d
+    logical, intent(in), optional :: force_recompute
     
     integer :: yr1,yr2
     real(double) :: calc_deltat_ymd, y0,dy, ddt
     real(double), save :: calc_deltat_old, y0_old
+    logical :: force_recompute_l
     
+    
+    ! Optional variable:
+    force_recompute_l = .false.
+    if(present(force_recompute)) force_recompute_l = force_recompute
     
     calc_deltat_ymd = 60.d0
     
     y0 = (dble(m-1)+((d-1)/31.d0))/12.d0 + y  ! ~decimal year
     
     ! Return old value if same instance:
-    if(deq(y0,y0_old)) then
+    if(deq(y0,y0_old) .and. .not. force_recompute_l) then
        calc_deltat_ymd = calc_deltat_old
        return
     end if
