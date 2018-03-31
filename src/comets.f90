@@ -53,8 +53,8 @@ contains
     integer, intent(in) :: com
     real(double), intent(out) :: x,y,z
     
-    integer :: i,j,j1,j2
-    real(double) :: k,jj,del,  tp,q,a,e,o1,o2,in,nu,r,t,jde,te,  m,n,ee,ee1,de,  qq,g,s,s0,s1,w,q2,q3,dq3
+    integer :: i,j,j1,j2, NiterI,NiterJ,NiterJ12
+    real(double) :: k,jj,del,  tp,q,a,e,o1,o2,in,nu,r,t,jde,te,  m,n,ee,ee1,de,  qq,g, s,s0,s00,s1, w,q2,q3,dq3
     real(double) :: eps,dpsi,eps0,deps,  ff,gg,hh,pp,qqq,rr,a1,a2,b1,b2,c1,c2
     
     jde = t1*365250.d0 + jd2000  ! t1 is in Julian Millennia after 2000.0 in dynamical time
@@ -63,6 +63,9 @@ contains
     j1  = 0
     j2  = 0
     del = 1.d-10           ! Convergence criterion
+    
+    s0 = huge(s0)
+    s00 = huge(s00)
     
     comepoche   = cometElems(com,1)      ! J2000.0
     q           = cometElems(com,2)      ! Perihelion distance (AU?)
@@ -139,35 +142,40 @@ contains
           
        ! Hyperbolic orbit:
        else  ! e > 1   CHECK - use this too for 0.98 < e < 1 ?
+          NiterI   = nint(1e7)  ! Number of iterations of the outer loop (i) after which we conclude that they don't converge
+          NiterJ   = 1000       ! Number of iterations of j to try to improve q3, before continuing and using the current value to get a better value for s
+          NiterJ12 = 100        ! Number of times the above should be done before concluding that dq3 won't converge (j1/j2)
+          
           qq = k/(2.d0*q)*sqrt((1.d0+e)/q)  ! Eq. "35.0a" - Q
           g  = (1.d0-e)/(1.d0+e)            ! Eq. "35.0b" - gamma
           q2 = qq*t                         ! Eq.  35.1a
           
-          iloop: do i=1,nint(1e7)           ! Program p.246, loop lines 40-64
+          iloop: do i=1,NiterI           ! Program p.246, loop lines 40-64
+             s00 = s0
              s0 = s
              q3 = q2 + 2.d0*g*s**3/3.d0     ! Eq. 35.1b, but version from program on next page (246), line 42
              
-             j1loop: do j=3,1000            ! Eq. 35.1c, d, ...  -  program p.246, loop lines 44-56
+             j1loop: do j=3,NiterJ            ! Eq. 35.1c, d, ...  -  program p.246, loop lines 44-56
                 jj = dble(j)
                 dq3 = (-1)**(j-1) * g**(j-2) * ((jj-1.d0) - jj*g) * s**(2*j-1) / (2.d0*jj-1.d0)
                 q3 = q3 + dq3               ! Program p.246, loop line 52
                 if(abs(dq3).lt.del) exit  j1loop  ! j
                 
-                if(j.eq.1000) j1 = j1+1
-                if(j1.eq.100) then
-                   if(TheSky_verbosity.gt.0) write(0,*) "COMETS: j1-iteration didn't converge"
+                if(j.eq.NiterJ) j1 = j1+1
+                if(j1.eq.NiterJ12) then
+                   if(TheSky_verbosity.gt.0) write(0,'(A,I0,A,ES10.7)') "COMETS: comet ", com, ", "//trim(cometNames(com))//": j1-iteration didn't converge:", abs(dq3)
                    return
                 end if
              end do  j1loop  ! j
              
-             j2loop: do j=1,1000                       ! Program p.246, loop lines 60-62
+             j2loop: do j=1,NiterJ                       ! Program p.246, loop lines 60-62
                 s1 = s
-                s = (2.d0/3.d0*s**3+q3) / (s**2+1.d0)  ! Program p.246, loop line 60
+                s = (2.d0/3.d0*s**3+q3) / (s**2+1.d0)  ! Program p.246, loop line 60; see also Eq. 34.2
                 if(abs(s-s1).lt.del) exit  j2loop  ! j
                 
-                if(j.eq.1000) j2 = j2+1
-                if(j2.eq.100) then
-                   if(TheSky_verbosity.gt.0) write(0,*) "COMETS: j2-iteration didn't converge",abs(s-s1)
+                if(j.eq.NiterJ) j2 = j2+1
+                if(j2.eq.NiterJ12) then
+                   if(TheSky_verbosity.gt.0) write(0,'(A,I0,A, ES10.3)') "COMETS: comet ", com, ", "//trim(cometNames(com))//": j2-iteration didn't converge: ", abs(s-s1)
                    return
                 end if
              end do  j2loop  ! j
@@ -177,9 +185,15 @@ contains
                 exit  iloop  ! i
              end if
              
-             if(i.ge.nint(1e7)) then
-                if(TheSky_verbosity.gt.0) write(0,*) "COMETS: i-Iteration didn't converge: ",abs(s-s1)
+             if(i.ge.NiterI) then
+                if(TheSky_verbosity.gt.0) write(0,'(A,I0,A, ES10.3)') "COMETS: comet ", com, ", "//trim(cometNames(com))//": i-iteration didn't converge: ", abs(s-s0)
                 return
+             end if
+             
+             if(abs(s-s00).lt.del) then  ! abs(s-s0) > del, but abs(s-s00) < del: possibly jumping between two values of s
+                !write(*,*) i, s, s0, s00, abs(s-s0), abs(s-s00), sqrt(del), (s + s0)/2.d0
+                s = (s + s0)/2.d0  ! Doesn't seem to help much
+                !s = sqrt(s*s0)
              end if
              
           end do  iloop  ! i
