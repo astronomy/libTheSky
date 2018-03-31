@@ -204,7 +204,7 @@ contains
     
     ! Relative air mass for the solar vector:
     AM  = 1.d0/(cosZ + 0.15d0 * (93.885-Z*r2d)**(-1.25d0))  ! Air mass
-    AMp = AM * PressL / 1013.d0                               ! Pressure-corrected air mass
+    AMp = AM * PressL / 1013.d0                             ! Pressure-corrected air mass
     
     ! TRANSMISSION EQUATIONS:
     ! Rayleigh scattering:
@@ -256,11 +256,11 @@ contains
   
   
   !*********************************************************************************************************************************
-  !> \brief  Compute diffuse radiation on an inclined surface using the Perez 1987 model
+  !> \brief  Compute diffuse radiation on an inclined surface using the older (1987) Perez model
   !!
   !! \param  DoY          Day of year (Nday)
   !! \param  alt          Altitude of the Sun (radians)
-  !!
+  !! 
   !! \param  surfIncl     Surface inclination wrt horizontal (radians) - 0 = horizontal, pi/2 = vertical
   !! \param  theta        Angle between surface normal vector and Sun position vector (radians)
   !!
@@ -274,6 +274,8 @@ contains
   !!
   !! \see Perez et al. Solar Energy Vol. 39, Nr. 3, p. 221 (1987) - references to equations and tables are to this paper.
   !! Most equations can be found in the Nomenclature section at the end of the paper (p.230).  We use a and c here, not b and d.
+  !!
+  !! \todo Implement Perez et al. Solar Energy Vol. 44, Nr. 5, p. 271 (1990)
   
   subroutine diffuse_radiation_Perez87(DoY, alt, surfIncl, theta, Gbeam_n,Gdif_hor,  Gdif_inc,   Gdif_inc_cs, Gdif_inc_hz)
     use SUFR_kinds, only: double
@@ -400,7 +402,6 @@ contains
     
   end subroutine diffuse_radiation_Perez87
   !*********************************************************************************************************************************
-  
   
   
   
