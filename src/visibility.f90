@@ -35,7 +35,7 @@
 !  limmag_extinction:            Calculate limiting magnitude based on Sun altitude and Moon phase
 !  limmag_skyBrightness:         Calculate sky brightness based on Sun altitude and Moon phase
 !  limmag_jd:                    Calculate limiting magnitude based on JD and object altitude, wrapper for limmag_full()
-!  limmag_zenith_jd:             Calculate limiting magnitude for the local zenith, based on JD and object altitude
+!  limmag_zenith_jd:             Calculate limiting magnitude for the local zenith, based on JD and observer's location
 !  limmag_jd_pl:                 Calculate limiting magnitude based on JD and planet ID, wrapper for limmag_jd()
 !  limmag_sun_airmass:           Calculate limiting magnitude based on Sun altitude and object altitude (airmass); assume New Moon
 !  limmag_sun:                   Calculate limiting magnitude, based on the altitude of the Sun only
@@ -960,13 +960,13 @@ contains
     planpos0 = planpos                                        ! Save current contents
     
     call planet_position_la(jd, 3, 4, 0)                      ! Sun position - 4: need alitude
-    sunAlt = planpos(31)                                        ! Sun altitude
-    sunElon = asep(objRA, planpos(5),  objDec, planpos(6))        ! Sun elongation
+    sunAlt = planpos(31)                                      ! Sun altitude
+    sunElon = asep(objRA, planpos(5),  objDec, planpos(6))    ! Sun elongation
     
     call planet_position_la(jd, 0, 5, 60)                     ! Moon position - 4: need k;  60 terms
-    moonPhase = planpos(14)                                     ! Moon phase (illuminated fraction, k)
-    moonAlt   = planpos(31)                                     ! Moon altitude
-    moonElon  = asep(objRA, planpos(5),  objDec, planpos(6))      ! Moon elongation
+    moonPhase = planpos(14)                                   ! Moon phase (illuminated fraction, k)
+    moonAlt   = planpos(31)                                   ! Moon altitude
+    moonElon  = asep(objRA, planpos(5),  objDec, planpos(6))  ! Moon elongation
     
     limmag_jd = limmag_full(year,month, lheight,llat, sunAlt,sunElon, moonPhase,moonAlt,moonElon, objAlt)
     
@@ -977,7 +977,7 @@ contains
   
   
   !*********************************************************************************************************************************
-  !> \brief  Calculate limiting magnitude for the local zenith, based on JD and object altitude, wrapper for limmag_jd()
+  !> \brief  Calculate limiting magnitude for the local zenith, based on JD and observer's location
   !!
   !! \param  jd         Julian day
   !! \param  lat        Latitude of the observer (rad)
@@ -1000,7 +1000,7 @@ contains
     ! Compute the RA and dec corresponding to the local zenith at JD, lat and lon:
     objAlt = pio2  ! Altitude of the zenith = pi/2
     gmst = calc_gmst(jd)  ! Greenwich mean sidereal time
-    call horiz2eq(0.d0,objAlt, gmst,  hh,objRA,objDec,  lat,lon)  ! Use azimith = 0, gmst iso agst
+    call horiz2eq(0.d0,objAlt, gmst,  hh,objRA,objDec,  lat,lon)  ! Use azimuth = 0, gmst iso agst
     
     ! Compute the limiting magnitude for the desired JD and the RA, dec and alt corresponding to the zenith:
     limmag_zenith_jd = limmag_jd(jd, objRA,objDec, objAlt, lat,height)
