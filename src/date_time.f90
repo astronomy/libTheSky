@@ -838,13 +838,13 @@ contains
   !*********************************************************************************************************************************
   !> \brief  Display a banner with date, time and location of calculation.  Computes and returns UT, JD and JDE.
   !!
-  !! \param  op     Output unit
-  !! \param  nlbef  Number of newlines before output
-  !! \param  nlaf   Number of newlines after output
+  !! \param  op     Output unit (optional, default 6)
+  !! \param  nlbef  Number of newlines before output (optional, default 0)
+  !! \param  nlaf   Number of newlines after output (optional, default 0)
   !!
-  !! \retval ut     UT: Universal Time
-  !! \retval jd     JD: Julian day
-  !! \retval jde    JDE: Apparent Julian day
+  !! \retval ut     UT: Universal Time (optional)
+  !! \retval jd     JD: Julian day (optional)
+  !! \retval jde    JDE: Apparent Julian day (optional)
   !!
   !! \note
   !! - uses the module local to obtain the variables year, month, etc.
@@ -860,33 +860,46 @@ contains
     
     
     implicit none
-    integer, intent(in) :: op, nlbef,nlaf
-    real(double), intent(out) :: ut,jd,jde
-    integer :: il
-    real(double) :: lt
+    integer, intent(in), optional :: op, nlbef,nlaf
+    real(double), intent(out), optional :: ut,jd,jde
+    integer :: il,  opl, nlbefl,nlafl
+    real(double) :: lt,  utl,jdl,jdel
     
-    call calctime(ut,jd,jde)
-    tz = gettz(jd)
+    ! Optional input parameters:
+    opl = 6                            ! Output unit - local variable
+    if(present(op)) opl = op
+    nlbefl = 0                         ! Number of newlines before output - local variable
+    if(present(nlbef)) nlbefl = nlbef
+    nlafl = 0                          ! Number of newlines after output - local variable
+    if(present(nlaf)) nlafl = nlaf
     
-    call calctime(ut,jd,jde)
+    call calctime(utl,jdl,jdel)
+    tz = gettz(jdl)
+    
+    call calctime(utl,jdl,jdel)
     lt = hour + (minute + second/60.d0)/60.d0 + 1.d-50  ! so that 0 doesn't give --:--
-    ut = ut + 1.d-50                                    ! so that 0 doesn't give --:--
+    utl = utl + 1.d-50                                  ! so that 0 doesn't give --:--
     
-    do il=1,nlbef
-       write(op,'(A)') ''  ! Newline
+    do il=1,nlbefl
+       write(opl,'(A)') ''  ! Newline
     end do
     
-    write(op,'(A20,3A,I3,A1,I5,  A9,A9,F4.3,A5,A,  A13,2(A4,A), A4,A,A1)') &
-         'LOCAL:      Date: ',trim(endays(dow(jd))),' ', trim(enmonths(month)),nint(day),',',year,  &
+    write(opl,'(A20,3A,I3,A1,I5,  A9,A9,F4.3,A5,A,  A13,2(A4,A), A4,A,A1)') &
+         'LOCAL:      Date: ',trim(endays(dow(jdl))),' ', trim(enmonths(month)),nint(day),',',year,  &
          'Time:',hms(lt),second-int(second),'tz: ',d2s(tz,1),   &
          'Location:','l: ',d2s(lon0*r2d,4),'b: ',d2s(lat0*r2d,4), 'h: ',d2s(height,1),'m'
     
-    write(op,'(A17,A9,F4.3,A7,F15.6, A12,F0.2,A1, A8,F15.6)') 'UNIVERSAL:  UT:',hms(ut),second-int(second),'JD:',jd, &
-         'DeltaT: ',deltat,'s', 'JDE:',jde
+    write(opl,'(A17,A9,F4.3,A7,F15.6, A12,F0.2,A1, A8,F15.6)') 'UNIVERSAL:  UT:',hms(utl),second-int(second),'JD:',jdl, &
+         'DeltaT: ',deltat,'s', 'JDE:',jdel
     
-    do il=1,nlaf
-       write(op,'(A)') ''  ! Newline
+    do il=1,nlafl
+       write(opl,'(A)') ''  ! Newline
     end do
+    
+    ! Optional output parameters:
+    if(present(ut))  ut  = utl
+    if(present(jd))  jd  = jdl
+    if(present(jde)) jde = jdel
     
   end subroutine print_date_time_and_location
   !*********************************************************************************************************************************

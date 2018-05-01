@@ -34,8 +34,8 @@ contains
   !! \retval libl    Libration (physical+optical) in longitude
   !! \retval libb    Libration (physical+optical) in latitude
   !!
-  !! \retval pa      Position angle of the Moon's axis/north pole
-  !! \retval blpa    Position angle of the Moon's bright limb
+  !! \retval pa      Position angle of the Moon's axis/north pole w.r.t. an equatorial grid
+  !! \retval blpa    Position angle of the Moon's bright limb w.r.t. an equatorial grid
   !!
   !! \retval sunl    Selenographic longitude of the Sun
   !! \retval sunb    Selenographic latitude of the Sun
@@ -147,7 +147,7 @@ contains
     libb = libb + libb2
     
     
-    ! Position Angle of the axis:
+    ! Position Angle of the axis w.r.t. equatorial grid:
     ! Meeus, p.374:
     vv = omg + dpsi + sig/sin(in)
     xx = sin(in+rho) * sin(vv)

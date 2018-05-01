@@ -303,7 +303,6 @@ contains
     !parang = atan2(sin(hh),tan(llat)*cos(dec) - sin(dec)*cos(hh))              ! Parallactic angle: geocentric
     parang = atan2(sin(tophh),tan(llat)*cos(topdec) - sin(topdec)*cos(tophh))   ! Parallactic angle: topocentric
     
-    
     ! Horizontal parallax:
     hp = asin(earthr/(delta*au))                                                ! Horizontal parallax
     
@@ -553,7 +552,7 @@ contains
     a2 = (/ 1.023d0, 0.d0,     0.d0, 0.d0,    0.d0,   0.d0,  0.d0,   0.d0,   0.d0/) * 1.d-4
     a3 = (/ 0.d0,    0.4247d0, 0.d0, 0.d0,    0.d0,   0.d0,  0.d0,   0.d0,   0.d0/) * 1.d-6
     
-    planet_magnitude = 5.d0*log10(r*d) + a0(pl) + a1(pl)*pa + a2(pl)*pa2 + a3(pl)*pa3
+    planet_magnitude = 5*log10(r*d) + a0(pl) + a1(pl)*pa + a2(pl)*pa2 + a3(pl)*pa3
     
     
     ! Method 2 - Meeus p.286:
