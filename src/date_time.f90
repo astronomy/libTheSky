@@ -846,11 +846,14 @@ contains
   !! \retval jd     JD: Julian day (optional)
   !! \retval jde    JDE: Apparent Julian day (optional)
   !!
+  !! \param  locname  Location name (optional)
+  !! \param  tzname   Time-zone name (optional)
+  !!
   !! \note
   !! - uses the module local to obtain the variables year, month, etc.
   !! - calls calctime(), gettz()
   
-  subroutine print_date_time_and_location(op,nlbef,nlaf, ut,jd,jde)
+  subroutine print_date_time_and_location(op,nlbef,nlaf, ut,jd,jde, locname,tzname)
     use SUFR_kinds, only: double
     use SUFR_constants, only: r2d, endays,enmonths
     use SUFR_time2string, only: hms
@@ -862,8 +865,10 @@ contains
     implicit none
     integer, intent(in), optional :: op, nlbef,nlaf
     real(double), intent(out), optional :: ut,jd,jde
+    character, intent(in), optional :: locname*(*),tzname*(*)
     integer :: il,  opl, nlbefl,nlafl
     real(double) :: lt,  utl,jdl,jdel
+    character :: locnamel*(999),tznamel*(99)
     
     ! Optional input parameters:
     opl = 6                            ! Output unit - local variable
@@ -872,6 +877,11 @@ contains
     if(present(nlbef)) nlbefl = nlbef
     nlafl = 0                          ! Number of newlines after output - local variable
     if(present(nlaf)) nlafl = nlaf
+    locnamel =  ' '                    ! Name of the location - local variable
+    if(present(locname)) locnamel = trim(locname)
+    tznamel =  ' '                     ! Name of the time zone - local variable
+    if(present(tzname)) tznamel = trim(tzname)//','
+    
     
     call calctime(utl,jdl,jdel)
     tz = gettz(jdl)
@@ -884,13 +894,13 @@ contains
        write(opl,'(A)') ''  ! Newline
     end do
     
-    write(opl,'(A20,3A,I3,A1,I5,  A9,A9,F4.3,A5,A,  A13,2(A4,A), A4,A,A1)') &
+    write(opl,'(A20,3A,I3,A1,I5,  A9,A9,F4.3,2x,A,  A13,2(A4,A), A4,A,A1)') &
          'LOCAL:      Date: ',trim(endays(dow(jdl))),' ', trim(enmonths(month)),nint(day),',',year,  &
-         'Time:',hms(lt),second-int(second),'tz: ',d2s(tz,1),   &
+         'Time:',hms(lt),second-int(second),'tz: '//trim(tznamel)//' '//d2s(tz,1),   &
          'Location:','l: ',d2s(lon0*r2d,4),'b: ',d2s(lat0*r2d,4), 'h: ',d2s(height,1),'m'
     
-    write(opl,'(A17,A9,F4.3,A7,F15.6, A12,F0.2,A1, A8,F15.6)') 'UNIVERSAL:  UT:',hms(utl),second-int(second),'JD:',jdl, &
-         'DeltaT: ',deltat,'s', 'JDE:',jdel
+    write(opl,'(A17,A9,F4.3,A7,F15.6, A12,F0.2,A1, A8,F15.6, 5x,A)') 'UNIVERSAL:  UT:',hms(utl),second-int(second),'JD:',jdl, &
+         'DeltaT: ',deltat,'s', 'JDE:',jdel, trim(locnamel)
     
     do il=1,nlafl
        write(opl,'(A)') ''  ! Newline
