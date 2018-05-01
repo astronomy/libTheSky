@@ -172,8 +172,7 @@ contains
     blpa = atan2( cos(decs)*sin(ras-ram),  sin(decs)*cos(decm) - cos(decs)*sin(decm)*cos(ras-ram) )
     
     
-    ! Selenographic position of the Sun:
-    ! Meeus, p.376:
+    ! Selenographic position of the Sun (Meeus, p.376):
     
     ! Heliocentric l,b:
     lhc = ls + pi + moonpos(4)/rs*cos(bm)*sin(ls-lm)

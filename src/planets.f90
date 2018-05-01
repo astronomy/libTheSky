@@ -80,7 +80,7 @@ contains
     real(double) :: hcl0,hcb0,hcr0, hcl,hcb,hcr, hcl00,hcb00,hcr00, sun_gcl,sun_gcb, gcx,gcy,gcz, gcx0,gcy0,gcz0, dhcr
     real(double) :: gcl,gcb,delta,gcl0,gcb0,delta0
     real(double) :: ra,dec,gmst,agst,lst,hh,az,alt,elon,  topra,topdec,topl,topb,topdiam,topdelta,tophh,topaz,topalt
-    real(double) :: diam,illfr,pa,magn,  parang,hp, rES1,rES2
+    real(double) :: diam,illfr,pa,magn,  parang,parang_ecl,hp, rES1,rES2
     logical :: lltime
     
     ! Make sure these are always defined:
@@ -300,8 +300,9 @@ contains
     
     
     ! Parallactic angle:
-    !parang = atan2(sin(hh),tan(llat)*cos(dec) - sin(dec)*cos(hh))              ! Parallactic angle: geocentric
-    parang = atan2(sin(tophh),tan(llat)*cos(topdec) - sin(topdec)*cos(tophh))   ! Parallactic angle: topocentric
+    !parang     = atan2(sin(hh),tan(llat)*cos(dec) - sin(dec)*cos(hh))                      ! Parallactic angle (between zenith and celestial north pole): geocentric - Meeus Eq.14.1
+    parang     = atan2(sin(tophh),tan(llat)*cos(topdec) - sin(topdec)*cos(tophh))           ! Parallactic angle (between zenith and celestial north pole): topocentric
+    parang_ecl = atan( (cos(topl)*tan(eps)) / (sin(topl)*sin(topb)*tan(eps) - cos(topb)) )  ! "Parallactic angle" (between ECLIPTICAL and celestial north pole): topocentric - Meeus p.100
     
     ! Horizontal parallax:
     hp = asin(earthr/(delta*au))                                                ! Horizontal parallax
@@ -338,8 +339,9 @@ contains
     planpos(13) = magn              ! Apparent visual magnitude
     planpos(14) = illfr             ! Illuminated fraction
     planpos(15) = rev(pa)           ! Phase angle
-    planpos(16) = parang            ! Topocentric parallactic angle
+    planpos(16) = parang            ! Topocentric parallactic angle (between celestial pole and zenith)
     planpos(17) = hp                ! Horizontal parallax
+    planpos(18) = parang_ecl        ! Topocentric ecliptic "parallactic angle" (between celestial and ecliptical pole)
     
     ! Topocentric:
     planpos(21) = rev(topl)   
