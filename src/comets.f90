@@ -252,7 +252,7 @@ contains
     
     use TheSky_coordinates, only: ecl_spher_2_eq_rect, fk5, precess_xyz, eq_2_ecl
     use TheSky_nutation, only: nutation
-    use TheSky_vsop, only: vsop_lbr
+    use TheSky_vsop, only: vsop87d_lbr
     use TheSky_cometdata, only: comepoche
     
     implicit none
@@ -264,7 +264,7 @@ contains
     real(double) :: ra,dec,dpsi,eps0,deps,eps,jd1,jd2
     
     
-    call vsop_lbr(t0,3, l0,b0,r0)  ! Earth
+    call vsop87d_lbr(t0,3, l0,b0,r0)  ! Earth
     call fk5(t, l0,b0)
     call nutation(t,dpsi,eps0,deps)
     eps = eps0 + deps

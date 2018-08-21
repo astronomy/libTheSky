@@ -36,7 +36,7 @@ contains
   !!
   !! \see ftp://cdsarc.u-strasbg.fr/pub/cats/VI/79/
   
-  subroutine moon_lbr(tjj, ll,bb,rr)
+  subroutine elp82b_lbr(tjj, ll,bb,rr)
     use SUFR_kinds, only: double, dbl
     use SUFR_constants, only: as2r, au, km
     use SUFR_angles, only: rev
@@ -50,20 +50,17 @@ contains
     real(double) :: r(3),x,y, pa,t4,t8
     
     
-    r(1) = 0.0_dbl
-    r(2) = 0.0_dbl
-    r(3) = 0.0_dbl
-    
+    r = 0.0_dbl
     x = 0.0_dbl
     y = 0.0_dbl
     
     t(1) = tjj*10.0_dbl  ! In centuries
-    t(2) = t(1)*t(1)     ! t^2
+    t(2) = t(1)**2       ! t^2
     t(3) = t(2)*t(1)     ! t^3
-    t(4) = t(3)*t(1)     ! t^4
+    t(4) = t(2)**2       ! t^4
     
     t4 = t(4)   ! t^4
-    t8 = t4*t4  ! t^8
+    t8 = t4**2  ! t^8
     
     
     do iv=1,3
@@ -134,7 +131,7 @@ contains
     
     r(1) = r(1) + pa   ! Precess to equinox of date, see ELP PS-file, p12
     
-    !!lbr2xyz: spherical to rectangular coordinates
+    !!lbr2xyz: spherical to rectangular coordinates:
     !x1 = r(3)*cos(r(2))
     !x2 = x1*sin(r(1))
     !x1 = x1*cos(r(1))
@@ -148,9 +145,9 @@ contains
     bb = r(2)
     rr = r(3)/au*km
     
-    !write(98,*)ll,bb,rr
+    !write(98,*) ll,bb,rr
     
-  end subroutine moon_lbr
+  end subroutine elp82b_lbr
   !*********************************************************************************************************************************
   
   

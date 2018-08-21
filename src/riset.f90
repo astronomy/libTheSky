@@ -43,8 +43,9 @@ contains
   !! \retval sh        Setting wind direction (rad)
   !! 
   !! \param  ltime     Passed to planet_position(). If .true., include light time, doubling the CPU time while gaining a bit of 
-  !!                     accuracy
+  !!                     accuracy (optional; default: false)
   !! \param  cWarn     Warn upon convergence failure (optional; default: true)
+  !! 
   !! \retval converge  Number of iterations needed to converge (optional)
   !!
   !! \note

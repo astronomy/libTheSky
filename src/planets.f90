@@ -56,13 +56,13 @@ contains
     use SUFR_angles, only: rev, rev2
     use SUFR_dummy, only: dumdbl1,dumdbl2
     
-    use TheSky_vsop, only: vsop_lbr
+    use TheSky_vsop, only: vsop87d_lbr
     use TheSky_local, only: lon0,lat0,height, deltat
     use TheSky_coordinates, only: ecl_2_eq, eq2horiz, hc_spher_2_gc_rect, geoc2topoc_ecl, rect_2_spher
     use TheSky_coordinates, only: precess_ecl, fk5, aberration_ecl, refract
     use TheSky_nutation, only: nutation, nutation2000
     use TheSky_sun, only: sunmagn
-    use TheSky_moon, only: moon_lbr, moonmagn
+    use TheSky_moon, only: elp82b_lbr, moonmagn
     use TheSky_comets, only: cometgc
     use TheSky_planetdata, only: planpos, pl0, VSOPtruncs
     use TheSky_cometdata, only: cometElems, cometDiedAtP
@@ -121,7 +121,7 @@ contains
     tjm    = (jde-jd2000)/365250.d0                                    ! Julian Millennia after 2000.0 in dyn. time, tau in Meeus
     tjm0   = tjm
     
-    call vsop_lbr(tjm,3, hcl0,hcb0,hcr0, lLBaccur,lRaccur)             ! Calculate the Earth's true heliocentric l,b,r
+    call vsop87d_lbr(tjm,3, hcl0,hcb0,hcr0, lLBaccur,lRaccur)             ! Calculate the Earth's true heliocentric l,b,r
     
     
     
@@ -137,18 +137,18 @@ contains
        
        
        ! Compute l,b,r for planet, Pluto, asteroid, Earth's shadow:
-       if(pl.gt.0.and.pl.lt.9) call vsop_lbr(tjm,pl, hcl,hcb,hcr, lLBaccur,lRaccur)  ! Heliocentric l,b,r
+       if(pl.gt.0.and.pl.lt.9) call vsop87d_lbr(tjm,pl, hcl,hcb,hcr, lLBaccur,lRaccur)  ! Heliocentric l,b,r
        if(pl.eq.9) call plutolbr(tjm*10.d0, hcl,hcb,hcr)               ! This is for 2000.0, precess 10 lines below
        if(pl.gt.10000) call asteroid_lbr(tjm,pl-10000, hcl,hcb,hcr)    ! Heliocentric lbr for asteroids
        if(pl.eq.-1) then                                               ! Centre of Earth's shadow
-          call vsop_lbr(tjm,3, hcl,hcb,hcr, lLBaccur,lRaccur)          ! = heliocentric coordinates ...
-          call moon_lbr(tjm, dumdbl1,dumdbl2,dhcr)                     ! only want dhcr
+          call vsop87d_lbr(tjm,3, hcl,hcb,hcr, lLBaccur,lRaccur)          ! = heliocentric coordinates ...
+          call elp82b_lbr(tjm, dumdbl1,dumdbl2,dhcr)                     ! only want dhcr
           hcr = hcr + dhcr                                             ! + distance Earth-Moon
        end if
        
        
        ! Compute geocentric ecliptical position:
-       if(pl.eq.0) call moon_lbr(tjm,gcl,gcb,delta)                    ! Get apparent geocentric coordinates of the Moon
+       if(pl.eq.0) call elp82b_lbr(tjm,gcl,gcb,delta)                    ! Get apparent geocentric coordinates of the Moon
        if(pl.ne.0.and.pl.lt.10 .or. pl.gt.10000) then                  ! Planet, asteroid, Earth's shadow
           
           ! For Neptune's birthday:
@@ -196,7 +196,7 @@ contains
     tau = tau1
     tjm = tjm0                                                  ! Still Julian Millennia since 2000.0 in dynamical time
     
-    if(pl.eq.-1) call moon_lbr(tjm, dumdbl1,dumdbl2,delta)      ! Geocentric distance of the Moon for Earth shadow; only need delta
+    if(pl.eq.-1) call elp82b_lbr(tjm, dumdbl1,dumdbl2,delta)      ! Geocentric distance of the Moon for Earth shadow; only need delta
     
     if(pl.eq.3) then                                            ! This seems true, but appears to be apparent?!?!?
        gcl   = rev(hcl0+pi)
@@ -269,7 +269,7 @@ contains
     if(pl.ge.0.and.pl.lt.10) topdelta = pland(pl)/tan(topdiam)/au
     
     
-    ! Convert equitorial to horizontal coordinates:
+    ! Convert equatorial to horizontal coordinates:
     call eq2horiz(ra,dec,agst, hh,az,alt, lat=llat,lon=llon)
     
     

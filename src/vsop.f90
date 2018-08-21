@@ -1,4 +1,4 @@
-!> \file vsop.f90  Core VSOP87 routines for libTheSky
+!> \file vsop.f90  Core VSOP routines for libTheSky
 
 
 !  Copyright (c) 2002-2018  Marc van der Sluys - marc.vandersluys.nl
@@ -17,10 +17,10 @@
 
 
 !***********************************************************************************************************************************
-!> \brief Procedures for VSOP87
+!> \brief Procedures for VSOP
 !!
 !! \note
-!! Accuracies 1900-2100 in milliarcseconds (VSOP87 paper):
+!! VSOP87 accuracies 1900-2100 in milliarcseconds (VSOP87 paper):
 !! - Me: 1,  Ve: 6,  Ea: 5,  Ma: 23,  Ju: 20,  Sa: 100,  Ur: 16,  Ne: 30
 !!
 !! \note
@@ -54,7 +54,7 @@ contains
   !!
   !! \see http://esoads.eso.org/abs/1988A%26A...202..309B
   
-  subroutine vsop_lbr(tm,pl, lon,lat,rad, LBaccur,Raccur)
+  subroutine vsop87d_lbr(tm,pl, lon,lat,rad, LBaccur,Raccur)
     use SUFR_kinds, only: double
     use SUFR_angles, only: rev
     use TheSky_planetdata, only: VSOPnls, VSOPdat, vsopNblk, VSOPtruncs
@@ -69,7 +69,7 @@ contains
     real(double) :: fac, lbr(3), accur, desired_accuracy(3)
     
     desired_accuracy = VSOPtruncs(1:3, pl)  ! Set accuracy equal to VSOP87 truncation
-    if(present(LBaccur)) desired_accuracy(1:2) = (/LBaccur,LBaccur/)
+    if(present(LBaccur)) desired_accuracy(1:2) = [LBaccur,LBaccur]
     if(present(Raccur))  desired_accuracy(3)   = Raccur
     !desired_accuracy = 1.d-9  ! 5e-9 rad = 1 mas = VSOP87 accuracy for Mercury in 1900-2100
     !desired_accuracy = 0.d0  ! Use all available terms
@@ -106,7 +106,7 @@ contains
     lat = lbr(2)
     rad = lbr(3)
     
-  end subroutine vsop_lbr
+  end subroutine vsop87d_lbr
   !*********************************************************************************************************************************
   
   
