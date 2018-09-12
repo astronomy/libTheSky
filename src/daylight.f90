@@ -61,11 +61,11 @@ contains
        coefs = [ 9.1619283d-2, 2.6098406d-1,-3.6487512d-2, 6.4036283d-3,-8.1993861d-4, 6.9994043d-5,-3.8980993d-6, 1.3929599d-7, &
             -3.0685834d-9, 3.7844273d-11,-1.9955057d-13]
        
-       extinction_sun_airmass = coefs(1)
-       AMpow = 1.d0
+       AMpow = 1.d0                                                               ! AM^0
+       extinction_sun_airmass = coefs(1)                                          ! c_1 * AM^0
        do iCoef=2,ncoef
           AMpow = AMpow * airmass                                                 ! AM^(i-1)
-          extinction_sun_airmass = extinction_sun_airmass + coefs(iCoef) * AMpow  ! + c*AM^(i-1)
+          extinction_sun_airmass = extinction_sun_airmass + coefs(iCoef) * AMpow  ! + c_i * AM^(i-1)
        end do
        
        extinction_sun_airmass = exp(extinction_sun_airmass)

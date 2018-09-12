@@ -505,21 +505,20 @@ contains
   
   function airmass(alt)
     use SUFR_kinds, only: double
-    use SUFR_constants, only: pio2, am2r
+    use SUFR_constants, only: am2r
     
     implicit none
     real(double), intent(in) :: alt
-    real(double) :: airmass,z,cosz,cosz2
+    real(double) :: airmass,sinh,sinh2
     
     if(alt.lt.-34*am2r) then  ! h<-34' - true altitude can be <0
        airmass = 1000.d0 * (0.15d0 + abs(alt))  ! Very bad (adds at least ~30 magnitudes due to extinction), 
        !                                          but still worse when farther below the horizon - for solvers
     else
-       z = pio2 - alt  ! Zenith angle
-       cosz = cos(z)
-       cosz2 = cosz**2
-       airmass = (1.002432d0*cosz2 + 0.148386d0*cosz + 0.0096467d0) / &
-            (cosz2*cosz + 0.149864d0*cosz2 + 0.0102963d0*cosz + 0.000303978d0)
+       sinh = sin(alt)
+       sinh2 = sinh**2
+       airmass = (1.002432d0*sinh2 + 0.148386d0*sinh + 0.0096467d0) / &
+            (sinh2*sinh + 0.149864d0*sinh2 + 0.0102963d0*sinh + 0.000303978d0)
        airmass = max( airmass, 1.d0 )
     end if
     
