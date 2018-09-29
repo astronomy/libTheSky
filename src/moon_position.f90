@@ -40,6 +40,7 @@ contains
     use SUFR_kinds, only: double, dbl
     use SUFR_constants, only: as2r, au, km
     use SUFR_angles, only: rev
+    
     use TheSky_moondata, only: t, nterm,nrang, pc1,pc2,pc3, per1,per2,per3, w, ath,a0
     
     implicit none
@@ -54,7 +55,7 @@ contains
     x = 0.0_dbl
     y = 0.0_dbl
     
-    t(1) = tjj*10.0_dbl  ! In centuries
+    t(1) = tjj*10.0_dbl  ! In Julian centuries since 2000.0
     t(2) = t(1)**2       ! t^2
     t(3) = t(2)*t(1)     ! t^3
     t(4) = t(2)**2       ! t^4
@@ -124,19 +125,25 @@ contains
     r(2) = r(2) * as2r
     r(3) = r(3) * a0 / ath
     
+    ! Precess from J2000 to EoD, see ELP PS-file, p12;  Laskar 1986 - note: longitude only!:
     pa =   2.438174835301452d-2  * t(1)     + 5.391128133938040d-6  * t(2)     + 3.733065344543427d-10 * t(3)    &
          - 1.140766591650738d-10 * t4       - 8.753311012432670d-14 * t4*t(1)  + 8.460483549042511d-16 * t4*t(2) &
          + 6.348635154129373d-18 * t4*t(3)  + 1.175188363009515E-20 * t8       - 2.307228308400282d-22 * t8*t(1) &
          - 4.198486478408581d-25 * t8*t(2)
     
-    r(1) = r(1) + pa   ! Precess to equinox of date, see ELP PS-file, p12
+    r(1) = r(1) + pa
+    
+    ! Doesn't seem to work better - why?
+    !jd = t(1) * 36525 + jd2000  ! t in Julian centuries since J2000 -> JD
+    !call precess_ecl(jd2000,jd, r(1),r(2))
     
     !!lbr2xyz: spherical to rectangular coordinates:
     !x1 = r(3)*cos(r(2))
     !x2 = x1*sin(r(1))
     !x1 = x1*cos(r(1))
     !x3 = r(3)*sin(r(2))
-    !xx = rev(x1)
+    !
+    !xx = x1
     !yy = x2
     !zz = x3
     

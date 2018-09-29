@@ -145,7 +145,7 @@ contains
   !! \param   Ba     Aerosol forward-scattering ratio  (optional, 0.82-0.86, default: 0.84)
   !! \param   K1     Aerosol-absorptance constant (optional, rural: 0.0933, urban: 0.385, default: 0.1)
   !!
-  !! \param   Rg     Ground albedo (fraction - default: 0.2)
+  !! \param   Rg     Ground albedo (optional, fraction - default: 0.2)
   !!
   !!
   !! \retval  Itot   Total insolation on a horizontal surface (W/m^2 - optional)

@@ -156,7 +156,7 @@ contains
     real(double) :: xx,xy,xz,yx,yy,yz,zx,zy,zz
     
     t1 = (jd1 - jd2000)/36525.d0  !  t since 2000.0 in Julian centuries
-    t2 = (jd2 - jd1)/36525.d0         ! dt in Julian centuries
+    t2 = (jd2 - jd1)/36525.d0     ! dt in Julian centuries
     t22 = t2*t2   ! t2^2
     t23 = t22*t2  ! t2^3
     
@@ -171,7 +171,8 @@ contains
     cz = cos(ze)
     st = sin(th)
     ct = cos(th)
-    
+
+    ! Ref?
     xx =  cd*cz*ct - sd*sz
     xy =  sd*cz    + cd*sz*ct
     xz =  cd*st
