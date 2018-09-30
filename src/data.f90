@@ -400,9 +400,13 @@ contains
   !*********************************************************************************************************************************
   !> \brief  Read ELP periodic terms from moondata.dat
   !!
-  !! \see ftp://cdsarc.u-strasbg.fr/pub/cats/VI/79/
+  !! \note
+  !!  Constants are defined in the module moondata
   !!
-  !! Constants are defined in the module moondata
+  !! \see
+  !!  - Chapront-Touzé & Chapront, A&A, 124, 50 (1983)
+  !!  - Chapront-Touzé & Chapront, A&A, 190, 342 (1988)
+  !!  - ftp://cdsarc.u-strasbg.fr/pub/cats/VI/79/
   
   subroutine readmoondata()
     use SUFR_kinds, only: double, dbl

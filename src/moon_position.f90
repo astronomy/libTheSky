@@ -34,13 +34,20 @@ contains
   !! \retval bb   Apparent geocentric ecliptical latitude
   !! \retval rr   Apparent geocentric distance
   !!
-  !! \see ftp://cdsarc.u-strasbg.fr/pub/cats/VI/79/
-  !!
   !! \note
-  !! Differences compared to ELP-MPP02 (ELP82b minus ELP-MPP02):
-  !! - longitude: +0.00001° in CE 1975, ~+0.11° in CE 0/4000 and +~0.7° in 3000 BCE
-  !! - latitude:  ~0.00000° in CE 1990, ~+/-0.01° in CE 0/4000 and +/- ~0.06° in 3000 BCE
-  !! - distance:  +/-0.03 km in CE 2000, +/- ~30 km in CE 0/4000 and +/- ~300 km in 3000 BCE
+  !! - This is supposed to be the ELP2000-85 version, with the corrections from the 1998 paper (mean arguments up to t^4,
+  !!     etc,).  However, the accuracy seems to be less than promised for historical calculations (0.1° rather than 0.01°
+  !!     for CE 0).  The subroutine elp_mpp02_lbr() below is supposed to give better results (but then again, so is this
+  !!     one).
+  !! - Differences compared to ELP-MPP02 (ELP82b minus ELP-MPP02):
+  !!   - longitude: +0.00001° in CE 1975, ~+0.11° in CE 0/4000 and +~0.7° in 3000 BCE
+  !!   - latitude:  ~0.00000° in CE 1990, ~+/-0.01° in CE 0/4000 and +/- ~0.06° in 3000 BCE
+  !!   - distance:  +/-0.03 km in CE 2000, +/- ~30 km in CE 0/4000 and +/- ~300 km in 3000 BCE
+  !!
+  !! \see
+  !!  - Chapront-Touzé & Chapront, A&A, 124, 50 (1983)
+  !!  - Chapront-Touzé & Chapront, A&A, 190, 342 (1988)
+  !!  - ftp://cdsarc.u-strasbg.fr/pub/cats/VI/79/
   
   subroutine elp82b_lbr(tjj, ll,bb,rr)
     use SUFR_kinds, only: double, dbl
@@ -154,7 +161,8 @@ contains
   
   
   !*********************************************************************************************************************************
-  !> \brief  Compute the spherical lunar coordinates using the ELP/MPP02 lunar theory in the dynamical mean ecliptic and equinox of J2000.
+  !> \brief  Compute the spherical lunar coordinates using the ELP2000/MPP02 lunar theory in the dynamical mean ecliptic and
+  !!           equinox of J2000.
   !!
   !! \param jd    Julian day to compute Moon position for
   !! \param mode  Index of the corrections to the constants: 0-Fit to LLR observations, 1-Fit to DE405 1950-2060 (historical)
@@ -214,10 +222,11 @@ contains
   !!    - elp_mpp02_constants:  Constants of the solution ELP/MPP02 (input),
   !!    - elp_mpp02_series:     Series of the solution ELP/MPP02 (input).
   !!
-  !!  - The nominal values of some constants have to be corrected.  There are two sets of corrections, which can be selected using
-  !!    the parameter 'mode' (used in elp_mpp02_initialise()).
+  !!  - The nominal values of some constants have to be corrected.  There are two sets of corrections, which can be selected
+  !!    using the parameter 'mode' (used in elp_mpp02_initialise()).
   !!    - mode=0, the constants are fitted to LLR observations provided from 1970 to 2001; it is the default value;
-  !!    - mode=1, the constants are fitted to DE405 ephemeris over one century (1950-2060); the lunar angles W1, W2, W3 receive also additive corrections to the secular coefficients.
+  !!    - mode=1, the constants are fitted to DE405 ephemeris over one century (1950-2060); the lunar angles W1, W2, W3
+  !!              receive also additive corrections to the secular coefficients ('historical mode').
   !!    When the mode is changed, the data must be reinitialised and the data file reread.
   !!
   !!  - Solutions (discussed) in the paper:
@@ -231,6 +240,8 @@ contains
   !!    - ELP/MPP02(LLR): ELP/MPP02(*?), optimised for lunar ranging since 1970
   !!    - ELPa: ELP + few Poisson terms (tested in the current study only?)
   !!    - ELPa*: ELPa + better secular arguments (as in ELP/MPP02*)
+  !!  - It is not entirely clear which version is given below, but we can hope it is ELP/MPP02*.  However, the subroutine
+  !!      elp82b_lbr() above is known to underperform (by a factor of 10) in accuracy.
   
   subroutine elp_mpp02_xyz(jd, mode, xyz,vxyz, ierr)
     use SUFR_kinds, only: double
