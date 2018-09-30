@@ -35,6 +35,12 @@ contains
   !! \retval rr   Apparent geocentric distance
   !!
   !! \see ftp://cdsarc.u-strasbg.fr/pub/cats/VI/79/
+  !!
+  !! \note
+  !! Differences compared to ELP-MPP02 (ELP82b minus ELP-MPP02):
+  !! - longitude: +0.00001° in CE 1975, ~+0.11° in CE 0/4000 and +~0.7° in 3000 BCE
+  !! - latitude:  ~0.00000° in CE 1990, ~+/-0.01° in CE 0/4000 and +/- ~0.06° in 3000 BCE
+  !! - distance:  +/-0.03 km in CE 2000, +/- ~30 km in CE 0/4000 and +/- ~300 km in 3000 BCE
   
   subroutine elp82b_lbr(tjj, ll,bb,rr)
     use SUFR_kinds, only: double, dbl
@@ -133,24 +139,12 @@ contains
     
     r(1) = r(1) + pa
     
-    ! Doesn't seem to work better - why?
-    !jd = t(1) * 36525 + jd2000  ! t in Julian centuries since J2000 -> JD
-    !call precess_ecl(jd2000,jd, r(1),r(2))
-    
-    !!lbr2xyz: spherical to rectangular coordinates:
-    !x1 = r(3)*cos(r(2))
-    !x2 = x1*sin(r(1))
-    !x1 = x1*cos(r(1))
-    !x3 = r(3)*sin(r(2))
-    !
-    !xx = x1
-    !yy = x2
-    !zz = x3
-    
-    
     ll = rev(r(1))
     bb = r(2)
     rr = r(3)/au*km
+    
+    ! The original code converts to rectangular coordinates and applies (more?) precession.
+    ! Since I want spherical coordinates, I don't do that here.  This gives similar (though not identical) results.
     
     !write(98,*) ll,bb,rr
     
@@ -180,7 +174,7 @@ contains
     integer, intent(in) :: mode
     real(double), intent(out) :: lon,lat,rad
     integer :: ierr
-    real(double) :: xyz(3),vxyz(3), oldlat
+    real(double) :: xyz(3),vxyz(3)
     
     call elp_mpp02_xyz(jd, mode, xyz,vxyz, ierr)
     
@@ -189,9 +183,7 @@ contains
     lon = atan2(xyz(2),xyz(1))
     lat = asin(xyz(3)/rad)
     
-    oldlat = lat
     call precess_ecl(jd2000,jd, lon,lat)
-    !lat = oldlat
     
     rad = rad*km/au  ! km -> AU
     
@@ -238,7 +230,7 @@ contains
   !!    - ELP/MPP02*: improved secular arguments, better long-term comparison to DE 405/406 [-3000,2500]
   !!    - ELP/MPP02(LLR): ELP/MPP02(*?), optimised for lunar ranging since 1970
   !!    - ELPa: ELP + few Poisson terms (tested in the current study only?)
-  !!    - ELPa*: ELPa + better secular arguments as in ELP/MPP02*
+  !!    - ELPa*: ELPa + better secular arguments (as in ELP/MPP02*)
   
   subroutine elp_mpp02_xyz(jd, mode, xyz,vxyz, ierr)
     use SUFR_kinds, only: double

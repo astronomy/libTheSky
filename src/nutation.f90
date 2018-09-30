@@ -85,8 +85,8 @@ contains
   !> \brief  Compute nutation using the IAU 2000 model
   !! 
   !! \param  jd        Julian day of computation
-  !! \retval dpsi_tot  Total 
-  !! \retval deps_tot  Total
+  !! \retval dpsi_tot  Total nutation in longitude
+  !! \retval deps_tot  Total nutation in obliquity
   !!
   !! \see http://geoweb.mit.edu/~tah/mhb2000/
   
@@ -189,7 +189,7 @@ contains
     dpsi_tot = dpsi_ls + dpsi_plan + dpsi_fcn + dpsi_prec
     deps_tot = deps_ls + deps_plan + deps_fcn + deps_prec
     
-    ! AF: convert from mas to radians:
+    ! Convert from mas to radians:
     pi = 4*atan(1.d0)
     mas2r = pi/(180.d0*3.6d6)
     dpsi_tot = dpsi_tot*mas2r
@@ -314,7 +314,7 @@ contains
     
     !***** Check to make sure user passed JD and not MJD.  Correct
     !     problem and warn the user.
-    ! AF: remove this 'solution'
+    ! MvdS: remove this 'solution'
     !if( jd .lt.2000000.0d0  ) then
     !             write(*,100) jd
     !    100      format('**WARNING** MJD apparently passed to SD_COMP',
@@ -1482,7 +1482,7 @@ contains
     
     !***** Check to make sure user passed JD and not MJD.  Correct
     !     problem and warn the user.
-    ! AF: remove this 'solution'
+    ! MvdS: remove this 'solution'
     !if( jd .lt.2000000.0d0  ) then
     !             write(*,100) jd    
     !    100      format('**WARNING** MJD apparently passed to SD_COMP',
@@ -2762,7 +2762,7 @@ contains
     
     !***** Check to make sure user passed JD and not MJD.  Correct
     !     problem and warn the user.
-    ! AF: remove this 'solution'
+    ! MvdS: remove this 'solution'
     !if( jd .lt.2000000.0d0  ) then
     !          write(*,100) jd
     ! 100      format('**WARNING** MJD apparently passed to FCN_NUT',
@@ -2876,7 +2876,7 @@ contains
     
     !***** Check to make sure user passed JD and not MJD.  Correct
     !     problem and warn the user.
-    ! AF: remove this 'solution'
+    ! MvdS: remove this 'solution'
     !if( jd .lt.2000000.0d0  ) then
     !             write(*,100) jd
     !    100      format('**WARNING** MJD apparently passed to SD_COMP',

@@ -245,14 +245,14 @@ contains
     ! Correct for nutation:
     call nutation(tjm, dpsi,eps0,deps)  ! dpsi: nutation in longitude, deps: in obliquity
     call nutation2000(jd, dpsi,deps)    ! IAU 2000 Nutation model, doesn't provide eps0
-    eps = eps0 + deps                   ! Correct for nutation: mean -> true obliquity of the ecliptic
+    eps = eps0 + deps                   ! Correct for nutation in obliquity: mean -> true obliquity of the ecliptic
     
     
     ! Correct for aberration, and convert to FK5:
     if(pl.lt.10) then  ! I suppose this should also happen for comets, but this compares better...
-       if(pl.ne.0) call aberration_ecl(tjm,hcl0, gcl,gcb)
+       if(pl.ne.0) call aberration_ecl(tjm,hcl0, gcl,gcb)  ! Aberration - not for the Moon
        call fk5(tjm, gcl,gcb)
-       gcl = gcl + dpsi  ! Nutation
+       gcl = gcl + dpsi  ! Nutation in longitude
     end if
     
     ! sun_gcl,sun_gcb give gcl,gcb as if pl.eq.3
@@ -262,7 +262,7 @@ contains
     ! Aberration, FK5 and nutation for sun_gcl,sun_gcb:
     call aberration_ecl(tjm,hcl0, sun_gcl,sun_gcb)
     call fk5(tjm, sun_gcl,sun_gcb)
-    sun_gcl = rev(sun_gcl + dpsi)  ! Nutation in longitude
+    sun_gcl = sun_gcl + dpsi  ! Nutation in longitude
     
     ! FK5 conversion for l,b, hcl0,hcb0, hcl00,hcb00:
     call fk5(tjm, hcl,hcb)
@@ -914,7 +914,7 @@ contains
           lam = lam + dl
           bet = bet + db
           
-          ! Meeus, step 13 - correct for nutation:
+          ! Meeus, step 13 - correct for nutation in longitude:
           lam0 = lam0 + dpsi
           lam  = lam  + dpsi
        end if
