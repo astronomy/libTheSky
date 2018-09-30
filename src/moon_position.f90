@@ -159,6 +159,238 @@ contains
   
   
   
+  !*********************************************************************************************************************************
+  !> \brief  Compute the spherical lunar coordinates using the ELP/MPP02 lunar theory in the dynamical mean ecliptic and equinox of J2000.
+  !!
+  !! \param jd    Julian day to compute Moon position for
+  !! \param mode  Index of the corrections to the constants: 0-Fit to LLR observations, 1-Fit to DE405 1950-2060 (historical)
+  !!
+  !! \retval  lon  Ecliptic longitude (rad)
+  !! \retval  lat  Ecliptic latitude (rad)
+  !! \retval  rad  Distance (AU)
+  
+  subroutine elp_mpp02_lbr(jd, mode, lon,lat,rad)
+    use SUFR_kinds, only: double
+    use SUFR_constants, only: jd2000, au, km  !, r2d
+    use SUFR_angles, only: rev
+    use TheSky_coordinates, only: precess_ecl
+    
+    implicit none
+    real(double), intent(in) :: jd
+    integer, intent(in) :: mode
+    real(double), intent(out) :: lon,lat,rad
+    integer :: ierr
+    real(double) :: xyz(3),vxyz(3), oldlat
+    
+    call elp_mpp02_xyz(jd, mode, xyz,vxyz, ierr)
+    
+    ! Compute ecliptic l,b,r:
+    rad = sqrt(sum(xyz**2))
+    lon = atan2(xyz(2),xyz(1))
+    lat = asin(xyz(3)/rad)
+    
+    oldlat = lat
+    call precess_ecl(jd2000,jd, lon,lat)
+    !lat = oldlat
+    
+    rad = rad*km/au  ! km -> AU
+    
+    !write(*,'(/, F20.5, 2F14.7,F14.5)') jd, rev(lon)*r2d, lat*r2d, rad
+    
+  end subroutine elp_mpp02_lbr
+  !*********************************************************************************************************************************
+  
+  
+  !***************************************************************************************************
+  !> \brief  Compute the rectangular lunar coordinates using the ELP/MPP02 lunar theory in the dynamical mean ecliptic and equinox of J2000.
+  !!
+  !! \param jd    Julian day to compute Moon position for
+  !! \param mode  Index of the corrections to the constants: 0-Fit to LLR observations, 1-Fit to DE405 1950-2060 (historical)
+  !! 
+  !! \retval xyz   Geocentric rectangular coordinates:
+  !!               - xyz(1) : Position X (km)
+  !!               - xyz(2) : Position Y (km)
+  !!               - xyz(3) : Position Z (km)
+  !! \retval vxyz  Geocentric rectangular velocities:
+  !!               - vxyz(1) : Velocity X' (km/day)
+  !!               - vxyz(2) : Velocity Y' (km/day)
+  !!               - vxyz(3) : Velocity Z' (km/day)
+  !! \retval ierr  File error index - ierr=0: no error, ierr=1: file error
+  !!
+  !! \note
+  !!  - The subroutine elp_mpp02() uses two modules:
+  !!    - elp_mpp02_constants:  Constants of the solution ELP/MPP02 (input),
+  !!    - elp_mpp02_series:     Series of the solution ELP/MPP02 (input).
+  !!
+  !!  - The nominal values of some constants have to be corrected.  There are two sets of corrections, which can be selected using
+  !!    the parameter 'mode' (used in elp_mpp02_initialise()).
+  !!    - mode=0, the constants are fitted to LLR observations provided from 1970 to 2001; it is the default value;
+  !!    - mode=1, the constants are fitted to DE405 ephemeris over one century (1950-2060); the lunar angles W1, W2, W3 receive also additive corrections to the secular coefficients.
+  !!    When the mode is changed, the data must be reinitialised and the data file reread.
+  !!
+  !!  - Solutions (discussed) in the paper:
+  !!    - ELP (original):
+  !!      - ELP2000-82: using VSOP82 (1983)
+  !!      - ELP2000-85: new mean lunar arguments, higher truncation level, longer time range (1988)
+  !!      - ELP2000-82B, here called "ELP": ELP2000-82, using mean lunar arguments from ELP2000-85 (19??)
+  !!    - ELP/MPP01:  using latest planetary perturbations from MPP01 and VSOP2000, but simpler than MPP01
+  !!    - ELP/MPP02:  ELP/MPP01, but for some arguments back to ELP + different selection of perturbations + lower truncation.  Good fit with DE 405 in [1950,2060]
+  !!    - ELP/MPP02*: improved secular arguments, better long-term comparison to DE 405/406 [-3000,2500]
+  !!    - ELP/MPP02(LLR): ELP/MPP02(*?), optimised for lunar ranging since 1970
+  !!    - ELPa: ELP + few Poisson terms (tested in the current study only?)
+  !!    - ELPa*: ELPa + better secular arguments as in ELP/MPP02*
+  
+  subroutine elp_mpp02_xyz(jd, mode, xyz,vxyz, ierr)
+    use SUFR_kinds, only: double
+    use SUFR_constants, only: r2as, jd2000  !, r2d,as2r
+    use SUFR_system, only: quit_program_error
+    use SUFR_angles, only: rev
+    use TheSky_data, only: elp_mpp02_initialise_and_read_files
+    
+    use TheSky_elp_mpp02_series, only: cmpb,fmpb,nmpb,   cper,fper,nper
+    use TheSky_elp_mpp02_constants, only: w, p1,p2,p3,p4,p5, q1,q2,q3,q4,q5
+    
+    implicit none
+    integer, intent(in) :: mode
+    real(double), intent(in) :: jd
+    integer, intent(out) :: ierr
+    real(double), intent(out) :: xyz(3),vxyz(3)
+    
+    
+    real(double), parameter :: a405=384747.9613701725d0, aelp=384747.980674318d0, sc=36525.d0  ! Moon mean distance for DE405 und ELP; Julian century in days
+    
+    integer :: it,iLine,iVar, k
+    real(double) :: rjd, t(-1:4),v(6), lambda,beta,rad
+    real(double) :: cbeta,clamb,cw, ppw,ppw2,ppwqpw,ppwra,pw,pw2,pwqw,pwra, qpw,qpw2,qpwra,qw,qw2,qwra
+    real(double) :: ra,rap,sbeta,slamb,sw, x,x1,x2,x3, xp,xp1,xp2,xp3, y,yp
+    
+    
+    ! Initialise data and read files if needed:
+    call elp_mpp02_initialise_and_read_files(mode, ierr)
+    if(ierr.ne.0) call quit_program_error('Could not read ELP-MPP02 files',0)
+    
+    
+    ! Initialization of time powers:
+    rjd  = jd - jd2000  ! Reduced JD - JD since 2000
+    t(0) = 1.d0
+    t(1) = rjd/sc       ! t: time since 2000 in Julian centuries
+    t(2) = t(1)**2      ! t^2
+    t(3) = t(2)*t(1)    ! t^3
+    t(4) = t(2)**2      ! t^4
+    
+    ! Evaluation of the series: substitution of time in the series
+    do iVar=1,3  ! iVar=1,2,3: Longitude, Latitude, Distance
+       v(iVar) = 0.d0
+       v(iVar+3) = 0.d0
+       
+       ! Main Problem series:
+       do iLine=nmpb(iVar,2),nmpb(iVar,3)
+          x = cmpb(iLine)
+          y = fmpb(0,iLine)
+          yp = 0.d0
+          
+          do k=1,4
+             y  = y  +   fmpb(k,iLine)*t(k)
+             yp = yp + k*fmpb(k,iLine)*t(k-1)
+          end do  ! k
+          
+          v(iVar) = v(iVar)+x*sin(y)
+          v(iVar+3) = v(iVar+3)+x*yp*cos(y)
+       end do  ! iLine
+       
+       ! Perturbations series:
+       do it=0,3
+          do iLine=nper(iVar,it,2),nper(iVar,it,3)
+             x = cper(iLine)
+             y = fper(0,iLine)
+             xp = 0.d0
+             yp = 0.d0
+             if(it.ne.0) xp = it*x*t(it-1)
+             
+             do k=1,4
+                y = y+fper(k,iLine)*t(k)
+                yp = yp+k*fper(k,iLine)*t(k-1)
+             end do  ! k
+             
+             v(iVar) = v(iVar) + x*t(it)*sin(y)
+             v(iVar+3) = v(iVar+3) + xp*sin(y) + x*t(it)*yp*cos(y)
+          end do  ! iLine
+       end do  ! it
+       
+    end do  ! iVar
+    
+    
+    ! Compute the spherical coordinates for the mean inertial ecliptic and equinox of date:
+    v(1)   = v(1)/r2as + w(1,0) + w(1,1)*t(1) + w(1,2)*t(2) + w(1,3)*t(3) + w(1,4)*t(4)  ! Longitude + mean longitude (rad)
+    v(2)   = v(2)/r2as                                                                   ! Latitude (rad)
+    v(3)   = v(3) * a405 / aelp                                                          ! Distance (km)
+    
+    lambda = v(1)
+    beta = v(2)
+    rad = v(3)
+    !lambda = lambda + (5029.0966d0*t(1) + 1.1120d0*t(2) + 0.000077d0*t(3) - 0.00002353d0*t(4)  -  0.29965d0*t(1)) * as2r  ! Precession from J2000 to EoD(?), but only in longitude!
+    !write(*,'(2F14.7,F14.5)') rev(lambda)*r2d, beta*r2d, rad
+    
+    
+    ! Compute the rectangular coordinates (for the EoD?):
+    clamb  = cos(v(1))
+    slamb  = sin(v(1))
+    cbeta  = cos(v(2))
+    sbeta  = sin(v(2))
+    cw     = v(3)*cbeta
+    sw     = v(3)*sbeta
+    
+    x1     = cw*clamb
+    x2     = cw*slamb
+    x3     = sw
+    
+    ! Is this simply precession in rectangular coordinates from EoD to J2000?
+    pw     = (p1 + p2*t(1) + p3*t(2) + p4*t(3) + p5*t(4)) * t(1)
+    qw     = (q1 + q2*t(1) + q3*t(2) + q4*t(3) + q5*t(4)) * t(1)
+    
+    ra     = 2*sqrt(1.d0 - pw**2 - qw**2)
+    pwqw   = 2*pw*qw
+    pw2    = 1.d0 - 2*pw**2
+    qw2    = 1.d0 - 2*qw**2
+    pwra   = pw*ra
+    qwra   = qw*ra
+    
+    xyz(1) =  pw2*x1  + pwqw*x2 + pwra*x3
+    xyz(2) =  pwqw*x1 + qw2*x2  - qwra*x3
+    xyz(3) = -pwra*x1 + qwra*x2 + (pw2+qw2-1.d0)*x3
+    
+    !xyz(1) = x1
+    !xyz(2) = x2
+    !xyz(3) = x3
+    
+    
+    ! Compute the rectangular velocities for the equinox J2000:
+    v(4)   = v(4)/r2as + w(1,1) + 2*w(1,2)*t(1) + 3*w(1,3)*t(2) + 4*w(1,4)*t(3)
+    v(5)   = v(5)/r2as
+    
+    xp1    = (v(6)*cbeta - v(5)*sw)*clamb - v(4)*x2
+    xp2    = (v(6)*cbeta - v(5)*sw)*slamb + v(4)*x1
+    xp3    = v(6)*sbeta  + v(5)*cw
+    
+    ppw    = p1 + (2*p2 + 3*p3*t(1) + 4*p4*t(2) + 5*p5*t(3)) * t(1)
+    qpw    = q1 + (2*q2 + 3*q3*t(1) + 4*q4*t(2) + 5*q5*t(3)) * t(1)
+    ppw2   = -4*pw*ppw
+    qpw2   = -4*qw*qpw
+    ppwqpw = 2*(ppw*qw + pw*qpw)
+    rap    = (ppw2+qpw2)/ra
+    ppwra  = ppw*ra + pw*rap
+    qpwra  = qpw*ra + qw*rap
+    
+    vxyz(1) = (pw2*xp1 + pwqw*xp2 + pwra*xp3  +  ppw2*x1 + ppwqpw*x2 + ppwra*x3) / sc
+    vxyz(2) = (pwqw*xp1 + qw2*xp2 - qwra*xp3  +  ppwqpw*x1 + qpw2*x2 - qpwra*x3) / sc
+    vxyz(3) = (-pwra*xp1 + qwra*xp2 + (pw2+qw2-1.d0)*xp3  -  ppwra*x1 + qpwra*x2 + (ppw2+qpw2)*x3) / sc
+    
+  end subroutine elp_mpp02_xyz
+  !***************************************************************************************************
+  
+  
+  
+  
   
   !*********************************************************************************************************************************
   !> \brief  Quick, lower-accuracy lunar coordinates; ~600x faster than ELP

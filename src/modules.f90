@@ -185,6 +185,35 @@ end module TheSky_moondata
 !***********************************************************************************************************************************
 
 
+!***************************************************************************************************
+! \brief  Constants for the ELP-MPP02 lunar theory
+
+module TheSky_elp_mpp02_constants
+  use SUFR_kinds, only: double
+  
+  implicit none
+  real(double) :: w(3,0:4),eart(0:4),peri(0:4),  zeta(0:4),del(4,0:4)
+  real(double) :: p(8,0:4),delnu,dele,delg,delnp,delep,dtasm,am,   p1,p2,p3,p4,p5,q1,q2,q3,q4,q5
+  
+end module TheSky_elp_mpp02_constants
+!***************************************************************************************************
+
+
+!***************************************************************************************************
+! \brief  Data series for the ELP-MPP02 lunar theory
+
+module TheSky_elp_mpp02_series
+  use SUFR_kinds, only: double
+  
+  implicit none
+  integer, parameter, private :: max1=2645, max2=33256
+  integer :: nmpb(3,3), nper(3,0:3,3)
+  real(double) :: cmpb(max1),fmpb(0:4,max1),   cper(max2),fper(0:4,max2)
+  
+end module TheSky_elp_mpp02_series
+!***************************************************************************************************
+
+
 !***********************************************************************************************************************************
 !> \brief  Data to compute comet positions
 

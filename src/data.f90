@@ -698,7 +698,402 @@ contains
   
   
   
-
+  !***************************************************************************************************
+  subroutine elp_mpp02_initialise_and_read_files(mode, ierr)
+    implicit none
+    integer, intent(in) :: mode
+    integer, intent(out) :: ierr
+    
+    integer, save :: modeInit = 999       ! Test whether data have been initialised
+    
+    ! Initializing of constants and reading the files:
+    ierr = 0
+    !print*,mode,modeInit
+    if(mode.ne.modeInit) then
+       call elp_mpp02_initialise(mode)
+       call elp_mpp02_read_files(ierr)
+       if(ierr.ne.0) return
+       
+       modeInit = mode
+    end if
+    
+  end subroutine elp_mpp02_initialise_and_read_files
+  !***************************************************************************************************
+  
+  
+  
+  !***************************************************************************************************
+  !> \brief  Initialization of the constants and parameters used for the evaluation of the ELP/MPP02 series
+  !!
+  !! \param mode  Index of the corrections to the constants: 0: LLR observations for 1970-2000, 1: DE405 ephemeris for 1950-2060
+  !!
+  !! \retval elp_mpp02_constants  Set of the constants of ELPMPP02 solution (module)
+  !!
+  !! \note
+  !!
+  !! - Remarks:
+  !!    The nominal values of some constants have to be corrected.  There are two sets of corrections, one of which can be chosen
+  !!    using the parameter 'mode' (used in elp_mpp02_initialise()):
+  !!    - mode=0, the constants are fitted to LLR observations provided from 1970 to 2001; it is the default value;
+  !!    - mode=1, the constants are fitted to DE405 ephemeris over one century (1950-2060); the lunar angles W1, W2, W3 receive also additive corrections to the secular coefficients.
+  !! 
+  !! - Moon constants:
+  !!    nu        : mean motion of the Moon (W1(1,1))                 (Nu)
+  !!    g         : half coefficient of sin(F) in latitude         (Gamma)
+  !!    e         : half coefficient of sin(l) in longitude            (E)
+  !!    np        : mean motion of EMB (eart(1))                      (n')
+  !!    ep        : eccentricity of EMB                               (e')
+  !!
+  !!    p is the precession rate and t is the time
+  !!
+  !! \see
+  !!   - ELPdoc: Lunar solution ELP, version ELP/MPP02,  Jean Chapront and Gerard Francou, October 2002
+  
+  subroutine elp_mpp02_initialise(mode)
+    use SUFR_kinds, only: double
+    use SUFR_constants, only: r2as, pi
+    use SUFR_system, only: quit_program_error
+    use TheSky_elp_mpp02_constants, only: w,eart,peri, zeta,del,   p,delnu,dele,delg,delnp,delep,dtasm,am,   p1,p2,p3,p4,p5,q1,q2,q3,q4,q5
+    
+    implicit none
+    integer, intent(in) :: mode
+    integer :: iD
+    real(double) :: bp(5,2),  x2,x3,y2,y3, d21,d22,d23,d24,d25, d31,d32,d33,d34,d35, Cw2_1,Cw3_1
+    real(double) :: alpha,xa, Deart_0,Dperi, Dw1_1,Dgam,De, Deart_1,Dep, Dw1_0,Dw1_2,Dw2_0,Dw2_1,Dw3_0,Dw3_1
+    
+    ! Value of the correction to the constant of precession:
+    real(double), parameter :: Dprec = -0.29965d0                                  ! Source: IAU 2000A
+    
+    
+    data bp/ 0.311079095d0, -0.4482398d-2,   -0.110248500d-2, 0.1056062d-2, 0.50928d-4,   -0.103837907d0, 0.6682870d-3,   -0.129807200d-2, -0.1780280d-3, -0.37342d-4 /
+    
+    if(mode.lt.0 .or. mode.gt.1) call quit_program_error('elp_mpp02_initialise(): mode must have value 0 or 1', 1)
+    
+    ! Constants for the evaluation of the partial derivatives:
+    am     =  0.074801329d0           ! Ratio of the mean motions (EMB / Moon)
+    alpha  =  0.002571881d0           ! Ratio of the semi-major axis (Moon / EMB)
+    dtasm  =  (2*alpha)/(3*am)  ! (2*alpha) / (3*am)
+    xa     =  (2*alpha)/3.d0
+    
+    
+    ! Corrections to constants:
+    if(mode.eq.0) then  ! Default - LLR
+       ! Values of the corrections to the constants fitted to LLR.  Fit 13-05-02 (2 iterations) except Phi and eps w2_1 and w3_1
+       ! See ELPdoc, Table 3 and paper, Table 1
+       Dw1_0   = -0.10525d0
+       Dw2_0   =  0.16826d0
+       Dw3_0   = -0.10760d0
+       Deart_0 = -0.04012d0
+       Dperi   = -0.04854d0
+       Dw1_1   = -0.32311d0
+       Dgam    =  0.00069d0
+       De      =  0.00005d0
+       Deart_1 =  0.01442d0
+       Dep     =  0.00226d0
+       Dw2_1   =  0.08017d0
+       Dw3_1   = -0.04317d0
+       Dw1_2   = -0.03794d0
+    else  ! DE 405
+       ! Values of the corrections to the constants fitted to DE405 over the time interval (1950-2060)
+       Dw1_0   = -0.07008d0
+       Dw2_0   =  0.20794d0
+       Dw3_0   = -0.07215d0
+       Deart_0 = -0.00033d0
+       Dperi   = -0.00749d0
+       Dw1_1   = -0.35106d0
+       Dgam    =  0.00085d0
+       De      = -0.00006d0
+       Deart_1 =  0.00732d0
+       Dep     =  0.00224d0
+       Dw2_1   =  0.08017d0
+       Dw3_1   = -0.04317d0
+       Dw1_2   = -0.03743d0
+    end if
+    
+    ! Fundamental arguments (Moon and EMB - ELPdoc, Table 1):
+    ! W1: mean longitude of the Moon:
+    w(1,0)  = elp_dms2rad(218,18,59.95571d0+Dw1_0)      ! Source: ELP
+    w(1,1)  = (1732559343.73604d0+Dw1_1)/r2as           ! Source: ELP
+    w(1,2)  = (        -6.8084d0 +Dw1_2)/r2as           ! Source: DE405
+    w(1,3)  =          0.66040d-2/r2as                  ! Source: ELP
+    w(1,4)  =         -0.31690d-4/r2as                  ! Source: ELP
+    
+    ! W2: mean longitude of the lunar perigee:
+    w(2,0)  = elp_dms2rad( 83,21,11.67475d0+Dw2_0)      ! Source: ELP
+    w(2,1)  = (  14643420.3171d0 +Dw2_1)/r2as           ! Source: DE405
+    w(2,2)  = (       -38.2631d0)/r2as                  ! Source: DE405
+    w(2,3)  =         -0.45047d-1/r2as                  ! Source: ELP
+    w(2,4)  =          0.21301d-3/r2as                  ! Source: ELP
+    
+    ! W3: mean longitude of the lunar ascending node:
+    w(3,0)  = elp_dms2rad(125, 2,40.39816d0+Dw3_0)      ! Source: ELP
+    w(3,1)  = (  -6967919.5383d0 +Dw3_1)/r2as           ! Source: DE405
+    w(3,2)  =          6.3590d0/r2as                    ! Source: DE405
+    w(3,3)  =          0.76250d-2/r2as                  ! Source: ELP
+    w(3,4)  =         -0.35860d-4/r2as                  ! Source: ELP
+    
+    ! Earth-Moon (EMB) elements:
+    ! Te: mean longitude of EMB:
+    eart(0) = elp_dms2rad(100,27,59.13885d0+Deart_0)    ! Source: VSOP2000
+    eart(1) = (129597742.29300d0 +Deart_1)/r2as         ! Source: VSOP2000
+    eart(2) =         -0.020200d0/r2as                  ! Source: ELP
+    eart(3) =          0.90000d-5/r2as                  ! Source: ELP
+    eart(4) =          0.15000d-6/r2as                  ! Source: ELP
+    
+    ! Pip: mean longitude of the perihelion of EMB:
+    peri(0) = elp_dms2rad(102,56,14.45766d0+Dperi)      ! Source: VSOP2000
+    peri(1) =       1161.24342d0/r2as                   ! Source: VSOP2000
+    peri(2) =          0.529265d0/r2as                  ! Source: VSOP2000
+    peri(3) =         -0.11814d-3/r2as                  ! Source: VSOP2000
+    peri(4) =          0.11379d-4/r2as                  ! Source: VSOP2000
+    
+    ! Corrections to the secular terms of Moon angles.  This gives a better (long-term?) fit
+    !   to DE 406.  See ELPdoc, Table 6/paper, Table 4, line 2:
+    if(mode.eq.1) then  ! DE 405 / DE 406
+       w(1,3) = w(1,3) - 0.00018865d0/r2as
+       w(1,4) = w(1,4) - 0.00001024d0/r2as
+       
+       w(2,2) = w(2,2) + 0.00470602d0/r2as
+       w(2,3) = w(2,3) - 0.00025213d0/r2as
+       
+       w(3,2) = w(3,2) - 0.00261070d0/r2as
+       w(3,3) = w(3,3) - 0.00010712d0/r2as
+    end if
+    
+    ! Corrections to the mean motions of the Moon angles W2 and W3, infered from the modifications of the constants:
+    x2     =   w(2,1)/w(1,1)
+    x3     =   w(3,1)/w(1,1)
+    y2     =   am*bp(1,1)+xa*bp(5,1)
+    y3     =   am*bp(1,2)+xa*bp(5,2)
+    
+    d21    =   x2-y2
+    d22    =   w(1,1)*bp(2,1)
+    d23    =   w(1,1)*bp(3,1)
+    d24    =   w(1,1)*bp(4,1)
+    d25    =   y2/am
+    
+    d31    =   x3-y3
+    d32    =   w(1,1)*bp(2,2)
+    d33    =   w(1,1)*bp(3,2)
+    d34    =   w(1,1)*bp(4,2)
+    d35    =   y3/am
+    
+    Cw2_1  =  d21*Dw1_1+d25*Deart_1+d22*Dgam+d23*De+d24*Dep
+    Cw3_1  =  d31*Dw1_1+d35*Deart_1+d32*Dgam+d33*De+d34*Dep
+    
+    w(2,1) =  w(2,1)+Cw2_1/r2as
+    w(3,1) =  w(3,1)+Cw3_1/r2as
+    
+    ! Arguments of Delaunay:
+    do iD=0,4
+       del(1,iD) = w(1,iD)  - eart(iD)                 ! D   =  W1 - Te + 180 degrees
+       del(2,iD) = w(1,iD)  - w(3,iD)                  ! F   =  W1 - W3
+       del(3,iD) = w(1,iD)  - w(2,iD)                  ! l   =  W1 - W2   mean anomaly of the Moon
+       del(4,iD) = eart(iD) - peri(iD)                 ! l'  =  Te - Pip  mean anomaly of EMB
+    end do
+    del(1,0) = del(1,0) + pi
+    
+    ! Planetary arguments: mean longitudes for J2000 (from VSOP2000):
+    p(1,0) = elp_dms2rad(252, 15,  3.216919d0)         ! Mercury
+    p(2,0) = elp_dms2rad(181, 58, 44.758419d0)         ! Venus
+    p(3,0) = elp_dms2rad(100, 27, 59.138850d0)         ! EMB (eart(0))
+    p(4,0) = elp_dms2rad(355, 26,  3.642778d0)         ! Mars
+    p(5,0) = elp_dms2rad( 34, 21,  5.379392d0)         ! Jupiter
+    p(6,0) = elp_dms2rad( 50,  4, 38.902495d0)         ! Saturn
+    p(7,0) = elp_dms2rad(314,  3,  4.354234d0)         ! Uranus
+    p(8,0) = elp_dms2rad(304, 20, 56.808371d0)         ! Neptune
+    
+    ! Planetary arguments: mean motions (from VSOP2000):
+    p(1,1) = 538101628.66888d0/r2as                    ! Mercury
+    p(2,1) = 210664136.45777d0/r2as                    ! Venus
+    p(3,1) = 129597742.29300d0/r2as                    ! EMB (eart(1))
+    p(4,1) =  68905077.65936d0/r2as                    ! Mars
+    p(5,1) =  10925660.57335d0/r2as                    ! Jupiter
+    p(6,1) =   4399609.33632d0/r2as                    ! Saturn
+    p(7,1) =   1542482.57845d0/r2as                    ! Uranus
+    p(8,1) =    786547.89700d0/r2as                    ! Neptune
+    
+    p(1:8,2:4) = 0.d0
+    
+    
+    ! Zeta: Mean longitude of the Moon W1 + Rate of precession (pt):
+    zeta(0) = w(1,0)
+    zeta(1) = w(1,1) + (5029.0966d0+Dprec)/r2as
+    zeta(2) = w(1,2)
+    zeta(3) = w(1,3)
+    zeta(4) = w(1,4)
+    
+    ! Corrections to the parameters: Nu, E, Gamma, n' et e' (Source: ELP):
+    delnu  = (+0.55604d0+Dw1_1)/r2as/w(1,1)                 ! Correction to the mean motion of the Moon
+    dele   = (+0.01789d0+De)/r2as                           ! Correction to the half coefficient of sin(l) in longitude
+    delg   = (-0.08066d0+Dgam)/r2as                         ! Correction to the half coefficient of sin(F) in latitude
+    delnp  = (-0.06424d0+Deart_1)/r2as/w(1,1)               ! Correction to the mean motion of EMB
+    delep  = (-0.12879d0+Dep)/r2as                          ! Correction to the eccentricity of EMB
+    
+    ! Precession of the longitude of the ascending node of the mean ecliptic of date on fixed ecliptic J2000 (Laskar, 1986):
+    ! P: sine coefficients:
+    p1 =  0.10180391d-04
+    p2 =  0.47020439d-06
+    p3 = -0.5417367d-09
+    p4 = -0.2507948d-11
+    p5 =  0.463486d-14
+    
+    ! Q: cosine coefficients:
+    q1 = -0.113469002d-03
+    q2 =  0.12372674d-06
+    q3 =  0.1265417d-08
+    q4 = -0.1371808d-11
+    q5 = -0.320334d-14
+    
+  end subroutine elp_mpp02_initialise
+  !***************************************************************************************************
+  
+  
+  
+  !***************************************************************************************************
+  !> \brief  Read the six data files containing the ELP/MPP02 series
+  !!
+  !! \retval ierr      File rrror index: ierr=0: no error, ierr=1: file error
+  !!
+  !! \note
+  !! - module elp_mpp02_constants:  Set of the constants of ELP/MPP02 solution (input)
+  !! - module elp_mpp02_series:  Series of the ELP/MPP02 solution (output)
+  
+  subroutine elp_mpp02_read_files(ierr)
+    use SUFR_kinds, only: double
+    use SUFR_constants, only: pi2,pio2
+    use SUFR_system, only: find_free_io_unit, file_open_error_quit
+    use TheSky_constants, only: TheSkydir
+    
+    use TheSky_elp_mpp02_series, only: cmpb,fmpb,nmpb,   cper,fper,nper
+    use TheSky_elp_mpp02_constants, only: zeta,del,   p,delnu,dele,delg,delnp,delep,dtasm,am
+    
+    implicit none
+    integer, intent(out) :: ierr
+    
+    integer :: ip, i, ilu(4),ifi(16), icount,ipt,ir,it,iFile, k,iLine,nerr
+    real(double) :: a,b(5),c, pha,s,tgv
+    logical :: fexist
+    character :: filename*(199)
+    
+    ! Read the Main Problem series:
+    ir=0
+    nmpb=0
+    ierr=1
+    
+    ! Name of the (here single) ELPMPP02 file:
+    filename = trim(TheSkydir)//'elp_mpp02.dat'
+    inquire(file=trim(filename), exist=fexist)
+    if(.not.fexist) call file_open_error_quit(trim(filename), 1, 1)  ! 1: input file
+    
+    
+    call find_free_io_unit(ip)
+    open(ip,file=trim(filename),status='old',iostat=nerr)
+    
+    do iFile=1,3  ! These used to be three files
+       ierr=3
+       read(ip,'(25x,I10)', iostat=nerr,end=100) nmpb(iFile,1)
+       if(nerr.ne.0) return
+       
+       nmpb(iFile,2) = ir+1
+       nmpb(iFile,3) = nmpb(iFile,1) + nmpb(iFile,2)-1
+       
+       do iLine=1,nmpb(iFile,1)
+          ierr=4
+          read(ip,'(4I3,2x,F13.5,5F12.2)', iostat=nerr,end=100) ilu,a,b
+          if(nerr.ne.0) return
+          
+          ir=ir+1
+          tgv = b(1) + dtasm*b(5)
+          if(iFile.eq.3) a = a - 2*a*delnu/3.d0
+          cmpb(ir) = a + tgv*(delnp-am*delnu) + b(2)*delg + b(3)*dele + b(4)*delep
+          
+          do k=0,4
+             fmpb(k,ir)=0.d0
+             do i=1,4
+                fmpb(k,ir) = fmpb(k,ir) + ilu(i)*del(i,k)
+             end do
+          end do  ! k
+          
+          if(iFile.eq.3) fmpb(0,ir)=fmpb(0,ir)+pio2
+       end do  ! iLine
+       
+    end do  ! iFile
+    
+    
+    ! Read the Perturbations series:
+    ir=0
+    nper = 0
+    
+    do iFile=1,3  ! These used to be three files
+       do it=0,3
+          read(ip,'(25x,2I10)', iostat=nerr,end=100) nper(iFile,it,1),ipt
+          ierr = 6
+          if(nerr.ne.0) return
+          
+          nper(iFile,it,2) = ir+1
+          nper(iFile,it,3) = nper(iFile,it,1) + nper(iFile,it,2) - 1
+          if(nper(iFile,it,1).eq.0) cycle
+          
+          do iLine=1,nper(iFile,it,1)
+             read(ip,'(I5,2D20.13,16I3)', iostat=nerr,end=100) icount,s,c,ifi
+             ierr = 7
+             if(nerr.ne.0) return
+             
+             ir = ir+1
+             cper(ir) = sqrt(c**2+s**2)
+             pha = atan2(c,s)
+             if(pha.lt.0.d0) pha = pha+pi2
+             
+             do k=0,4
+                fper(k,ir)=0.d0
+                if(k.eq.0) fper(k,ir) = pha
+                do i=1,4
+                   fper(k,ir) = fper(k,ir) + ifi(i)*del(i,k)
+                end do
+                do i=5,12
+                   fper(k,ir) = fper(k,ir) + ifi(i)*p(i-4,k)
+                end do
+                fper(k,ir) = fper(k,ir) + ifi(13)*zeta(k)
+             end do  ! k
+             
+          end do  ! iLine
+          
+       end do  ! it
+    end do  ! iFile
+    
+    close(ip)
+    
+    ! Exit:
+    ierr=0
+    return
+    
+    ! End of file error:
+100 continue
+    ierr=9
+    
+  end subroutine elp_mpp02_read_files
+  !***************************************************************************************************
+  
+  
+  !***************************************************************************************************
+  !> \brief Function for the conversion: sexagesimal degrees -> radians
+  
+  function elp_dms2rad(deg,min,sec)
+    use SUFR_kinds, only: double
+    use SUFR_constants, only: d2r
+    
+    implicit none
+    integer, intent(in) :: deg, min
+    real(double), intent(in) :: sec
+    real(double) :: elp_dms2rad
+    
+    elp_dms2rad = (deg+min/60.d0+sec/3600.d0)*d2r
+  end function elp_dms2rad
+  !***************************************************************************************************
+  
+  
+  
   !*********************************************************************************************************************************
   !> \brief  Read orbital-element data for the asteroids
   !!
