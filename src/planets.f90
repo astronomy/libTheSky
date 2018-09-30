@@ -42,6 +42,8 @@ contains
   !!
   !! \param ltime    Set to .false. to disable light-time correction, and save ~50% in CPU time at the cost of some accuracy
   !! 
+  !! \param lunar_theory    Choose Lunar theory:  1: ELP82b,  2: ELP-MPP02/LLR,  3: ELP-MPP02/DE405 ('historical' - default)
+  !! 
   !!
   !! \note
   !! - lat0 and lon0 can be provided through the module TheSky_local (rad, rad and m), or through the optional arguments.
@@ -49,10 +51,10 @@ contains
   !! - results are returned in the array planpos() in the module TheSky_planetdata
   !!
   
-  subroutine planet_position(jd,pl, lat,lon,hgt, LBaccur,Raccur, ltime)
+  subroutine planet_position(jd,pl, lat,lon,hgt, LBaccur,Raccur, ltime, lunar_theory)
     use SUFR_kinds, only: double
     use SUFR_constants, only: pi, au,earthr,pland, enpname, jd2000
-    use SUFR_system, only: warn
+    use SUFR_system, only: warn, quit_program_error
     use SUFR_angles, only: rev, rev2
     use SUFR_dummy, only: dumdbl1,dumdbl2
     
@@ -62,7 +64,7 @@ contains
     use TheSky_coordinates, only: precess_ecl, fk5, aberration_ecl, refract
     use TheSky_nutation, only: nutation, nutation2000
     use TheSky_sun, only: sunmagn
-    use TheSky_moon, only: elp82b_lbr, moonmagn
+    use TheSky_moon, only: elp82b_lbr, elp_mpp02_lbr, moonmagn
     use TheSky_comets, only: cometgc
     use TheSky_planetdata, only: planpos, pl0, VSOPtruncs
     use TheSky_cometdata, only: cometElems, cometDiedAtP
@@ -74,9 +76,10 @@ contains
     integer, intent(in) :: pl
     real(double), intent(in), optional :: lat,lon,hgt, LBaccur,Raccur
     logical, intent(in), optional :: ltime
+    integer, intent(in), optional :: lunar_theory
     
-    integer :: j
-    real(double) :: tjm,jde,tjm0,  llat,llon,lhgt, lLBaccur,lRaccur,  dpsi,eps0,deps,eps,tau,tau1
+    integer :: j, llunar_theory
+    real(double) :: tjm,jde,jde_lt,tjm0,  llat,llon,lhgt, lLBaccur,lRaccur,  dpsi,eps0,deps,eps,tau,tau1
     real(double) :: hcl0,hcb0,hcr0, hcl,hcb,hcr, hcl00,hcb00,hcr00, sun_gcl,sun_gcb, gcx,gcy,gcz, gcx0,gcy0,gcz0, dhcr
     real(double) :: gcl,gcb,delta,gcl0,gcb0,delta0
     real(double) :: ra,dec,gmst,agst,lst,hh,az,alt,elon,  topra,topdec,topl,topb,topdiam,topdelta,tophh,topaz,topalt
@@ -114,6 +117,10 @@ contains
     lltime = .true.                    ! Take into account light time by default
     if(present(ltime)) lltime = ltime
     
+    llunar_theory = 3  ! ELP-MPP02/DE405 ('historical')
+    if(present(lunar_theory)) llunar_theory = lunar_theory
+    if(llunar_theory.lt.1 .or. llunar_theory.gt.3) &
+         call quit_program_error('planet_position(): lunar_theory must be 1, 2 or 3', 1)
     
     ! Calc JDE and tjm:
     deltat = calc_deltat(jd)
@@ -126,13 +133,14 @@ contains
     
     
     ! Iterate to get the light time tau, hence apparent positions:
-    tau  = 6.d-3                                                       ! Light distance in days - typical planet: ~500s ~ 0.006 days
+    tau  = 6.d-3                                                       ! Initial guess for light distance in days - typical planet: ~500s ~ 0.006 days
     tau1 = 0.d0                                                        ! On first iteration, tau=0 to get true positions
     j = 0                                                              ! Takes care of escape in case of infinite loop
     do while(abs((tau-tau1)/tau).gt.1.d-10)                            ! Moon's tau ~10^-5; 1.d-10~10^-5 sec, 1.d-7~10^-2 sec
        
        tau = tau1                                                      ! On first iteration, tau=0 to get true positions
        tjm = tjm0 - tau/365250.d0                                      ! Iterate to calculate light time
+       jde_lt = jd2000 + tjm*365250                                    ! JDE, corrected for light time
        hcl = 0.d0; hcb = 0.d0; hcr = 0.d0                              ! Heliocentric coordinates
        
        
@@ -141,16 +149,34 @@ contains
        if(pl.eq.9) call plutolbr(tjm*10.d0, hcl,hcb,hcr)               ! This is for 2000.0, precess 10 lines below
        if(pl.gt.10000) call asteroid_lbr(tjm,pl-10000, hcl,hcb,hcr)    ! Heliocentric lbr for asteroids
        if(pl.eq.-1) then                                               ! Centre of Earth's shadow
-          call vsop87d_lbr(tjm,3, hcl,hcb,hcr, lLBaccur,lRaccur)          ! = heliocentric coordinates ...
-          call elp82b_lbr(tjm, dumdbl1,dumdbl2,dhcr)                     ! only want dhcr
+          call vsop87d_lbr(tjm,3, hcl,hcb,hcr, lLBaccur,lRaccur)       ! = heliocentric coordinates ...
+          
+          select case(llunar_theory)
+          case(1)
+             call elp82b_lbr(tjm, dumdbl1,dumdbl2,dhcr)                   ! only want dhcr
+          case(2)
+             call elp_mpp02_lbr(jde_lt, 0, dumdbl1,dumdbl2,dhcr)          ! only want dhcr - 0: LLR mode
+          case(3)
+             call elp_mpp02_lbr(jde_lt, 1, dumdbl1,dumdbl2,dhcr)          ! only want dhcr - 1: DE405 ('historical') mode
+          end select
+          
           hcr = hcr + dhcr                                             ! + distance Earth-Moon
        end if
        
        
        ! Compute geocentric ecliptical position:
-       if(pl.eq.0) call elp82b_lbr(tjm,gcl,gcb,delta)                    ! Get apparent geocentric coordinates of the Moon
+       if(pl.eq.0) then  ! Moon
+          select case(llunar_theory)
+          case(1)
+             call elp82b_lbr(tjm, gcl,gcb,delta)                 ! Get apparent geocentric coordinates of the Moona
+          case(2)
+             call elp_mpp02_lbr(jde_lt, 0, gcl,gcb,delta)        ! Get apparent geocentric coordinates of the Moon.  Mode=0: LLR mode
+          case(3)
+             call elp_mpp02_lbr(jde_lt, 1, gcl,gcb,delta)        ! Get apparent geocentric coordinates of the Moon.  Mode=1: DE405 ('historical') mode
+          end select
+       end if
+       
        if(pl.ne.0.and.pl.lt.10 .or. pl.gt.10000) then                  ! Planet, asteroid, Earth's shadow
-          
           ! For Neptune's birthday:
           !print*,'TESTING!!!'
           !call precess_ecl(jde,jd2000,hcl,hcb)                        ! from JoD to J2000.0
@@ -196,7 +222,18 @@ contains
     tau = tau1
     tjm = tjm0                                                  ! Still Julian Millennia since 2000.0 in dynamical time
     
-    if(pl.eq.-1) call elp82b_lbr(tjm, dumdbl1,dumdbl2,delta)      ! Geocentric distance of the Moon for Earth shadow; only need delta
+    
+    if(pl.eq.-1) then  ! Earth's shadow
+       select case(llunar_theory)
+       case(1)
+          call elp82b_lbr(tjm, dumdbl1,dumdbl2,delta)           ! Geocentric distance of the Moon for Earth shadow; only need delta
+       case(2)
+          call elp_mpp02_lbr(jde_lt, 0, dumdbl1,dumdbl2,delta)  ! Geocentric distance of the Moon for Earth shadow; only need delta - LLR mode
+       case(3)
+          call elp_mpp02_lbr(jde_lt, 1, dumdbl1,dumdbl2,delta)  ! Geocentric distance of the Moon for Earth shadow; only need delta - DE405 ('historical') mode
+       end select
+    end if
+    
     
     if(pl.eq.3) then                                            ! This seems true, but appears to be apparent?!?!?
        gcl   = rev(hcl0+pi)
