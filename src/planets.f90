@@ -399,7 +399,7 @@ contains
     planpos(33) = rev(hcl)          ! Heliocentric apparent l,b,r
     planpos(34) = rev2(hcb) 
     planpos(35) = hcr               
-    planpos(36) = rev(hcl00)        ! Heliocentric true l,b,r
+    planpos(36) = rev(hcl00)        ! Heliocentric true l,b,r, converted to FK5
     planpos(37) = rev2(hcb00)
     planpos(38) = hcr00
     
@@ -782,14 +782,14 @@ contains
     v = y*sin(eps0) + z*cos(eps0)
     
     alp = rev(atan2(u,x))
-    del = atan2(v,sqrt(x*x+u*u))
+    del = atan2(v,sqrt(x**2+u**2))
     dze = rev( atan2( sin(del0)*cos(del)*cos(alp0-alp) - sin(del)*cos(del0) , cos(del)*sin(alp0-alp) ) )
     
     ! Meeus, step 12, p.294:
     de = -sin(del0)*sin(del) - cos(del0)*cos(del)*cos(alp0-alp)  ! Planetocentric declination of the Earth
     
     ! Meeus, step 14, p.295 - phase correction - same sign as sin(l-l0):
-    dphase = abs( (2*r*delta + r0*r0 - r*r - delta*delta)/(4*r*delta) ) * sin(l-l0)/abs(sin(l-l0))
+    dphase = abs( (2*r*delta + r0**2 - r**2 - delta**2)/(4*r*delta) ) * sin(l-l0)/abs(sin(l-l0))
     
     ! Meeus, step 13, p.295:
     omg1 = rev(w1 - dze - 5.07033d0*d2r * delta + dphase)  ! Longitude of central meridian of System I (equator +- 10deg)

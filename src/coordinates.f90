@@ -395,12 +395,12 @@ contains
        b = 0.d0
        r = 0.d0
     else
-       x2 = x*x
-       y2 = y*y
+       x2 = x**2
+       y2 = y**2
        
        l = rev( atan2(y,x) )        ! Longitude
        b = atan2(z, sqrt(x2 + y2))  ! Latitude
-       r = sqrt(x2 + y2 + z*z)      ! Distance
+       r = sqrt(x2 + y2 + z**2)     ! Distance
     end if
     
   end subroutine rect_2_spher
