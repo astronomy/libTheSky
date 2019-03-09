@@ -263,7 +263,7 @@ contains
     real(double), parameter :: a405=384747.9613701725d0, aelp=384747.980674318d0, sc=36525.d0  ! Moon mean distance for DE405 und ELP; Julian century in days
     
     integer :: it,iLine,iVar, k
-    real(double) :: rjd, t(-1:4),v(6), lambda,beta,rad
+    real(double) :: rjd, t(-1:4),v(6)  !, lambda,beta,rad
     real(double) :: cbeta,clamb,cw, ppw,ppw2,ppwqpw,ppwra,pw,pw2,pwqw,pwra, qpw,qpw2,qpwra,qw,qw2,qwra
     real(double) :: ra,rap,sbeta,slamb,sw, x,x1,x2,x3, xp,xp1,xp2,xp3, y,yp
     
@@ -328,9 +328,9 @@ contains
     v(2)   = v(2)/r2as                                                                   ! Latitude (rad)
     v(3)   = v(3) * a405 / aelp                                                          ! Distance (km)
     
-    lambda = v(1)
-    beta = v(2)
-    rad = v(3)
+    !lambda = v(1)
+    !beta = v(2)
+    !rad = v(3)
     !lambda = lambda + (5029.0966d0*t(1) + 1.1120d0*t(2) + 0.000077d0*t(3) - 0.00002353d0*t(4)  -  0.29965d0*t(1)) * as2r  ! Precession from J2000 to EoD(?), but only in longitude!
     !write(*,'(2F14.7,F14.5)') rev(lambda)*r2d, beta*r2d, rad
     

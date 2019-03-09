@@ -1076,6 +1076,9 @@ contains
 100 continue
     ierr=9
     
+    icount = icount  ! Suppress 'variable set but not used' compiler warnings
+    ipt = ipt        ! Suppress 'variable set but not used' compiler warnings
+    
   end subroutine elp_mpp02_read_files
   !***************************************************************************************************
   
