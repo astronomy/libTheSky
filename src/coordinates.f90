@@ -206,24 +206,25 @@ contains
   !!
   !! \see Meeus, Astronomical Algorithms, 1998, Ch.21, p.134
   
-  subroutine precess_eq(jd1,jd2,a1,d1)
+  subroutine precess_eq(jd1,jd2, a1,d1)
     use SUFR_kinds, only: double
     use SUFR_constants, only: jd2000
     
     implicit none
     real(double), intent(in) :: jd1,jd2
     real(double), intent(inout) :: a1,d1
-    real(double) :: t1,t2,t22,t23, dz,ze,th,a,b,c
+    real(double) :: t1,t11, t2,t22,t23, dz,ze,th,a,b,c
     
     t1 = (jd1 - jd2000)/36525.d0      !  t since 2000.0 in Julian centuries
+    t11 = t1**2   ! t1^2
     t2 = (jd2 - jd1)/36525.d0         ! dt in Julian centuries
-    t22 = t2*t2   ! t2^2
+    t22 = t2**2   ! t2^2
     t23 = t22*t2  ! t2^3
     
     ! Meeus, Eq. 21.2:
-    dz = (1.11808609d-2 + 6.770714d-6*t1 - 6.739d-10*t1*t1)*t2 + (1.463556d-6 - 1.668d-9*t1)*t22 + 8.725677d-8*t23
-    ze = (1.11808609d-2 + 6.770714d-6*t1 - 6.739d-10*t1*t1)*t2 + (5.307158d-6 + 3.20d-10*t1)*t22 + 8.825063d-8*t23
-    th = (9.71717346d-3 - 4.136915d-6*t1 - 1.0520d-9*t1*t1)*t2 - (2.068458d-6 + 1.052d-9*t1)*t22 - 2.028121d-7*t23
+    dz = (1.11808609d-2 + 6.770714d-6*t1 - 6.739d-10*t11)*t2 + (1.463556d-6 - 1.668d-9*t1)*t22 + 8.725677d-8*t23
+    ze = (1.11808609d-2 + 6.770714d-6*t1 - 6.739d-10*t11)*t2 + (5.307158d-6 + 3.20d-10*t1)*t22 + 8.825063d-8*t23
+    th = (9.71717346d-3 - 4.136915d-6*t1 - 1.0520d-9*t11)*t2 - (2.068458d-6 + 1.052d-9*t1)*t22 - 2.028121d-7*t23
     
     ! Meeus, Eq. 21.4:
     a = cos(d1)           * sin(a1+dz)
@@ -254,17 +255,18 @@ contains
     implicit none
     real(double), intent(in) :: yr1,yr2
     real(double), intent(inout) :: a1,d1
-    real(double) :: t1,t2,t22,t23, dz,ze,th,a,b,c
+    real(double) :: t1,t11, t2,t22,t23, dz,ze,th,a,b,c
     
     t1 = (yr1 - 2000.d0)/100.d0  !  t since 2000.0 in Julian centuries
+    t11 = t1**2   ! t1^2
     t2 = (yr2 - yr1)/100.d0      ! dt in Julian centuries
     t22 = t2*t2   ! t2^2
     t23 = t22*t2  ! t2^3
     
     ! Meeus, Eq. 21.2:
-    dz = (1.11808609d-2 + 6.770714d-6*t1 - 6.739d-10*t1*t1)*t2 + (1.463556d-6 - 1.668d-9*t1)*t22 + 8.725677d-8*t23
-    ze = (1.11808609d-2 + 6.770714d-6*t1 - 6.739d-10*t1*t1)*t2 + (5.307158d-6 + 3.20d-10*t1)*t22 + 8.825063d-8*t23
-    th = (9.71717346d-3 - 4.136915d-6*t1 - 1.0520d-9*t1*t1)*t2 - (2.068458d-6 + 1.052d-9*t1)*t22 - 2.028121d-7*t23
+    dz = (1.11808609d-2 + 6.770714d-6*t1 - 6.739d-10*t11)*t2 + (1.463556d-6 - 1.668d-9*t1)*t22 + 8.725677d-8*t23
+    ze = (1.11808609d-2 + 6.770714d-6*t1 - 6.739d-10*t11)*t2 + (5.307158d-6 + 3.20d-10*t1)*t22 + 8.825063d-8*t23
+    th = (9.71717346d-3 - 4.136915d-6*t1 - 1.0520d-9*t11)*t2 - (2.068458d-6 + 1.052d-9*t1)*t22 - 2.028121d-7*t23
     
     ! Meeus, Eq. 21.4:
     a = cos(d1)           * sin(a1+dz)
@@ -296,17 +298,18 @@ contains
     implicit none
     real(double), intent(in) :: jd1,jd2
     real(double), intent(inout) :: l,b
-    real(double) :: t1,t2,t22,t23, eta,pii,p,aa,bb,cc
+    real(double) :: t1,t11, t2,t22,t23, eta,pii,p,aa,bb,cc
     
     t1  = (jd1 - jd2000)/36525.d0      !  t since 2000.0 in Julian centuries
+    t11 = t1**2   ! t1^2
     t2  = (jd2 - jd1)/36525.d0         ! dt in Julian centuries
     t22 = t2*t2   ! t2^2
     t23 = t22*t2  ! t2^3
     
     ! Meeus, Eq. 21.5  -  the different powers of t1/t2 have been checked and are ok:
-    eta = (2.278765d-4    - 3.2012d-7     *t1  + 2.899d-9*t1*t1)   *t2  + (-1.60085d-7  + 2.899d-9*t1)   *t22  + 2.909d-10*t23
-    pii = 3.0521686858d0  + 1.59478437d-2 *t1  + 2.939037d-6*t1*t1      - (4.2169525d-3 + 2.44787d-6*t1) *t2   + 1.7143d-7*t22
-    p   = (2.438174835d-2 + 1.077382d-5   *t1  - 2.036d-10*t1*t1)  *t2  + (5.38691d-6   - 2.036d-10*t1)  *t22  - 2.91d-11*t23
+    eta = (2.278765d-4    - 3.2012d-7     *t1  + 2.899d-9*t11)   *t2  + (-1.60085d-7  + 2.899d-9*t1)   *t22  + 2.909d-10*t23
+    pii = 3.0521686858d0  + 1.59478437d-2 *t1  + 2.939037d-6*t11      - (4.2169525d-3 + 2.44787d-6*t1) *t2   + 1.7143d-7*t22
+    p   = (2.438174835d-2 + 1.077382d-5   *t1  - 2.036d-10*t11)  *t2  + (5.38691d-6   - 2.036d-10*t1)  *t22  - 2.91d-11*t23
     
     ! Meeus, Eq. 21.7:
     aa = cos(eta) * cos(b) * sin(pii-l)  -  sin(eta) * sin(b)
@@ -341,17 +344,18 @@ contains
     implicit none
     real(double), intent(in) :: jd1,jd2
     real(double), intent(inout) :: i,o1,o2
-    real(double) :: t1,t2,t22,t23,  eta,pii,p,psi,aa,bb,cc,dd
+    real(double) :: t1,t11,t2,t22,t23,  eta,pii,p,psi,aa,bb,cc,dd
     
     t1  = (jd1 - jd2000)/36525.d0      !  t since 2000.0 in Julian centuries
+    t11 = t1**2   ! t1^2
     t2  = (jd2 - jd1)/36525.d0         ! dt in Julian centuries
     t22 = t2*t2   ! t2^2
     t23 = t22*t2  ! t2^3
     
     ! Meeus, Eq. 21.5:
-    eta = (2.278765d-4    - 3.2012d-7 * t1     + 2.899d-9*t1*t1) *t2  + (-1.60085d-7  + 2.899d-9*t1) * t22  + 2.909d-10 * t23
-    pii =  3.0521686858d0 + 1.59478437d-2 * t1 + 2.939037d-6*t1 *t1   - (4.2169525d-3 + 2.44787d-6*t1) * t2 + 1.7143d-7 * t22
-    p   = (2.438174835d-2 + 1.077382d-5 * t1   - 2.036d-10*t1*t1) *t2 + (5.38691d-6   - 2.036d-10*t1) * t22 - 2.91d-11 * t23
+    eta = (2.278765d-4    - 3.2012d-7 * t1     + 2.899d-9*t11) *t2  + (-1.60085d-7  + 2.899d-9*t1) * t22  + 2.909d-10 * t23
+    pii =  3.0521686858d0 + 1.59478437d-2 * t1 + 2.939037d-6*t11    - (4.2169525d-3 + 2.44787d-6*t1) * t2 + 1.7143d-7 * t22
+    p   = (2.438174835d-2 + 1.077382d-5 * t1   - 2.036d-10*t11) *t2 + (5.38691d-6   - 2.036d-10*t1) * t22 - 2.91d-11 * t23
     psi = pii + p
     
     ! Meeus, Eq. 24.2:
