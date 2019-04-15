@@ -331,9 +331,9 @@ contains
     
     ! Compute magnitude:
     if(pl.gt.0.and.pl.lt.10) magn = planet_magnitude(pl,hcr,delta,pa)
-    if(pl.eq.0) magn = moonmagn(pa,delta)                          ! Moon
-    if(pl.eq.6) magn = satmagn(tjm*10.,gcl,gcb,delta,hcl,hcb,hcr)  ! Calculate Saturn's magnitude
-    if(pl.gt.10000) magn = asteroid_magn(pl-10000,delta,hcr,pa)     ! Asteroid magnitude (valid for |pa|<120deg
+    if(pl.eq.0) magn = moonmagn(pa,delta)                             ! Moon
+    if(pl.eq.6) magn = satmagn(tjm*10., gcl,gcb, delta, hcl,hcb,hcr)  ! Calculate Saturn's magnitude
+    if(pl.gt.10000) magn = asteroid_magn(pl-10000,delta,hcr,pa)       ! Asteroid magnitude (valid for |pa|<120deg
     
     
     ! Parallactic angle:
@@ -411,7 +411,7 @@ contains
     planpos(43) = hcr0
     planpos(44) = lst               ! Local APPARENT sidereal time
     planpos(45) = rev(agst)         ! Greenwich APPARENT sidereal time (in radians)
-    planpos(46) = tjm0 * 10.d0      ! Apparent dynamical time in Julian Centuries since 2000.0
+    planpos(46) = tjm0 * 10         ! Apparent dynamical time in Julian Centuries since 2000.0
     planpos(47) = dpsi              ! Nutation in longitude
     planpos(48) = eps               ! True obliquity of the ecliptic; corrected for nutation
     planpos(49) = rev(gmst)         ! Greenwich MEAN sidereal time (in radians)
@@ -630,18 +630,18 @@ contains
     
     implicit none
     real(double), intent(in) :: t, gl,gb,d, l,b,r
-    real(double) :: satmagn, i,o,bbb,n,ll,bb,u1,u2,du
+    real(double) :: satmagn, in,om,bbb,n,ll,bb,u1,u2,du
     
-    i = (28.075216d0  - 0.012998d0*t + 4.d-6*t*t)   * d2r
-    o = (169.508470d0 + 1.394681d0*t + 4.12d-4*t*t) * d2r
+    in = 0.490005d0  - 2.2686d-4*t + 7.d-8*t**2      ! Radians
+    om = 2.9584809d0 + 0.0243418d0*t + 7.19d-6*t**2  ! Radians
     
-    bbb = asin( sin(i)*cos(gb)*sin(gl-o) - cos(i)*sin(gb) )
+    bbb = asin( sin(in)*cos(gb)*sin(gl-om) - cos(in)*sin(gb) )
     n  = (113.6655d0 + 0.8771d0*t)*d2r
     ll = l - 0.01759d0*d2r/r
     bb = b - 7.64d-4*d2r * cos(l-n)/r
     
-    u1 = atan2( sin(i)*sin(bb) + cos(i)*cos(bb)*sin(ll-o) , cos(bb)*cos(ll-o) )
-    u2 = atan2( sin(i)*sin(gb) + cos(i)*cos(gb)*sin(gl-o) , cos(gb)*cos(gl-o) )
+    u1 = atan2( sin(in)*sin(bb) + cos(in)*cos(bb)*sin(ll-om) , cos(bb)*cos(ll-om) )
+    u2 = atan2( sin(in)*sin(gb) + cos(in)*cos(gb)*sin(gl-om) , cos(gb)*cos(gl-om) )
     du = abs(rev2(u1-u2))  ! rev2() is needed because u1 and u2 jump from pi to -pi at different moments
     
     ! Method 1 - Meeus p.285:

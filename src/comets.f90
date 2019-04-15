@@ -28,18 +28,18 @@ contains
   !*********************************************************************************************************************************
   !> \brief Calculate heliocentric xyz coordinates for comet com at t1 (in J.mill DT).  Usually called by cometgc() below.
   !! 
-  !! \param t1   Time in Julian millennia DT
-  !! \param com  Comet ID
+  !! \param t1     Time in Julian millennia DT
+  !! \param comID  Comet ID
   !! 
-  !! \retval x   Heliocentric x coordinate
-  !! \retval y   Heliocentric y coordinate
-  !! \retval z   Heliocentric z coordinate
+  !! \retval x     Heliocentric x coordinate
+  !! \retval y     Heliocentric y coordinate
+  !! \retval z     Heliocentric z coordinate
   !!
   !! \see Meeus, Astronomical Algorithms, 1998, Ch. 30, 33-35.  Equation and page numbers refer to this book.
   !!
   !! \todo  Use "hyperbolic method" for 0.98 < e < 1 as well? - see CHECK
   
-  subroutine cometxyz(t1,com, x,y,z)
+  subroutine cometxyz(t1,comID, x,y,z)
     use SUFR_kinds, only: double
     use SUFR_constants, only: nlpname,enpname, jd2000
     use SUFR_numerics, only: deq
@@ -50,7 +50,7 @@ contains
     
     implicit none
     real(double), intent(in) :: t1
-    integer, intent(in) :: com
+    integer, intent(in) :: comID
     real(double), intent(out) :: x,y,z
     
     integer :: i,j,j1,j2
@@ -64,18 +64,18 @@ contains
     j2  = 0
     del = 1.d-10           ! Convergence criterion
     
-    comepoche   = cometElems(com,1)      ! J2000.0
-    q           = cometElems(com,2)      ! Perihelion distance (AU?)
-    e           = cometElems(com,3)      ! Eccentricity
-    in          = cometElems(com,4)      ! Inclination
-    o1          = cometElems(com,5)      ! Argument of perihelion (lowercase omega)
-    o2          = cometElems(com,6)      ! Longitude of ascending node (uppercase omega)
-    tp          = cometElems(com,7)      ! Perihelion date (JD)
-    nlpname(11) = trim(cometNames(com))  ! Warning: cometNames is much longer than nlpname
-    enpname(11) = trim(cometNames(com))  ! Warning: cometNames is much longer than enpname
+    comepoche   = cometElems(comID,1)      ! J2000.0
+    q           = cometElems(comID,2)      ! Perihelion distance (AU?)
+    e           = cometElems(comID,3)      ! Eccentricity
+    in          = cometElems(comID,4)      ! Inclination
+    o1          = cometElems(comID,5)      ! Argument of perihelion (lowercase omega)
+    o2          = cometElems(comID,6)      ! Longitude of ascending node (uppercase omega)
+    tp          = cometElems(comID,7)      ! Perihelion date (JD)
+    nlpname(11) = trim(cometNames(comID))  ! Warning: cometNames is much longer than nlpname
+    enpname(11) = trim(cometNames(comID))  ! Warning: cometNames is much longer than enpname
     
-    !write(0,'(I9,9F15.5)') com, o1,o2,in,q,e,tp,comepoche
-    !write(6,'(I9,2x,A50,9F15.5)') com, trim(cometNames(com)), q,e,in*r2d, o1*r2d,o2*r2d, tp,comepoche
+    !write(0,'(I9,9F15.5)') comID, o1,o2,in,q,e,tp,comepoche
+    !write(6,'(I9,2x,A50,9F15.5)') comID, trim(cometNames(comID)), q,e,in*r2d, o1*r2d,o2*r2d, tp,comepoche
     
     
     
@@ -113,7 +113,7 @@ contains
        end if
        
        if(i.ge.nint(1e7)) write(0,'(A,I0,A,F8.5)') '  cometxyz():  WARNING:  Kepler solution did not converge for comet '// &
-            trim(cometNames(com))//' (',com,'), with e =',e
+            trim(cometNames(comID))//' (',comID,'), with e =', e
        
        nu = 2.d0 * atan( sqrt( (1.d0+e)/(1.d0-e) ) * tan(ee/2.d0) )  ! True anomaly, elliptic orbits, Eq. 30.1
        
@@ -197,6 +197,7 @@ contains
     ff  =  cos(o2)           ! F
     gg  =  sin(o2)*cos(eps)  ! G
     hh  =  sin(o2)*sin(eps)  ! H
+    
     pp  = -sin(o2)*cos(in)                              ! P
     qqq =  cos(o2)*cos(in)*cos(eps) - sin(in)*sin(eps)  ! Q
     rr  =  cos(o2)*cos(in)*sin(eps) + sin(in)*cos(eps)  ! R
