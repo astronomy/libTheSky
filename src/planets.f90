@@ -565,43 +565,52 @@ contains
   !! \param r           Distance from the Sun (AU)
   !! \param d           Distance from the Earth (AU)
   !! \param par         Phase angle (rad)
+  !! \param meth        Method to use from Meeus (1: p.285,  2: p.286;  optional, default: 1)
   !!
-  !! \retval magnitude  Apparent planet magnitiude
+  !! \retval magnitude  Apparent visual planet magnitiude
   !!
   !! \see  Meeus, Astronomical Algorithms, 1998, Ch.41
   
-  function planet_magnitude(pl,r,d,par)
+  function planet_magnitude(pl, r,d, par, meth)
     use SUFR_kinds, only: double
     use SUFR_constants, only: r2d
     
     implicit none
     integer, intent(in) :: pl
+    integer, intent(in), optional :: meth
+    integer :: lmeth
     real(double), intent(in) :: r,d,par
     real(double) :: planet_magnitude,pa,pa2,pa3,a0(9),a1(9),a2(9),a3(9)
     
+    ! Optional argument:
+    lmeth = 1
+    if(present(meth)) lmeth = meth
+    
     ! PA must be in degrees:
     pa  = par*r2d
-    if(pl.eq.1) pa = pa - 50.d0  ! For Mercury (deg) -- ONLY FOR METHOD 1 !!!
+    if(lmeth.eq.1 .and. pl.eq.1) pa = pa - 50.d0  ! For Mercury (deg) -- ONLY FOR METHOD 1 !!!
     pa2 = pa*pa
     pa3 = pa*pa2
     
-    ! Method 1 - Meeus p.285:
-    a0 = (/-1.16d0,  4.d0,     0.d0, 1.3d0,   8.93d0, 8.7d0, 6.85d0, 7.05d0, 1.d0/) * (-1)
-    a1 = (/ 2.838d0, 1.322d0,  0.d0, 1.486d0, 0.d0,   0.d0,  0.d0,   0.d0,   0.d0/) * 1.d-2
-    a2 = (/ 1.023d0, 0.d0,     0.d0, 0.d0,    0.d0,   0.d0,  0.d0,   0.d0,   0.d0/) * 1.d-4
-    a3 = (/ 0.d0,    0.4247d0, 0.d0, 0.d0,    0.d0,   0.d0,  0.d0,   0.d0,   0.d0/) * 1.d-6
+    if(lmeth.eq.1) then  ! Method 1 - Meeus p.285:
+       !       Mer      Ven       Ear   Mars     Jup     Sat    Ur      Nep     Pl
+       a0 = (/-1.16d0,  4.d0,     0.d0, 1.3d0,   8.93d0, 8.7d0, 6.85d0, 7.05d0, 1.d0/) * (-1)
+       a1 = (/ 2.838d0, 1.322d0,  0.d0, 1.486d0, 0.d0,   0.d0,  0.d0,   0.d0,   0.d0/) * 1.d-2
+       a2 = (/ 1.023d0, 0.d0,     0.d0, 0.d0,    0.d0,   0.d0,  0.d0,   0.d0,   0.d0/) * 1.d-4
+       a3 = (/ 0.d0,    0.4247d0, 0.d0, 0.d0,    0.d0,   0.d0,  0.d0,   0.d0,   0.d0/) * 1.d-6
+       
+    else  ! Method 2 - Meeus p.286:
+       !        Mer     Ven     Ear   Mars    Jup    Sat     Ur      Nep     Pl
+       a0 = (/ 0.42d0, 4.40d0, 0.d0, 1.52d0, 9.40d0, 8.88d0, 7.19d0, 6.87d0, 1.00d0/) * (-1)  ! Meeus
+       !a0 = (/ 0.36d0, 4.29d0, 0.d0, 1.52d0, 9.25d0, 8.88d0, 7.19d0, 6.87d0, 1.00d0/) * (-1)  ! Expl.Supl.tt.Astr.Almanac, 2nd Ed.
+       a1 = (/ 3.80d0, 0.09d0, 0.d0, 1.6d0,  0.5d0,  0.d0,   0.d0,   0.d0,   0.d0/)   * 1.d-2
+       a2 = (/-2.73d0, 2.39d0, 0.d0, 0.d0,   0.d0,   0.d0,   0.d0,   0.d0,   0.d0/)   * 1.d-4
+       a3 = (/ 2.d0,  -0.65d0, 0.d0, 0.d0,   0.d0,   0.d0,   0.d0,   0.d0,   0.d0/)   * 1.d-6
+       
+    end if
     
     planet_magnitude = 5*log10(r*d) + a0(pl) + a1(pl)*pa + a2(pl)*pa2 + a3(pl)*pa3
-    
-    
-    ! Method 2 - Meeus p.286:
-    ! a0 = (/ 0.42d0, 4.4d0,  0.d0, 1.52d0, 9.4d0, 8.88d0, 7.19d0, 6.87d0, 1.d0/) * (-1)
-    ! a1 = (/ 3.8d0,  0.09d0, 0.d0, 1.6d0,  0.5d0, 0.d0,   0.d0,   0.d0,   0.d0/) * 1.d-2
-    ! a2 = (/-2.73d0, 2.39d0, 0.d0, 0.d0,   0.d0,  0.d0,   0.d0,   0.d0,   0.d0/) * 1.d-4
-    ! a3 = (/ 2.d0,   0.65d0, 0.d0, 0.d0,   0.d0,  0.d0,   0.d0,   0.d0,   0.d0/) * 1.d-6
-    !
-    ! planet_magnitude = 5.d0*log10(r*d) + a0(pl) + a1(pl)*pa + a2(pl)*pa2 + a3(pl)*pa3
-    
+       
   end function planet_magnitude
   !*********************************************************************************************************************************
   
