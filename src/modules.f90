@@ -159,7 +159,7 @@ end module TheSky_planetdata
 
 
 !***********************************************************************************************************************************
-!> \brief  Moon data, needed to compute Moon positions
+!> \brief  ELP-82B Moon data, needed to compute Moon positions
 
 module TheSky_moondata
   use SUFR_kinds, only: double
@@ -170,7 +170,7 @@ module TheSky_moondata
   real(double), parameter :: c1=1.d0/60.d0, c2=1.d0/3600.d0
   real(double), parameter :: ath=384747.9806743165d0, a0=384747.9806448954d0
   
-  real(double) :: p1,p2,p3,p4,p5,q1,q2,q3,q4,q5
+  real(double) :: p1,p2,p3,p4,p5, q1,q2,q3,q4,q5
   real(double) :: w(3,0:4),eart(0:4),peri(0:4),p(8,0:1), del(4,0:4),zeta(0:1),t(0:4)
   real(double) :: pre(3),coef(7),zone(6), pc1(6,1023),pc2(6,918),pc3(6,704), per1(3,19537),per2(3,6766),per3(3,8924)
   

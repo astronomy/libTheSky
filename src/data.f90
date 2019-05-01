@@ -398,7 +398,7 @@ contains
   
   
   !*********************************************************************************************************************************
-  !> \brief  Read ELP periodic terms from moondata.dat
+  !> \brief  Read ELP-82B periodic terms from moondata.dat
   !!
   !! \note
   !!  Constants are defined in the module moondata
@@ -757,7 +757,7 @@ contains
     use SUFR_kinds, only: double
     use SUFR_constants, only: r2as, pi
     use SUFR_system, only: quit_program_error
-    use TheSky_elp_mpp02_constants, only: w,eart,peri, zeta,del,   p,delnu,dele,delg,delnp,delep,dtasm,am,   p1,p2,p3,p4,p5,q1,q2,q3,q4,q5
+    use TheSky_elp_mpp02_constants, only: w,eart,peri, zeta,del,   p,delnu,dele,delg,delnp,delep,dtasm,am,   p1,p2,p3,p4,p5, q1,q2,q3,q4,q5
     
     implicit none
     integer, intent(in) :: mode

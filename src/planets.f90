@@ -124,6 +124,9 @@ contains
     
     ! Calc JDE and tjm:
     deltat = calc_deltat(jd)
+    !deltat = 0.d0
+    !write(*,'(/,A,/)') '*** WARNING: libTheSky/planets.f90: setting DeltaT to 0 ***'
+    
     jde    = jd + deltat/86400.d0
     tjm    = (jde-jd2000)/365250.d0                                    ! Julian Millennia after 2000.0 in dyn. time, tau in Meeus
     tjm0   = tjm
@@ -149,7 +152,7 @@ contains
        if(pl.eq.9) call plutolbr(tjm*10.d0, hcl,hcb,hcr)               ! This is for 2000.0, precess 10 lines below
        if(pl.gt.10000) call asteroid_lbr(tjm,pl-10000, hcl,hcb,hcr)    ! Heliocentric lbr for asteroids
        if(pl.eq.-1) then                                               ! Centre of Earth's shadow
-          call vsop87d_lbr(tjm,3, hcl,hcb,hcr, lLBaccur,lRaccur)       ! = heliocentric coordinates ...
+          call vsop87d_lbr(tjm,3, hcl,hcb,hcr, lLBaccur,lRaccur)       ! = heliocentric coordinates of the Earth...
           
           select case(llunar_theory)
           case(1)
@@ -331,6 +334,7 @@ contains
     
     ! Compute magnitude:
     if(pl.gt.0.and.pl.lt.10) magn = planet_magnitude(pl,hcr,delta,pa)
+    !if(pl.gt.0.and.pl.lt.10) magn = planet_magnitude_new(pl,hcr,delta,pa)
     if(pl.eq.0) magn = moonmagn(pa,delta)                             ! Moon
     if(pl.eq.6) magn = satmagn(tjm*10., gcl,gcb, delta, hcl,hcb,hcr)  ! Calculate Saturn's magnitude
     if(pl.gt.10000) magn = asteroid_magn(pl-10000,delta,hcr,pa)       ! Asteroid magnitude (valid for |pa|<120deg
@@ -612,6 +616,49 @@ contains
     planet_magnitude = 5*log10(r*d) + a0(pl) + a1(pl)*pa + a2(pl)*pa2 + a3(pl)*pa3
        
   end function planet_magnitude
+  !*********************************************************************************************************************************
+  
+  
+  
+  
+  !*********************************************************************************************************************************
+  !> \brief  Calculate planet magnitude
+  !!
+  !! \param pl          Planet ID
+  !! \param r           Distance from the Sun (AU)
+  !! \param d           Distance from the Earth (AU)
+  !! \param par         Phase angle (rad)
+  !!
+  !! \retval magnitude  Apparent visual planet magnitiude
+  !!
+  !! \see  Expl.Suppl.tt.Astr.Almanac, 3rd Ed, Eq. 10.4, Table 10.6 and Sect. 10.7.5
+  
+  function planet_magnitude_new(pl, r,d, par)
+    use SUFR_kinds, only: double
+    use SUFR_constants, only: r2d
+    
+    implicit none
+    integer, intent(in) :: pl
+    real(double), intent(in) :: r,d,par
+    integer :: pll
+    real(double) :: planet_magnitude_new, pa,pa2,pa3,a0(9),a1(9),a2(9),a3(9)
+    
+    ! PA must be in degrees:
+    pa  = par*r2d
+    pa2 = pa*pa
+    pa3 = pa*pa2
+    
+    !       Mer      Ven       Ven2    Mars     Jup     Sat     Ur      Nep     Pl
+    a0 = [ 0.60d0,  4.47d0,  -0.98d0, 1.52d0,  9.40d0, 8.88d0, 7.19d0, 6.87d0, 1.01d0] * (-1)
+    a1 = [ 4.98d0,  1.03d0,  -1.02d0, 1.6d0,   0.5d0,  4.4d0,  0.2d0,  0.d0,   0.d0] * 1.d-2
+    a2 = [-4.88d0,  0.57d0,   0.d0,   0.d0,    0.d0,   0.d0,   0.d0,   0.d0,   0.d0] * 1.d-4
+    a3 = [ 3.02d0,  0.13d0,   0.d0,   0.d0,    0.d0,   0.d0,   0.d0,   0.d0,   0.d0] * 1.d-6
+    
+    pll = pl  ! Local pl
+    if(pl.eq.2 .and. pa.gt.163.6d0) pll = 3  ! Venus 2
+    planet_magnitude_new = 5*log10(r*d) + a0(pll) + a1(pll)*pa + a2(pll)*pa2 + a3(pll)*pa3
+    
+  end function planet_magnitude_new
   !*********************************************************************************************************************************
   
   
