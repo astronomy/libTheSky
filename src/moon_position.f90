@@ -195,8 +195,6 @@ contains
     
     rad = rad*km/au  ! km -> AU
     
-    !write(*,'(/, F20.5, 2F14.7,F14.5)') jd, rev(lon)*r2d, lat*r2d, rad
-    
   end subroutine elp_mpp02_lbr
   !*********************************************************************************************************************************
   
@@ -227,7 +225,7 @@ contains
   !!    - mode=0, the constants are fitted to LLR observations provided from 1970 to 2001; it is the default value;
   !!    - mode=1, the constants are fitted to DE405 ephemeris over one century (1950-2060); the lunar angles W1, W2, W3
   !!              receive also additive corrections to the secular coefficients ('historical mode').
-  !!    When the mode is changed, the data must be reinitialised and the data file reread.
+  !!    When the mode is changed, the constants will be reinitialised and the data file reread.
   !!
   !!  - Solutions (discussed) in the paper:
   !!    - ELP (original):
@@ -267,7 +265,6 @@ contains
     real(double) :: cbeta,clamb,cw, ppw,ppw2,ppwqpw,ppwra,pw,pw2,pwqw,pwra, qpw,qpw2,qpwra,qw,qw2,qwra
     real(double) :: ra,rap,sbeta,slamb,sw, x,x1,x2,x3, xp,xp1,xp2,xp3, y,yp
     
-    
     ! Initialise data and read files if needed:
     call elp_mpp02_initialise_and_read_files(mode, ierr)
     if(ierr.ne.0) call quit_program_error('Could not read ELP-MPP02 files',0)
@@ -282,9 +279,8 @@ contains
     t(4) = t(2)**2      ! t^4
     
     ! Evaluation of the series: substitution of time in the series
+    v = 0.d0
     do iVar=1,3  ! iVar=1,2,3: Longitude, Latitude, Distance
-       v(iVar) = 0.d0
-       v(iVar+3) = 0.d0
        
        ! Main Problem series:
        do iLine=nmpb(iVar,2),nmpb(iVar,3)
@@ -297,8 +293,8 @@ contains
              yp = yp + k*fmpb(k,iLine)*t(k-1)
           end do  ! k
           
-          v(iVar) = v(iVar)+x*sin(y)
-          v(iVar+3) = v(iVar+3)+x*yp*cos(y)
+          v(iVar)   = v(iVar)   + x*sin(y)
+          v(iVar+3) = v(iVar+3) + x*yp*cos(y)
        end do  ! iLine
        
        ! Perturbations series:
@@ -308,14 +304,14 @@ contains
              y = fper(0,iLine)
              xp = 0.d0
              yp = 0.d0
-             if(it.ne.0) xp = it*x*t(it-1)
+             if(it.ne.0) xp = it * x * t(it-1)
              
              do k=1,4
-                y = y+fper(k,iLine)*t(k)
-                yp = yp+k*fper(k,iLine)*t(k-1)
+                y = y   +   fper(k,iLine)*t(k)
+                yp = yp + k*fper(k,iLine)*t(k-1)
              end do  ! k
              
-             v(iVar) = v(iVar) + x*t(it)*sin(y)
+             v(iVar)   = v(iVar)   + x * t(it) * sin(y)
              v(iVar+3) = v(iVar+3) + xp*sin(y) + x*t(it)*yp*cos(y)
           end do  ! iLine
        end do  ! it
@@ -325,8 +321,13 @@ contains
     
     ! Compute the spherical coordinates for the mean inertial ecliptic and equinox of date:
     v(1)   = v(1)/r2as + w(1,0) + w(1,1)*t(1) + w(1,2)*t(2) + w(1,3)*t(3) + w(1,4)*t(4)  ! Longitude + mean longitude (rad)
+    !v(1)   = rev(v(1)/r2as) + w(1,0) + rev(w(1,1)*t(1)) + rev(w(1,2)*t(2)) + rev(w(1,3)*t(3)) + rev(w(1,4)*t(4))  ! Longitude + mean longitude (rad)
     v(2)   = v(2)/r2as                                                                   ! Latitude (rad)
     v(3)   = v(3) * a405 / aelp                                                          ! Distance (km)
+    
+    v(1) = rev(v(1))  ! This adds a bit of CPU time, but also alters the outcome of the cos/sin, similarly to
+    !                   taking the 5 rev()s before adding up the terms when computing v(1), which might
+    !                   indicate that this gives a better result, especially for dates far from 2000
     
     !lambda = v(1)
     !beta = v(2)

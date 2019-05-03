@@ -957,11 +957,14 @@ contains
   !***************************************************************************************************
   !> \brief  Read the six data files containing the ELP/MPP02 series
   !!
-  !! \retval ierr      File rrror index: ierr=0: no error, ierr=1: file error
+  !! \retval ierr      File error index: ierr=0: no error, ierr=1: file error
   !!
   !! \note
   !! - module elp_mpp02_constants:  Set of the constants of ELP/MPP02 solution (input)
   !! - module elp_mpp02_series:  Series of the ELP/MPP02 solution (output)
+  !!
+  !! \see
+  !! - Data files: ftp://cyrano-se.obspm.fr/pub/2_lunar_solutions/2_elpmpp02/
   
   subroutine elp_mpp02_read_files(ierr)
     use SUFR_kinds, only: double
@@ -1000,7 +1003,7 @@ contains
        if(nerr.ne.0) return
        
        nmpb(iFile,2) = ir+1
-       nmpb(iFile,3) = nmpb(iFile,1) + nmpb(iFile,2)-1
+       nmpb(iFile,3) = nmpb(iFile,1) + nmpb(iFile,2) - 1
        
        do iLine=1,nmpb(iFile,1)
           ierr=4
@@ -1095,7 +1098,7 @@ contains
     real(double), intent(in) :: sec
     real(double) :: elp_dms2rad
     
-    elp_dms2rad = (deg+min/60.d0+sec/3600.d0)*d2r
+    elp_dms2rad = (deg+min/60.d0+sec/3600.d0) * d2r
   end function elp_dms2rad
   !***************************************************************************************************
   
