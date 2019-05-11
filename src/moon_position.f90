@@ -406,10 +406,6 @@ contains
   !! \see
   !! - Meeus, Astronomical Algorithms, 1998, Ch. 22 and 47
   !! - Simon et al, A&A, 282, p.663 (1994)
-  !! 
-  !!
-  !! \todo
-  !! - Improve some parts (search for 'improve' below): use Meeus Ch.47/p.338 rather than Ch.22/p.144
   
   subroutine moonpos_la(jd, calc,nt)
     use SUFR_kinds, only: double
@@ -428,7 +424,7 @@ contains
     integer, intent(in) :: calc,nt
     
     integer :: i,j,mal(4,60),mab(4,60)
-    real(double) :: jde,deltat,t,t2,t3,l,b,r,  lm,d,ms,mm,f,e,esl(60),esb(60),a1,a2,a3
+    real(double) :: jde,deltat, tjc,tjc2,tjc3,tjc4, l,b,r,  lm,d,ms,mm,f,e,esl(60),esb(60),a1,a2,a3
     real(double) :: ls,omg,ra,dec,eps,eps0,deps,gmst,agst,lst,dpsi,az,alt,hh, args(4),argl,argb
     real(double) :: moondat(nPlanpos), hcl0,hcb0,hcr0, gcl,gcb,delta, elon,pa,illfr
     
@@ -436,27 +432,34 @@ contains
     
     deltat = calc_deltat(jd)
     jde = jd + deltat/86400.d0
-    t   = (jde-jd2000)/36525.d0  ! Julian Centuries after 2000.0 in dynamical time, the T in Meeus, p.163
-    t2  = t*t
-    t3  = t*t2
     
-    ! These can be improved somewhat (by using Meeus Ch.47/p.338 rather than Ch.22/p.144):
-    ! In fact, these values may be 'incompatible' with the periodic terms used
-    lm = rev(3.8103417d0 + 8399.709113d0*t)                                                 ! Moon's mean longitude, Meeus p.144
+    tjc   = (jde-jd2000)/36525.d0  ! Julian Centuries after 2000.0 in dynamical time, the T in Meeus, p.163
+    tjc2  = tjc**2
+    tjc3  = tjc*tjc2
+    tjc4  = tjc2**2
+    
+    ! Moon's mean longitude, Meeus p.338:
+    lm   = rev(3.8103408236d0    +  8399.7091116339958d0*tjc -  2.755176757d-5*tjc2  +  3.239043d-8*tjc3 -  2.6771d-10*tjc4)
     
     ! Delauney arguments [d, ms, mm, f] (Meeus p.144) = [D, l', l, F] in Simon et al. 1994, Sect. 3.5:
-    d  = rev(5.19846946025d0 + 7771.37714617d0*t - 3.340909d-5*t2    + 9.2114446d-8*t3)     ! Moon's mean elongation
-    ms = rev(6.24003588115d0 + 628.301956024d0*t - 2.79776d-6*t2     - 5.8177641733d-8*t3)  ! Sun's mean anomaly
-    mm = rev(2.3555483693d0  + 8328.69142288d0*t + 1.517947757d-4*t2 + 3.102807559d-7*t3)   ! Moon's mean anomaly
-    f  = rev(1.62790192912d0 + 8433.46615832d0*t - 6.42717497d-5*t2  + 5.3329949d-8*t3)     ! Moon's argument of latitute
+    !d  = rev(5.19846946025d0 + 7771.37714617d0*tjc - 3.340909d-5*tjc2    + 9.2114446d-8*tjc3)     ! Moon's mean elongation
+    !ms = rev(6.24003588115d0 + 628.301956024d0*tjc - 2.79776d-6*tjc2     - 5.8177641733d-8*tjc3)  ! Sun's mean anomaly
+    !mm = rev(2.3555483693d0  + 8328.69142288d0*tjc + 1.517947757d-4*tjc2 + 3.102807559d-7*tjc3)   ! Moon's mean anomaly
+    !f  = rev(1.62790192912d0 + 8433.46615832d0*tjc - 6.42717497d-5*tjc2  + 5.3329949d-8*tjc3)     ! Moon's argument of latitute
+    
+    ! Meeus p.338, compares better to ELP-MPP02:
+    d  = rev(5.1984665298d0  + 7771.377144834d0*tjc - 3.2845d-5*tjc2  + 3.197347d-8*tjc3    - 1.5436512d-10*tjc4)  ! Moon's mean elongation
+    ms = rev(6.240060127d0   + 628.301955167d0*tjc  - 2.681d-6*tjc2   + 7.1267017d-10*tjc3)                        ! Sun's mean anomaly
+    mm = rev(2.355555637d0   + 8328.691424759d0*tjc + 1.52566d-4*tjc2 + 2.5041d-7*tjc3      - 1.18633d-9*tjc4)     ! Moon's mean anomaly
+    f  = rev(1.627905158d0   + 8433.466158061d0*tjc - 6.3773d-5*tjc2  - 4.94988d-9*tjc3     + 2.02167d-11*tjc4)    ! Moon's argument of latitute
     args = [d,ms,mm,f]  ! Delauney arguments
     
-    e  = 1.d0 - 0.002516d0*t - 0.0000074*t2
+    e  = 1.d0 - 0.002516d0*tjc - 0.0000074d0*tjc2
     
     ! Meeus, p.338:
-    a1 = rev(2.090032d0  + 2.301199d0 * t)
-    a2 = rev(0.926595d0  + 8364.7398477d0 * t)
-    a3 = rev(5.4707345d0 + 8399.6847253d0 * t)
+    a1 = rev(2.090032d0  +     2.301199d0 * tjc)
+    a2 = rev(0.926595d0  + 8364.7398477d0 * tjc)
+    a3 = rev(5.4707345d0 + 8399.6847253d0 * tjc)
     
     l  = 0.d0
     r  = 0.d0
@@ -484,13 +487,14 @@ contains
     b = b - 2235*sin(lm) + 382*sin(a3) + 175*sin(a1-f) + 175*sin(a1+f) + 127*sin(lm-mm) - 115*sin(lm+mm)
     
     ! Compute nutation:
-    omg  = 2.18243858558d0 - 33.7570459367d0*t + 3.6142278d-5*t2 + 3.87850944888d-8*t3   ! Moon's mean lon. of asc.node, Meeus p.144
-    ls   = 4.89506386655d0 + 62.84528862d0*t                                             ! Mean long. Sun, Meeus p.144
+    omg  = 2.18243858558d0 - 33.7570459367d0*tjc + 3.6142278d-5*tjc2 + 3.87850944888d-8*tjc3   ! Moon's mean lon. of asc.node, Meeus p.144
+    ls   = 4.89506386655d0 + 62.84528862d0*tjc                                                 ! Mean long. Sun, Meeus p.144
     dpsi = -8.338795d-5*sin(omg) - 6.39954d-6*sin(2*ls) - 1.115d-6*sin(2*lm) + 1.018d-6*sin(2*omg)
     
-    l = rev(dble(l)*1.d-6*d2r + lm + dpsi)
-    b = rev2(dble(b)*1.d-6*d2r)
+    l = rev( dble(l) * 1.d-6*d2r + lm + dpsi)
+    b = rev2(dble(b) * 1.d-6*d2r)
     r = (dble(r*100) + 3.8500056d10)/au
+    
     
     ! Store results:
     planpos(1)   = l  ! Geocentric ecliptic longitude
@@ -501,14 +505,14 @@ contains
     planpos(12)  = pland(0)/(r*au)       ! Apparent diameter of the Moon
        
     planpos(40)  = jde   ! JDE
-    planpos(46)  = t     ! App. dyn. time in Julian Centuries since 2000.0
+    planpos(46)  = tjc   ! App. dyn. time in Julian Centuries since 2000.0
     planpos(47)  = dpsi  ! Nutation in longitude
     
     if(calc.eq.1) return
     
     
     ! Obliquity of the ecliptic:
-    eps0 = 0.409092804222d0 - 2.26965525d-4*t - 2.86d-9*t2 + 8.78967d-9*t2*t                ! Mean obliquity of the ecliptic
+    eps0 = 0.409092804222d0 - 2.26965525d-4*tjc - 2.86d-9*tjc2 + 8.78967d-9*tjc3            ! Mean obliquity of the ecliptic
     deps = 4.468d-5*cos(omg) + 2.76d-6*cos(2*ls) + 4.848d-7*cos(2*lm) - 4.36d-7*cos(2*omg)  ! Nutation in obliquity
     eps  = eps0 + deps                                                                      ! True obliquity of the ecliptic
     

@@ -114,7 +114,8 @@ contains
     
     ! Mean longitude of the Moon, L in CTC88:
     lm   = 3.810344430588d0  +  8399.709113522267d0*tjc  -  2.315615585d-5*tjc2  +  3.23904d-8*tjc3  -  2.67714d-10*tjc4
-    
+    !lm  = 3.8103408236d0    +  8399.7091116339958d0*tjc -  2.755176757d-5*tjc2  +  3.239043d-8*tjc3 -  2.6771d-10*tjc4 - Meeus, CHECK 3rd term!
+     
     ! Nutation in longitude, 1980 IAU Theory of Nutation, Seidelmann (1982), Table I, lines 1,9,31,2,10 -> rad:
     dpsi = (-8.338601d-5-7.1365d-8*tjc)*sin(omg) - 6.39324d-6*sin(2*l0) - 1.1025d-6*sin(2*lm) + 9.9969d-7*sin(2*omg) &
          + 6.9134d-7*sin(m)
