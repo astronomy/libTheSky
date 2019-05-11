@@ -458,7 +458,7 @@ contains
        eart(1) =  129597742.2758d0   * as2r
        peri(1) =  1161.2283d0        * as2r
        
-       w(1,2)  = -5.8883d0           * as2r
+       w(1,2)  = -5.8883d0           * as2r  ! CHECK - should this be 6.8883?
        w(2,2)  = -38.2776d0          * as2r
        w(3,2)  =  6.3622d0           * as2r
        eart(2) = -0.0202d0           * as2r

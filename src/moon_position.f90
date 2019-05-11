@@ -40,7 +40,8 @@ contains
   !!     for CE 0).  The subroutine elp_mpp02_lbr() below is supposed to give better results (but then again, so is this
   !!     one).
   !! - Differences compared to ELP-MPP02 (ELP82b minus ELP-MPP02):
-  !!   - longitude: +0.00001° in CE 1975, ~+0.11° in CE 0/4000 and +~0.7° in 3000 BCE
+  !!   - longitude: +0.00001° in CE 1975, ~+0.11° in CE 0/4000 and +~0.7° in 3000 BCE (systematicly drifting to positive values)
+  !!                - replacing w(1,2)  = -5.8883 with -6.8883 replaces the systematic drift to +0.7° to -0.07° @3000 BCE
   !!   - latitude:  ~0.00000° in CE 1990, ~+/-0.01° in CE 0/4000 and +/- ~0.06° in 3000 BCE
   !!   - distance:  +/-0.03 km in CE 2000, +/- ~30 km in CE 0/4000 and +/- ~300 km in 3000 BCE
   !!
@@ -51,7 +52,7 @@ contains
   
   subroutine elp82b_lbr(tjj, ll,bb,rr)
     use SUFR_kinds, only: double, dbl
-    use SUFR_constants, only: as2r, au, km
+    use SUFR_constants, only: as2r, au, km,  r2d
     use SUFR_angles, only: rev
     
     use TheSky_moondata, only: t, nterm,nrang, pc1,pc2,pc3, per1,per2,per3, w, ath,a0
@@ -61,7 +62,7 @@ contains
     real(double), intent(out) :: ll,bb,rr
     
     integer :: iv,itab,nt,k,j
-    real(double) :: r(3),x,y, pa,t4,t8
+    real(double) :: r(3),x,y, pa,t4,t8, lon,lat,dist
     
     
     r = 0.0_dbl
@@ -77,15 +78,15 @@ contains
     t8 = t4**2  ! t^8
     
     
-    do iv=1,3
+    do iv=1,3  ! 3 variables (lon, lat, dist)
        r(iv) = 0.0_dbl
        
-       do itab = 1,12
+       do itab = 1,12  ! 12 tables: ELP1,4,7,10,13,16,19,22,25,28,31,34 for lon
           do nt = 1,nterm(iv,itab)
              
-             select case(iv)
+             select case(iv)  ! variable
                 
-             case(1)
+             case(1)  ! lon
                 if(itab.eq.1) then
                    x = pc1(1,nt)
                    y = pc1(2,nt)
@@ -98,7 +99,7 @@ contains
                    y = per1(2,j) + per1(3,j)*t(1)
                 end if
                 
-             case(2)
+             case(2)  ! lat
                 if(itab.eq.1) then
                    x = pc2(1,nt)
                    y = pc2(2,nt)
@@ -111,7 +112,7 @@ contains
                    y = per2(2,j) + per2(3,j)*t(1)
                 end if
                 
-             case(3)
+             case(3)  ! dist
                 if(itab.eq.1) then
                    x = pc3(1,nt)
                    y = pc3(2,nt)
@@ -137,6 +138,13 @@ contains
     r(1) = r(1) * as2r + w(1,0) + w(1,1)*t(1) + w(1,2)*t(2) + w(1,3)*t(3) + w(1,4)*t(4)  ! Add mean longitude (see ELP PS-file, p.3)
     r(2) = r(2) * as2r
     r(3) = r(3) * a0 / ath
+    
+    lon = r(1)
+    lat = r(2)
+    dist = r(3)
+    !write(*,'(A, F15.9,2F14.7,9F14.5)') 'ELP82b:    ', t(1), rev(lon)*r2d, lat*r2d, dist, &
+    !     rev(w(1,0) + w(1,1)*t(1) + w(1,2)*t(2) + w(1,3)*t(3) + w(1,4)*t(4))*r2d, &
+    !     rev(w(1,0))*r2d, rev(w(1,1)*t(1))*r2d, rev(w(1,2)*t(2))*r2d, rev(w(1,3)*t(3))*r2d, rev(w(1,4)*t(4))*r2d
     
     ! Precess from J2000 to EoD, see ELP PS-file, p12;  Laskar 1986 - note: longitude only!:
     pa =   2.438174835301452d-2  * t(1)     + 5.391128133938040d-6  * t(2)     + 3.733065344543427d-10 * t(3)    &
@@ -243,7 +251,7 @@ contains
   
   subroutine elp_mpp02_xyz(jd, mode, xyz,vxyz, ierr)
     use SUFR_kinds, only: double
-    use SUFR_constants, only: r2as, jd2000  !, r2d,as2r
+    use SUFR_constants, only: r2as, jd2000  , r2d!,as2r
     use SUFR_system, only: quit_program_error
     use SUFR_angles, only: rev
     use TheSky_data, only: elp_mpp02_initialise_and_read_files
@@ -261,7 +269,7 @@ contains
     real(double), parameter :: a405=384747.9613701725d0, aelp=384747.980674318d0, sc=36525.d0  ! Moon mean distance for DE405 und ELP; Julian century in days
     
     integer :: it,iLine,iVar, k
-    real(double) :: rjd, t(-1:4),v(6)  !, lambda,beta,rad
+    real(double) :: rjd, t(-1:4),v(6), lon,lat,dist
     real(double) :: cbeta,clamb,cw, ppw,ppw2,ppwqpw,ppwra,pw,pw2,pwqw,pwra, qpw,qpw2,qpwra,qw,qw2,qwra
     real(double) :: ra,rap,sbeta,slamb,sw, x,x1,x2,x3, xp,xp1,xp2,xp3, y,yp
     
@@ -325,15 +333,17 @@ contains
     v(2)   = v(2)/r2as                                                                   ! Latitude (rad)
     v(3)   = v(3) * a405 / aelp                                                          ! Distance (km)
     
+    lon = v(1)
+    lat = v(2)
+    dist = v(3)
+    !lon = lon + (5029.0966d0*t(1) + 1.1120d0*t(2) + 0.000077d0*t(3) - 0.00002353d0*t(4)  -  0.29965d0*t(1)) * as2r  ! Precession from J2000 to EoD(?), but only in longitude!
+    !write(*,'(A, F15.9,2F14.7,9F14.5)') 'ELP-MPP02: ', t(1), rev(lon)*r2d, lat*r2d, dist, &
+    !     rev(w(1,0) + w(1,1)*t(1) + w(1,2)*t(2) + w(1,3)*t(3) + w(1,4)*t(4))*r2d, &
+    !     rev(w(1,0))*r2d, rev(w(1,1)*t(1))*r2d, rev(w(1,2)*t(2))*r2d, rev(w(1,3)*t(3))*r2d, rev(w(1,4)*t(4))*r2d
+    
     v(1) = rev(v(1))  ! This adds a bit of CPU time, but also alters the outcome of the cos/sin, similarly to
     !                   taking the 5 rev()s before adding up the terms when computing v(1), which might
     !                   indicate that this gives a better result, especially for dates far from 2000
-    
-    !lambda = v(1)
-    !beta = v(2)
-    !rad = v(3)
-    !lambda = lambda + (5029.0966d0*t(1) + 1.1120d0*t(2) + 0.000077d0*t(3) - 0.00002353d0*t(4)  -  0.29965d0*t(1)) * as2r  ! Precession from J2000 to EoD(?), but only in longitude!
-    !write(*,'(2F14.7,F14.5)') rev(lambda)*r2d, beta*r2d, rad
     
     
     ! Compute the rectangular coordinates (for the EoD?):
