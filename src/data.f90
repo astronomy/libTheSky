@@ -446,30 +446,44 @@ contains
        dtasm = 2.d0*alpha/(3.d0*am)
        
        ! Lunar arguments:
+       ! W1: mean longitude of the Moon:
        w(1,0)  = (218.d0+18.d0*c1 + 59.95571d0*c2) * d2r
        w(1,1)  =  1732559343.73604d0 * as2r
-       w(1,2)  = -5.8883d0           * as2r  ! CHECK - should this be 6.8883?
+       w(1,2)  = -6.8084d0           * as2r  ! CHECK - was -5.8883
+       ! Also -5.8883 in elp82b.pdf (originally PS?), Table C.
+       ! Should this be -6.8883, -6.8083 or -6.8084?  All constants W(1,*) are identical to MPP02, except this one!
+       ! Effect w.r.t. MPP02 in 3000 BCE (one test calculation per century):
+       ! - -5.8883: Delta longitude gradually drifts to +0.65°,   dlat ~ +-0.06°,   ddist ~ +-300km
+       ! - -6.8883:                      dlon drifts to -0.065°,  dlat ~ +-0.005°,  ddist ~ +-13km
+       ! - -6.8083:           dlon no longer drifts, ~ +-0.012°,  dlat ~ +-0.006°,  ddist ~ +-20km
+       ! - -6.8084:           same as above
+       ! - This value comes from DE405 fits(?)
        w(1,3)  =  0.6604d-2          * as2r
        w(1,4)  = -0.3169d-4          * as2r
        
+       ! W2: mean longitude of the lunar perigee:
        w(2,0)  = (83.d0+21.d0*c1  + 11.67475d0*c2) * d2r
        w(2,1)  =  14643420.2632d0    * as2r
        w(2,2)  = -38.2776d0          * as2r
        w(2,3)  = -0.45047d-1         * as2r
        w(2,4)  =  0.21301d-3         * as2r
        
+       ! W3: mean longitude of the lunar ascending node:
        w(3,0)  = (125.d0+2.d0*c1  + 40.39816d0*c2) * d2r
        w(3,1)  = -6967919.3622d0     * as2r
        w(3,2)  =  6.3622d0           * as2r
        w(3,3)  =  0.7625d-2          * as2r
        w(3,4)  = -0.3586d-4          * as2r
        
+       ! Earth-Moon (EMB) elements:
+       ! Te: mean longitude of EMB:
        eart(0) = (100.d0+27.d0*c1 + 59.22059d0*c2) * d2r
        eart(1) =  129597742.2758d0   * as2r
        eart(2) = -0.0202d0           * as2r
        eart(3) =  0.9d-5             * as2r
        eart(4) =  0.15d-6            * as2r
        
+       ! Pip: mean longitude of the perihelion of EMB:
        peri(0) = (102.d0+56.d0*c1 + 14.42753d0*c2) * d2r
        peri(1) =  1161.2283d0        * as2r
        peri(2) =  0.5327d0           * as2r
