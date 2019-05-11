@@ -447,40 +447,40 @@ contains
        
        ! Lunar arguments:
        w(1,0)  = (218.d0+18.d0*c1 + 59.95571d0*c2) * d2r
-       w(2,0)  = (83.d0+21.d0*c1  + 11.67475d0*c2) * d2r
-       w(3,0)  = (125.d0+2.d0*c1  + 40.39816d0*c2) * d2r
-       eart(0) = (100.d0+27.d0*c1 + 59.22059d0*c2) * d2r
-       peri(0) = (102.d0+56.d0*c1 + 14.42753d0*c2) * d2r
-       
        w(1,1)  =  1732559343.73604d0 * as2r
-       w(2,1)  =  14643420.2632d0    * as2r
-       w(3,1)  = -6967919.3622d0     * as2r
-       eart(1) =  129597742.2758d0   * as2r
-       peri(1) =  1161.2283d0        * as2r
-       
        w(1,2)  = -5.8883d0           * as2r  ! CHECK - should this be 6.8883?
-       w(2,2)  = -38.2776d0          * as2r
-       w(3,2)  =  6.3622d0           * as2r
-       eart(2) = -0.0202d0           * as2r
-       peri(2) =  0.5327d0           * as2r
-       
        w(1,3)  =  0.6604d-2          * as2r
-       w(2,3)  = -0.45047d-1         * as2r
-       w(3,3)  =  0.7625d-2          * as2r
-       eart(3) =  0.9d-5             * as2r
-       peri(3) = -0.138d-3           * as2r
-       
        w(1,4)  = -0.3169d-4          * as2r
+       
+       w(2,0)  = (83.d0+21.d0*c1  + 11.67475d0*c2) * d2r
+       w(2,1)  =  14643420.2632d0    * as2r
+       w(2,2)  = -38.2776d0          * as2r
+       w(2,3)  = -0.45047d-1         * as2r
        w(2,4)  =  0.21301d-3         * as2r
+       
+       w(3,0)  = (125.d0+2.d0*c1  + 40.39816d0*c2) * d2r
+       w(3,1)  = -6967919.3622d0     * as2r
+       w(3,2)  =  6.3622d0           * as2r
+       w(3,3)  =  0.7625d-2          * as2r
        w(3,4)  = -0.3586d-4          * as2r
+       
+       eart(0) = (100.d0+27.d0*c1 + 59.22059d0*c2) * d2r
+       eart(1) =  129597742.2758d0   * as2r
+       eart(2) = -0.0202d0           * as2r
+       eart(3) =  0.9d-5             * as2r
        eart(4) =  0.15d-6            * as2r
+       
+       peri(0) = (102.d0+56.d0*c1 + 14.42753d0*c2) * d2r
+       peri(1) =  1161.2283d0        * as2r
+       peri(2) =  0.5327d0           * as2r
+       peri(3) = -0.138d-3           * as2r
        peri(4) =  0.d0
        
        
        ! Precession constant:
        precess = 5029.0966d0 * as2r
        
-       ! Planetary arguments:
+       ! Planetary arguments: mean longitudes:
        p(1,0) = (252.d0+15.d0*c1+3.25986d0*c2)  * d2r
        p(2,0) = (181.d0+58.d0*c1+47.28305d0*c2) * d2r
        p(3,0) = eart(0)
@@ -489,6 +489,8 @@ contains
        p(6,0) = (50.d0+4.d0*c1+38.89694d0*c2)   * d2r
        p(7,0) = (314.d0+3.d0*c1+18.01841d0*c2)  * d2r
        p(8,0) = (304.d0+20.d0*c1+55.19575d0*c2) * d2r
+       
+       ! Planetary arguments: mean motions:
        p(1,1) = 538101628.68898d0               * as2r
        p(2,1) = 210664136.43355d0               * as2r
        p(3,1) = eart(1)
@@ -517,12 +519,15 @@ contains
        zeta(0)  = w(1,0)
        zeta(1)  = w(1,1) + precess
        
-       ! Precession matrix:
+       ! Precession of the longitude of the ascending node of the mean ecliptic of date on fixed ecliptic J2000 (Laskar, 1986):
+       ! P: sine coefficients:
        p1 =  0.10180391d-4
        p2 =  0.47020439d-6
        p3 = -0.5417367d-9
        p4 = -0.2507948d-11
        p5 =  0.463486d-14
+       
+       ! Q: cosine coefficients:
        q1 = -0.113469002d-3
        q2 =  0.12372674d-6
        q3 =  0.1265417d-8
@@ -922,7 +927,7 @@ contains
     
     ! Zeta: Mean longitude of the Moon W1 + Rate of precession (pt):
     zeta(0) = w(1,0)
-    zeta(1) = w(1,1) + (5029.0966d0+Dprec)/r2as
+    zeta(1) = w(1,1) + (5029.0966d0+Dprec)/r2as  ! Include precession
     zeta(2) = w(1,2)
     zeta(3) = w(1,3)
     zeta(4) = w(1,4)
