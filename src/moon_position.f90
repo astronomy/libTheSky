@@ -53,7 +53,7 @@ contains
   
   subroutine elp82b_lbr(tjj, ll,bb,rr)
     use SUFR_kinds, only: double, dbl
-    use SUFR_constants, only: as2r, au, km,  r2d
+    use SUFR_constants, only: as2r, au, km  !,  r2d
     use SUFR_angles, only: rev
     
     use TheSky_moondata, only: t, nterm,nrang, pc1,pc2,pc3, per1,per2,per3, w, ath,a0
@@ -252,7 +252,7 @@ contains
   
   subroutine elp_mpp02_xyz(jd, mode, xyz,vxyz, ierr)
     use SUFR_kinds, only: double
-    use SUFR_constants, only: r2as, jd2000  , r2d!,as2r
+    use SUFR_constants, only: r2as, jd2000  !, r2d!,as2r
     use SUFR_system, only: quit_program_error
     use SUFR_angles, only: rev
     use TheSky_data, only: elp_mpp02_initialise_and_read_files
@@ -434,7 +434,7 @@ contains
     real(double), intent(in) :: jd
     integer, intent(in) :: calc,nt
     
-    integer :: i,j,mal(4,60),mab(4,60)
+    integer :: iLine,iArg, mal(4,60),mab(4,60)
     real(double) :: jde,deltat, tjc,tjc2,tjc3,tjc4, l,b,r,  lm,d,ms,mm,f,e,esl(60),esb(60),a1,a2,a3
     real(double) :: ls,omg,ra,dec,eps,eps0,deps,gmst,agst,lst,dpsi,az,alt,hh, args(4),argl,argb
     real(double) :: moondat(nPlanpos), hcl0,hcb0,hcr0, gcl,gcb,delta, elon,pa,illfr
@@ -450,7 +450,7 @@ contains
     tjc4  = tjc2**2
     
     ! Moon's mean longitude, Meeus p.338:
-    lm   = rev(3.8103408236d0    +  8399.7091116339958d0*tjc -  2.755176757d-5*tjc2  +  3.239043d-8*tjc3 -  2.6771d-10*tjc4)
+    lm = rev(3.8103408236d0 + 8399.7091116339958d0*tjc - 2.755176757d-5*tjc2 + 3.239043d-8*tjc3 - 2.6771d-10*tjc4)
     
     ! Delauney arguments [d, ms, mm, f] (Meeus p.144) = [D, l', l, F] in Simon et al. 1994, Sect. 3.5:
     !d  = rev(5.19846946025d0 + 7771.37714617d0*tjc - 3.340909d-5*tjc2    + 9.2114446d-8*tjc3)     ! Moon's mean elongation
@@ -467,11 +467,6 @@ contains
     
     e  = 1.d0 - 0.002516d0*tjc - 0.0000074d0*tjc2
     
-    ! Meeus, p.338:
-    a1 = rev(2.090032d0  +     2.301199d0 * tjc)
-    a2 = rev(0.926595d0  + 8364.7398477d0 * tjc)
-    a3 = rev(5.4707345d0 + 8399.6847253d0 * tjc)
-    
     l  = 0.d0
     r  = 0.d0
     b  = 0.d0
@@ -481,21 +476,29 @@ contains
     esl = e**abs(moonla_arg(2,:))
     esb = e**abs(moonla_arg(6,:))
     
-    do i=1,min(nt,60)
+    do iLine=1,min(nt,60)
        argl = 0.d0
        argb = 0.d0
-       do j=1,4
-          argl = argl + mal(j,i)*args(j)
-          argb = argb + mab(j,i)*args(j)
+       do iArg=1,4
+          argl = argl + mal(iArg,iLine)*args(iArg)
+          argb = argb + mab(iArg,iLine)*args(iArg)
        end do
-       l = l + sin(argl) * moonla_lrb(1,i) * esl(i)
-       r = r + cos(argl) * moonla_lrb(2,i) * esl(i)
-       b = b + sin(argb) * moonla_lrb(3,i) * esb(i)
+       l = l + sin(argl) * moonla_lrb(1,iLine) * esl(iLine)
+       r = r + cos(argl) * moonla_lrb(2,iLine) * esl(iLine)
+       b = b + sin(argb) * moonla_lrb(3,iLine) * esb(iLine)
     end do
+    
+    
+    ! Perturbations by other planets, and flattening of the Earth:
+    ! Meeus, p.338:
+    a1 = rev(2.090032d0  +     2.301199d0 * tjc)  ! Influence from Venus
+    a2 = rev(0.926595d0  + 8364.7398477d0 * tjc)  ! Influence from Jupiter
+    a3 = rev(5.4707345d0 + 8399.6847253d0 * tjc)
     
     ! Meeus, p.342:
     l = l + 3958*sin(a1) + 1962*sin(lm-f) + 318*sin(a2)
     b = b - 2235*sin(lm) + 382*sin(a3) + 175*sin(a1-f) + 175*sin(a1+f) + 127*sin(lm-mm) - 115*sin(lm+mm)
+    
     
     ! Compute nutation:
     omg  = 2.18243858558d0 - 33.7570459367d0*tjc + 3.6142278d-5*tjc2 + 3.87850944888d-8*tjc3   ! Moon's mean lon. of asc.node, Meeus p.144

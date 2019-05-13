@@ -772,17 +772,17 @@ contains
   !*********************************************************************************************************************************
   !> \brief  Convert spherical ecliptical coordinates from the geocentric to the topocentric system
   !!
-  !! \param  gcl   Geocentric longitude
-  !! \param  gcb   Geocentric latitude
-  !! \param  gcr   Geocentric distance
-  !! \param  gcs   Geocentric semi-diameter
+  !! \param  gcl   Geocentric ecliptic longitude of the object (rad)
+  !! \param  gcb   Geocentric ecliptic latitude of the object (rad)
+  !! \param  gcr   Geocentric distance of the object
+  !! \param  gcs   Geocentric semi-diameter of the object (rad)
   !!
-  !! \param  eps   Obliquity of the ecliptic
-  !! \param  lst   Local sidereal time
+  !! \param  eps   Obliquity of the ecliptic (rad)
+  !! \param  lst   Local sidereal time (rad)
   !!
-  !! \retval tcl   Topocentric longitude
-  !! \retval tcb   Topocentric latitude
-  !! \retval tcs   Topocentric semi-diameter
+  !! \retval tcl   Topocentric ecliptic longitude of the object (rad)
+  !! \retval tcb   Topocentric ecliptic latitude of the object (rad)
+  !! \retval tcs   Topocentric semi-diameter of the object (rad)
   !!
   !!
   !! \param lat   Latitude of the observer (rad, optional)

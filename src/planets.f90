@@ -424,6 +424,9 @@ contains
     ! Geocentric:
     planpos(51) = rev(sun_gcl)      ! Apparent geocentric longitude of the Sun (variable was treated as if pl.eq.3)
     planpos(52) = rev2(sun_gcb)     ! Apparent geocentric latitude of the Sun (variable was treated as if pl.eq.3)
+
+    planpos(58) = jd                ! JD used for calculation
+    planpos(59) = deltat            ! DeltaT used for calculation
     
     planpos(61) = gcx               ! Apparent geocentric x,y,z
     planpos(62) = gcy
