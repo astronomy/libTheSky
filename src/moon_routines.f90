@@ -371,14 +371,13 @@ contains
   !! \param  jd   Julian day for computation
   !! \retval age  Age of the Moon (since last New Moon) in days
   
-  subroutine moon_age(jd, age)
+  function moon_age(jd)
     use SUFR_kinds, only: double
     use SUFR_constants, only: jd2000
     
     implicit none
     real(double), intent(in) :: jd
-    real(double), intent(out) :: age
-    real(double) :: djd, jd0, k0
+    real(double) :: moon_age, djd, jd0, k0
     
     
     ! Moon age:
@@ -386,15 +385,15 @@ contains
     
     ! Overshoot by a month, to make sure you don't miss one.  Age.gt.29.530589d0 doesn't work, since this is the MEAN month:
     k0 = floor(djd/365.25*12.3685d0) + 1.d0
-    age = -1.d0
+    moon_age = -1.d0
     
-    do while(age.lt.0.d0)
+    do while(moon_age.lt.0.d0)
        jd0 = moonphase(k0)
-       age = jd-jd0
+       moon_age = jd-jd0
        k0 = k0 - 1.d0  ! Previous New Moon
     end do
     
-  end subroutine moon_age
+  end function moon_age
   !*********************************************************************************************************************************
   
   
