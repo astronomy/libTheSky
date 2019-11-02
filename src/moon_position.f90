@@ -63,7 +63,7 @@ contains
     real(double), intent(out) :: ll,bb,rr
     
     integer :: iv,itab,nt,k,j
-    real(double) :: r(3),x,y, pa,t4,t8, lon,lat,dist
+    real(double) :: r(3),x,y, pa,t4,t8  !, lon,lat,dist
     
     
     r = 0.0_dbl
@@ -140,9 +140,9 @@ contains
     r(2) = r(2) * as2r
     r(3) = r(3) * a0 / ath
     
-    lon = r(1)
-    lat = r(2)
-    dist = r(3)
+    !lon = r(1)
+    !lat = r(2)
+    !dist = r(3)
     !write(*,'(A, F15.9,2F14.7,9F14.5)') 'ELP82b:    ', t(1), rev(lon)*r2d, lat*r2d, dist, &
     !     rev(w(1,0) + w(1,1)*t(1) + w(1,2)*t(2) + w(1,3)*t(3) + w(1,4)*t(4))*r2d, &
     !     rev(w(1,0))*r2d, rev(w(1,1)*t(1))*r2d, rev(w(1,2)*t(2))*r2d, rev(w(1,3)*t(3))*r2d, rev(w(1,4)*t(4))*r2d
@@ -270,7 +270,7 @@ contains
     real(double), parameter :: a405=384747.9613701725d0, aelp=384747.980674318d0, sc=36525.d0  ! Moon mean distance for DE405 und ELP; Julian century in days
     
     integer :: it,iLine,iVar, k
-    real(double) :: rjd, t(-1:4),v(6), lon,lat,dist
+    real(double) :: rjd, t(-1:4),v(6)  !, lon,lat,dist
     real(double) :: cbeta,clamb,cw, ppw,ppw2,ppwqpw,ppwra,pw,pw2,pwqw,pwra, qpw,qpw2,qpwra,qw,qw2,qwra
     real(double) :: ra,rap,sbeta,slamb,sw, x,x1,x2,x3, xp,xp1,xp2,xp3, y,yp
     
@@ -334,9 +334,9 @@ contains
     v(2)   = v(2)/r2as                                                                   ! Latitude (rad)
     v(3)   = v(3) * a405 / aelp                                                          ! Distance (km)
     
-    lon = v(1)
-    lat = v(2)
-    dist = v(3)
+    !lon = v(1)
+    !lat = v(2)
+    !dist = v(3)
     !lon = lon + (5029.0966d0*t(1) + 1.1120d0*t(2) + 0.000077d0*t(3) - 0.00002353d0*t(4)  -  0.29965d0*t(1)) * as2r  ! Precession from J2000 to EoD(?), but only in longitude!
     !write(*,'(A, F15.9,2F14.7,9F14.5)') 'ELP-MPP02: ', t(1), rev(lon)*r2d, lat*r2d, dist, &
     !     rev(w(1,0) + w(1,1)*t(1) + w(1,2)*t(2) + w(1,3)*t(3) + w(1,4)*t(4))*r2d, &
