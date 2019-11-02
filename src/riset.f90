@@ -56,7 +56,7 @@ contains
   !! - Moon transit error ~0.15s (?)
   !! 
   !! \todo
-  !! - This version sometimes finds the answer tmdy(i)>1, which is the answer for the next day...
+  !! - This version sometimes finds the answer tmRad(i)>1, which is the answer for the next day...
   !!   - (only?) solution: use a solver on JD for az,alt
   !! 
   !! \note Speed wrt riset_ipol(), transit only, when using low-accuracy approximations:
@@ -92,8 +92,8 @@ contains
     integer, intent(out), optional :: converge(3)
     
     integer :: evi,iter,yr,mnt,tc,evMax, lconverge(3)
-    real(double) :: dy,day0,  jd0,jd1,tmdy(3),  ra,dec
-    real(double) :: rsa,cosH0,h0,agst0,th0,dTmdy,accur,  ha,alt,azAlt(3)
+    real(double) :: dy,day0,  jd0,jd1,tmRad(3),  ra,dec
+    real(double) :: rsa,cosH0,h0,agst0,th0,dTmRad,accur,  ha,alt,azAlt(3)
     character :: event(3)*(13)
     logical :: use_vsop, lltime, lcWarn
     
@@ -110,7 +110,7 @@ contains
     end if
     
     
-    alt=0.d0; ha=0.d0; h0=0.d0; azAlt=0.d0; tmdy=0.d0
+    alt=0.d0; ha=0.d0; h0=0.d0; azAlt=0.d0; tmRad=0.d0
     tc = 0        ! 0: geocentric, 1: topocentric, seems to give wrong results (for the Moon), see also different rsa
     event = ['Transit time ','Rise time    ','Set time     ']
     
@@ -153,10 +153,10 @@ contains
     end if
     
     
-    tmdy(1) = rev(ra - lon0 - agst0)  ! Transit time in radians; tmdy(1)=m0, tmdy(2)=m1, tmdy(3)=m2 in Meeus, but lon0 > 0 for E
+    tmRad(1) = rev(ra - lon0 - agst0)  ! Transit time in radians; tmRad(1)=m0, tmRad(2)=m1, tmRad(3)=m2 in Meeus, but lon0 > 0 for E
     if(evMax.eq.3) then
-       tmdy(2) = rev(tmdy(1) - h0)    ! Rise time in radians
-       tmdy(3) = rev(tmdy(1) + h0)    ! Set time in radians
+       tmRad(2) = rev(tmRad(1) - h0)    ! Rise time in radians
+       tmRad(3) = rev(tmRad(1) + h0)    ! Set time in radians
     end if
     
     
@@ -165,12 +165,12 @@ contains
        accur = 1.d-3       ! Accuracy.  Initially 1d-3, later 1d-5 ~ 0.1s. Don't make this smaller than 1d-16
        use_vsop = .false.  ! Initially
        
-       dTmdy = huge(dTmdy)
-       do while(abs(dTmdy).ge.accur .or. .not.use_vsop)
-          th0 = agst0 + 1.002737909350795d0*tmdy(evi)   ! Solar day in sidereal days in 2000; Expl.Suppl.tt.Astr.Almanac 3rdEd 
-          jd1 = jd0 + tmdy(evi)/pi2 + deltat/86400.d0   !                                    Eq.3.17 (removed '...37...' typo)
+       dTmRad = huge(dTmRad)
+       do while(abs(dTmRad).ge.accur .or. .not.use_vsop)
+          th0 = agst0 + 1.002737909350795d0*tmRad(evi)   ! Solar day in sidereal days in 2000; Expl.Suppl.tt.Astr.Almanac 3rdEd 
+          jd1 = jd0 + tmRad(evi)/pi2 + deltat/86400.d0   !                                    Eq.3.17 (removed '...37...' typo)
           
-          if(abs(dTmdy).le.accur) then
+          if(abs(dTmRad).le.accur) then
              use_vsop = .true.
              accur = 1.d-5  ! 1d-5~0.1s.  Changing this to 1.d-4 (~1s) speeds the code yearly_moon_table code up by ~30%
           end if
@@ -191,22 +191,22 @@ contains
           
           ! Correction to transit/rise/set times:
           if(evi.eq.1) then  ! Transit
-             dTmdy = -ha
+             dTmRad = -ha
           else              ! Rise/set
-             dTmdy = (alt-rsa)/(cos(dec)*cos(lat0)*sin(ha))
+             dTmRad = (alt-rsa)/(cos(dec)*cos(lat0)*sin(ha))
           end if
-          tmdy(evi) = tmdy(evi) + dTmdy
+          tmRad(evi) = tmRad(evi) + dTmRad
           
           iter = iter+1
           if(iter.gt.30) exit  ! do-while loop
-       end do  ! do while(abs(dTmdy).ge.accur .or. .not.use_vsop)
+       end do  ! do while(abs(dTmRad).ge.accur .or. .not.use_vsop)
        
        
        if(iter.gt.30) then  ! Convergence failed
           if(lcWarn .and. (pl.ne.3.or.nint(rsAlt).ne.-18)) write(0,'(A,F10.3,A)') '  * WARNING:  riset():  Riset failed to '// &
                'converge: '//trim(enpname(pl))//'  '//trim(event(evi)),rsAlt,'d *'
           
-          tmdy(evi) = 0.d0
+          tmRad(evi) = 0.d0
           azAlt(evi) = 0.d0
        else               ! Result converged, store it
           if(evi.eq.1) then
@@ -216,13 +216,13 @@ contains
           end if
        end if
        
-       if(pl.eq.0 .and. tmdy(evi).gt.pi2) then  ! Moon;  in case after m_i = m_i+1, m_f > 1
-          tmdy(evi) = 0.d0
+       if(pl.eq.0 .and. tmRad(evi).gt.pi2) then  ! Moon;  in case after m_i = m_i+1, m_f > 1
+          tmRad(evi) = 0.d0
           azAlt(evi) = 0.d0
        end if
        
-       if(tmdy(evi).lt.0.d0 .and. deq0(rsAlt)) then
-          tmdy(evi) = 0.d0
+       if(tmRad(evi).lt.0.d0 .and. deq0(rsAlt)) then
+          tmRad(evi) = 0.d0
           azAlt(evi) = 0.d0
        end if
        
@@ -232,10 +232,11 @@ contains
     
     
     ! Store results:
-    tmdy = tmdy * r2h  ! Times radians -> hours
-    tt = tmdy(1)       ! Transit time
-    rt = tmdy(2)       ! Rise time
-    st = tmdy(3)       ! Set time
+    tmRad = tmRad * r2h  ! Times radians -> hours
+    
+    tt = tmRad(1)       ! Transit time
+    rt = tmRad(2)       ! Rise time
+    st = tmRad(3)       ! Set time
     
     ta = azAlt(1)  ! Transit altitude
     rh = azAlt(2)  ! Rise azimuth
