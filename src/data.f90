@@ -33,7 +33,7 @@ contains
   subroutine set_TheSky_constants()
     use SUFR_constants, only: set_SUFR_constants, homedir
     use SUFR_system, only: error,quit_program_error
-    use TheSky_constants, only: library_name, TheSky_verbosity, TheSkydir
+    use TheSky_constants, only: library_name, TheSky_verbosity, TheSkydir, deltat_forced
     
     implicit none
     integer, parameter :: ntrials = 11
@@ -82,6 +82,8 @@ contains
        write(0,'(A)') 'or github.com/astronomy/libTheSky. See the libTheSky INSTALL file for details.'
        call quit_program_error('libTheSky: Data directory not found.', 1)
     end if
+    
+    deltat_forced = -huge(deltat_forced)  ! Use this to force the DeltaT to a given value (if > -9999)
     
   end subroutine set_TheSky_constants
   !*********************************************************************************************************************************

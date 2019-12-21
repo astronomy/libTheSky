@@ -339,6 +339,7 @@ contains
     use SUFR_kinds, only: double
     use SUFR_date_and_time, only: jd2cal
     use SUFR_numerics, only: deq0
+    use TheSky_constants, only: deltat_forced
     use TheSky_local, only: year,month,day
     
     implicit none
@@ -348,6 +349,14 @@ contains
     real(double) :: calc_deltat,d
     integer :: y,m
     logical :: force_recompute_l
+    
+    
+    ! If deltat_forced > -9999, use that value:
+    if(deltat_forced .gt. -9999.d0) then
+       calc_deltat = deltat_forced
+       return
+    end if
+    
     
     ! Optional variable:
     force_recompute_l = .false.
@@ -383,7 +392,7 @@ contains
   function calc_deltat_ymd(y,m,d, force_recompute)
     use SUFR_kinds, only: double
     use SUFR_numerics, only: deq
-    use TheSky_constants, only: deltat_0, deltat_accel, deltat_change, deltat_minyr, deltat_maxyr, deltat_years, deltat_values
+    use TheSky_constants, only: deltat_0, deltat_accel, deltat_change, deltat_minyr, deltat_maxyr, deltat_years, deltat_values, deltat_forced
     
     implicit none
     integer, intent(in) :: y,m
@@ -394,6 +403,12 @@ contains
     real(double) :: calc_deltat_ymd, y0,dy, ddt
     real(double), save :: calc_deltat_old, y0_old
     logical :: force_recompute_l
+    
+    ! If deltat_forced > -9999, use that value:
+    if(deltat_forced .gt. -9999.d0) then
+       calc_deltat_ymd = deltat_forced
+       return
+    end if
     
     
     ! Optional variable:
@@ -423,12 +438,12 @@ contains
        if(y.lt.yr1) then  ! Earlier than historical record
           dy = y0 - dble(deltat_minyr)
           ddt = (deltat_values(2)-deltat_values(1)) / (deltat_years(2)-deltat_years(1))  ! 1 and 2 are spaced by 100 yr
-          calc_deltat_ymd = deltat_values(1)  +  ddt * dy  +  deltat_accel * dy*dy
+          calc_deltat_ymd = deltat_values(1)  +  ddt * dy  +  deltat_accel * dy**2
        end if
        
        if(y.gt.yr2) then  ! Future extrapolation
           dy = y0 - dble(deltat_maxyr)
-          calc_deltat_ymd = deltat_0 + deltat_change * dy  +  deltat_accel * dy*dy
+          calc_deltat_ymd = deltat_0 + deltat_change * dy  +  deltat_accel * dy**2
        end if
        
     end if  ! if(y.gt.yr0.and.y.lt.yr1)
