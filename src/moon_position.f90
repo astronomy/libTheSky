@@ -40,8 +40,8 @@ contains
   !!     for CE 0).  The subroutine elp_mpp02_lbr() below is supposed to give better results (but then again, so is this
   !!     one).
   !! - Differences compared to ELP-MPP02 (ELP82b minus ELP-MPP02):
-  !!   - longitude: +0.00001° in CE 1975, ~+0.11° in CE 0/4000 and +~0.65° in 3000 BCE (systematicly drifting to positive values)
-  !!                - replacing w(1,2)  = -5.8883 with -6.8084 removes the systematic drift to +0.65° @3000 BCE;
+  !!   - longitude: +0.00001° in CE 1975, ~+0.11° in CE 0/4000 and ~+0.65° in 3000 BCE (systematicly drifting to positive values)
+  !!                - replacing w(1,2)  = -5.8883 with -6.8084 removes the systematic drift to +0.65° @3000 BCE; (data.f90 / readmoondata())
   !!                  the drift now oscillates around +-0.012°;
   !!   - latitude:  ~0.00000° in CE 1990, ~+/-0.01° in CE 0/4000 and +/- ~0.06° (now ~0.006°) in 3000 BCE
   !!   - distance:  +/-0.03 km in CE 2000, +/- ~30 km in CE 0/4000 and +/- ~300 km (now ~20km) in 3000 BCE

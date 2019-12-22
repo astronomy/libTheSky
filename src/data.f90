@@ -451,6 +451,7 @@ contains
        ! W1: mean longitude of the Moon:
        w(1,0)  = (218.d0+18.d0*c1 + 59.95571d0*c2) * d2r
        w(1,1)  =  1732559343.73604d0 * as2r
+       ! w(1,2)  = -5.8883d0           * as2r  ! Original, but erroneous!
        w(1,2)  = -6.8084d0           * as2r  ! CHECK - was -5.8883
        ! Also -5.8883 in elp82b.pdf (originally PS?), Table C.
        ! Should this be -6.8883, -6.8083 or -6.8084?  All constants W(1,*) are identical to MPP02, except this one!

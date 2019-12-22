@@ -117,7 +117,8 @@ contains
     lltime = .true.                    ! Take into account light time by default
     if(present(ltime)) lltime = ltime
     
-    llunar_theory = 3  ! ELP-MPP02/DE405 ('historical')
+    !llunar_theory = 1  ! Use (corrected) ELP82b as default
+    llunar_theory = 3  ! Use ELP-MPP02/DE405 ('historical') as default.  This should be the "default default" :-)
     if(present(lunar_theory)) llunar_theory = lunar_theory
     if(llunar_theory.lt.1 .or. llunar_theory.gt.3) &
          call quit_program_error('planet_position(): lunar_theory must be 1, 2 or 3', 1)
