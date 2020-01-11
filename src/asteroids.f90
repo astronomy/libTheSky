@@ -32,14 +32,14 @@ contains
   !! \param tjm  Dynamical time in Julian Millennia after 2000.0
   !! \param as   Asteroid ID
   !!
-  !! \retval hcr   Heliocentric distance (AU)
-  !! \retval om1   Argument of perihelion (rad)
-  !! \retval nu    True anomaly (rad)
+  !! \param hcr   Heliocentric distance (AU) (output)
+  !! \param om1   Argument of perihelion (rad) (output)
+  !! \param nu    True anomaly (rad) (output)
   !!
-  !! \retval cosi  cos(i): cosine of inclination
-  !! \retval sini  sin(i): sine of inclination
-  !! \retval coso  cos(Om): cosine of longitude of ascending node
-  !! \retval sino  sin(Om): sine of longitude of ascending node
+  !! \param cosi  cos(i): cosine of inclination (output)
+  !! \param sini  sin(i): sine of inclination (output)
+  !! \param coso  cos(Om): cosine of longitude of ascending node (output)
+  !! \param sino  sin(Om): sine of longitude of ascending node (output)
   !!
   !! \see Meeus, Astronomical Algorithms, 1998, Ch.33
   !!
@@ -105,9 +105,9 @@ contains
   !! \param t    Dynamical time in Julian Millennia after 2000.0
   !! \param as   Asteroid ID
   !!
-  !! \retval l   Heliocentric ecliptical longitude (rad)
-  !! \retval b   Heliocentric ecliptical latitude (rad)
-  !! \retval r   Heliocentric distance (AU)
+  !! \param l   Heliocentric ecliptical longitude (rad) (output)
+  !! \param b   Heliocentric ecliptical latitude (rad) (output)
+  !! \param r   Heliocentric distance (AU) (output)
   !!
   !! \see Meeus, Astronomical Algorithms, 1998, Ch.33
   
@@ -154,9 +154,9 @@ contains
   !! \param b0   Heliocentric latitude of Earth
   !! \param r0   Heliocentric distance of Earth
   !!
-  !! \retval ra     Geocentric right ascension (rad)
-  !! \retval dec    Geocentric declination (rad)
-  !! \retval delta  Geocentric distance (AU)
+  !! \param ra     Geocentric right ascension (rad) (output)
+  !! \param dec    Geocentric declination (rad) (output)
+  !! \param delta  Geocentric distance (AU) (output)
   !!
   !! \see Meeus, Astronomical Algorithms, 1998, Ch.33
   
@@ -265,7 +265,7 @@ contains
   !!
   !! \param  ecc  Eccentricity
   !! \param  mea  Mean anomaly
-  !! \retval eca   Eccentric anomaly
+  !! \param eca   Eccentric anomaly (output)
   !!
   !! Solve Kepler's equation for given eccentricity ecc, mean anomaly mea and eccentric anomaly eca
   !! \see Meeus, Astronomical Algorithms, 1998, p.206

@@ -85,13 +85,13 @@ contains
   !*********************************************************************************************************************************
   !> \brief  Retrieve the current global date/time variables (year, month, ..., minute, second, stored in TheSky_local)
   !!
-  !! \retval year    Year
-  !! \retval month   Month
-  !! \retval day     Day
+  !! \param year    Year (output)
+  !! \param month   Month (output)
+  !! \param day     Day (output)
   !!
-  !! \retval hour    Hour
-  !! \retval minute  Minute
-  !! \retval second  Second
+  !! \param hour    Hour (output)
+  !! \param minute  Minute (output)
+  !! \param second  Second (output)
   
   subroutine get_date_and_time(year,month,day, hour,minute, second)
     use SUFR_kinds, only: double
@@ -117,15 +117,15 @@ contains
   !*********************************************************************************************************************************
   !> \brief Return system-clock date and time in (year, month, ..., minute, second and tz)
   !! 
-  !! \retval year    Year
-  !! \retval month   Month of year
-  !! \retval day     Day of month
+  !! \param year    Year (output)
+  !! \param month   Month of year (output)
+  !! \param day     Day of month (output)
   !! 
-  !! \retval hour    Hour of day
-  !! \retval minute  Minute
-  !! \retval second  Second
+  !! \param hour    Hour of day (output)
+  !! \param minute  Minute (output)
+  !! \param second  Second (output)
   !! 
-  !! \retval tz      Time zone w.r.t. Greenwich - >0 = east
+  !! \param tz      Time zone w.r.t. Greenwich - >0 = east (output)
   
   subroutine system_clock_2_ymdhms(year,month,day, hour,minute,second, tz)
     use SUFR_kinds, only: double
@@ -189,9 +189,9 @@ contains
   !*********************************************************************************************************************************
   !> \brief  Compute UT, JD, JDE, DeltaT and TZ, using the date and (local) time and TZ stored in the module TheSky_local
   !!
-  !! \retval ut   Universal time
-  !! \retval jd   Julian date
-  !! \retval jde  Julian date
+  !! \param ut   Universal time (output)
+  !! \param jd   Julian date (output)
+  !! \param jde  Julian date (output)
   !!
   !! \note
   !! - Date and time are obtained from year, month, day, hour, minute, second, through the module TheSky_local, assuming LOCAL time
@@ -234,7 +234,8 @@ contains
   !> \brief  Calculate Greenwich Mean Sidereal Time for any instant, in radians
   !!
   !! \param  jd         Julian day of computation
-  !! \retval calc_gmst  Greenwich Mean Sidereal Time in radians
+  !! \param  DeltaT     ΔT (s) (optional)
+  !! \retval calc_gmst  Greenwich Mean Sidereal Time (radians)
   !!
   !! \see Explanatory Supplement to the Astronomical Almanac, 3rd edition, Eq. 6.66 (2012)
   
@@ -297,7 +298,7 @@ contains
   !*********************************************************************************************************************************
   !> \brief  Computes JD, DeltaT and TZ, from date/time variables in module TheSky_local
   !!
-  !! \retval JD   Julian date
+  !! \param JD   Julian date (output)
   !!
   !! \note
   !! - Date and time are obtained from year, month, day, hour, minute, second, through the module TheSky_local
@@ -498,12 +499,12 @@ contains
   !!
   !! \param  jd  Julian day (UT)
   !!
-  !! \retval yy  Year (CE, LT)
-  !! \retval mm  Month (LT)
-  !! \retval d   Day (LT)
-  !! \retval h   Hour (LT)
-  !! \retval m   Minute (LT)
-  !! \retval s   Second (+ fraction, LT)
+  !! \param yy  Year (CE, LT) (output)
+  !! \param mm  Month (LT) (output)
+  !! \param d   Day (LT) (output)
+  !! \param h   Hour (LT) (output)
+  !! \param m   Minute (LT) (output)
+  !! \param s   Second (+ fraction, LT) (output)
   
   subroutine jd2dtm(jd,  yy,mm,d, h,m,s)
     use SUFR_kinds, only: double, dbl
@@ -564,11 +565,11 @@ contains
   !> \brief  Convert a Julian day (UT) to LOCAL date and time (h,m - no seconds)
   !!
   !! \param  jd  Julian day (UT)
-  !! \retval yy   Year (CE, LT)
-  !! \retval mm   Month (LT)
-  !! \retval d    Day (LT)
-  !! \retval h    Hour (LT)
-  !! \retval m    Minute (LT)
+  !! \param yy   Year (CE, LT) (output)
+  !! \param mm   Month (LT) (output)
+  !! \param d    Day (LT) (output)
+  !! \param h    Hour (LT) (output)
+  !! \param m    Minute (LT) (output)
   
   subroutine jd2dthm(jd,yy,mm,d,h,m)
     use SUFR_kinds, only: double
@@ -716,8 +717,8 @@ contains
   !!
   !! \param  yr   Year (CE)
   !!
-  !! \retval jdb  Julian day of beginning of DST
-  !! \retval jde  Julian day of end of DST
+  !! \param jdb  Julian day of beginning of DST (output)
+  !! \param jde  Julian day of end of DST (output)
   
   subroutine dls(yr, jdb,jde)
     use SUFR_kinds, only: double
@@ -857,9 +858,9 @@ contains
   !! \param  nlbef  Number of newlines before output (optional, default 0)
   !! \param  nlaf   Number of newlines after output (optional, default 0)
   !!
-  !! \retval ut     UT: Universal Time (optional)
-  !! \retval jd     JD: Julian day (optional)
-  !! \retval jde    JDE: Apparent Julian day (optional)
+  !! \param ut     UT: Universal Time (optional) (output)
+  !! \param jd     JD: Julian day (optional) (output)
+  !! \param jde    JDE: Apparent Julian day (optional) (output)
   !!
   !! \param  locname  Location name (optional)
   !! \param  tzname   Time-zone name (optional)

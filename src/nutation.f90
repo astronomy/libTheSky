@@ -33,9 +33,9 @@ contains
   !> \brief  Calculate nutation - cheap routine from Meeus
   !! 
   !! \param  t     Time in Julian Millennia since 2000.0 in dynamical time
-  !! \retval dpsi  Nutation in longitude
-  !! \retval eps0  Obliquity of the ecliptic
-  !! \retval deps  Nutation in obliquity
+  !! \param dpsi  Nutation in longitude (output)
+  !! \param eps0  Obliquity of the ecliptic (output)
+  !! \param deps  Nutation in obliquity (output)
   !!
   !! \see  Meeus, Astronomical Algorithms, 1998, Ch. 22
   
@@ -84,9 +84,9 @@ contains
   !*********************************************************************************************************************************
   !> \brief  Compute nutation using the IAU 2000 model
   !! 
-  !! \param  jd        Julian day of computation
-  !! \retval dpsi_tot  Total nutation in longitude
-  !! \retval deps_tot  Total nutation in obliquity
+  !! \param jd        Julian day of computation
+  !! \param dpsi_tot  Total nutation in longitude (output)
+  !! \param deps_tot  Total nutation in obliquity (output)
   !!
   !! \see http://geoweb.mit.edu/~tah/mhb2000/
   

@@ -45,9 +45,9 @@ contains
   !! \param  tm   Dynamical time in Julian Millennia after J2000.0, (tau in Meeus)
   !! \param  pl   Planet to compute position for
   !!
-  !! \retval lon  Heliocentric longitude (rad)
-  !! \retval lat  Heliocentric latitude (rad)
-  !! \retval rad  Heliocentric distance (AU)
+  !! \param lon  Heliocentric longitude (rad) (output)
+  !! \param lat  Heliocentric latitude (rad) (output)
+  !! \param rad  Heliocentric distance (AU) (output)
   !!
   !! \param  LBaccur  Desired accuracy of L,B (rad, optional)
   !! \param  Raccur   Desired accuracy of R (AU, optional)

@@ -106,8 +106,8 @@ contains
   !!
   !! \param alt  TRUE altitude of the Sun (radians)
   !!
-  !! \retval beam_norm   Normal beam radiation, perpendicular to the position vector of the Sun (W/m2)
-  !! \retval beam_horiz  Beam radiation on a horizontal surface (W/m2)
+  !! \param beam_norm   Normal beam radiation, perpendicular to the position vector of the Sun (W/m2) (output)
+  !! \param beam_horiz  Beam radiation on a horizontal surface (W/m2) (output)
   !!
   !! \see  function extinction_sun()
   
@@ -148,10 +148,10 @@ contains
   !! \param   Rg     Ground albedo (optional, fraction - default: 0.2)
   !!
   !!
-  !! \retval  Itot   Total insolation on a horizontal surface (W/m^2 - optional)
-  !! \retval  Idir   Direct (beam) insolation on a horizontal surface (W/m^2 - optional)
-  !! \retval  Idif   Diffuse insolation on a horizontal surface (W/m^2 - optional)
-  !! \retval  Igr    Ground-reflection insolation from a horizontal surface (W/m^2 - optional)
+  !! \param  Itot   Total insolation on a horizontal surface (W/m^2 - optional) (output)
+  !! \param  Idir   Direct (beam) insolation on a horizontal surface (W/m^2 - optional) (output)
+  !! \param  Idif   Diffuse insolation on a horizontal surface (W/m^2 - optional) (output)
+  !! \param  Igr    Ground-reflection insolation from a horizontal surface (W/m^2 - optional) (output)
   !!
   !!
   !! \see  Bird & Hulstrom, A simplified clear-sky model for direct and diffuse insolation on horizontal surfaces, SERI/TR-642-761 (1981)
@@ -258,19 +258,19 @@ contains
   !*********************************************************************************************************************************
   !> \brief  Compute diffuse radiation on an inclined surface using the older (1987) Perez model
   !!
-  !! \param  DoY          Day of year (Nday)
-  !! \param  alt          Altitude of the Sun (radians)
+  !! \param DoY          Day of year (Nday)
+  !! \param alt          Altitude of the Sun (radians)
   !! 
-  !! \param  surfIncl     Surface inclination wrt horizontal (radians) - 0 = horizontal, pi/2 = vertical
-  !! \param  theta        Angle between surface normal vector and Sun position vector (radians)
+  !! \param surfIncl     Surface inclination wrt horizontal (radians) - 0 = horizontal, pi/2 = vertical
+  !! \param theta        Angle between surface normal vector and Sun position vector (radians)
   !!
-  !! \param  Gbeam_n      Beam (direct) normal radiation (W/m2; in the direction of the Sun)
-  !! \param  Gdif_hor     Diffuse radiation on a horizontal surface (W/m2)
+  !! \param Gbeam_n      Beam (direct) normal radiation (W/m2; in the direction of the Sun)
+  !! \param Gdif_hor     Diffuse radiation on a horizontal surface (W/m2)
   !!
-  !! \retval Gdif_inc     Diffuse irradiation on the inclined surface (W/m2)
+  !! \param Gdif_inc     Diffuse irradiation on the inclined surface (W/m2) (output)
   !!
-  !! \retval Gdif_inc_cs  Diffuse irradiation on the inclined surface - circumsolar part (optional; W/m2)
-  !! \retval Gdif_inc_hz  Diffuse irradiation on the inclined surface - horizon-band part (optional; W/m2)
+  !! \param Gdif_inc_cs  Diffuse irradiation on the inclined surface - circumsolar part (optional; W/m2) (output)
+  !! \param Gdif_inc_hz  Diffuse irradiation on the inclined surface - horizon-band part (optional; W/m2) (output)
   !!
   !! \see Perez et al. Solar Energy Vol. 39, Nr. 3, p. 221 (1987) - references to equations and tables are to this paper.
   !! Most equations can be found in the Nomenclature section at the end of the paper (p.230).  We use a and c here, not b and d.

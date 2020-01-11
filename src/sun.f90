@@ -213,11 +213,11 @@ contains
   !! \param  lat        Geographic latitunde (radians; >0=north)
   !! \param  tz         Time zone (hours; >0=east)
   !!
-  !! \retval ha         Hour angle of the Sun (radians)
-  !! \retval dec        Declination of the Sun (radians; >0=north)
+  !! \param ha         Hour angle of the Sun (radians) (output)
+  !! \param dec        Declination of the Sun (radians; >0=north) (output)
   !!
-  !! \retval az         Azimuth of the Sun (radians; 0=north, pi/2=east)
-  !! \retval alt        Altitude of the Sun (radians; >0 = up)
+  !! \param az         Azimuth of the Sun (radians; 0=north, pi/2=east) (output)
+  !! \param alt        Altitude of the Sun (radians; >0 = up) (output)
   !!
   !! \see Wenham, S.R.: Applied photovoltaics (2012; book), Appendix B
   

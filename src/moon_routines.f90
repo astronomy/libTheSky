@@ -31,14 +31,14 @@ contains
   !!
   !! \param  jd      Julian day for computation (epoch)
   !!
-  !! \retval libl    Libration (physical+optical) in longitude
-  !! \retval libb    Libration (physical+optical) in latitude
+  !! \param libl    Libration (physical+optical) in longitude (output)
+  !! \param libb    Libration (physical+optical) in latitude (output)
   !!
-  !! \retval pa      Position angle of the Moon's axis/north pole w.r.t. an equatorial grid
-  !! \retval blpa    Position angle of the Moon's bright limb w.r.t. an equatorial grid
+  !! \param pa      Position angle of the Moon's axis/north pole w.r.t. an equatorial grid (output)
+  !! \param blpa    Position angle of the Moon's bright limb w.r.t. an equatorial grid (output)
   !!
-  !! \retval sunl    Selenographic longitude of the Sun
-  !! \retval sunb    Selenographic latitude of the Sun
+  !! \param sunl    Selenographic longitude of the Sun (output)
+  !! \param sunb    Selenographic latitude of the Sun (output)
   !!
   !! \param  jdEqnx  Julian day for equinox (optional; default: jd = JD of epoch)
   !!
@@ -369,7 +369,7 @@ contains
   !> \brief  Compute the age of the Moon for a given JD
   !!
   !! \param  jd   Julian day for computation
-  !! \retval age  Age of the Moon (since last New Moon) in days
+  !! \retval moon_age  Age of the Moon (since last New Moon) in days
   
   function moon_age(jd)
     use SUFR_kinds, only: double
@@ -401,8 +401,8 @@ contains
   !> \brief  Compute the next lunar phase after a given JD
   !!
   !! \param  JD      Julian day for computation
-  !! \retval phase   Next lunar phase: 0-NM ... 3-LQ
-  !! \retval JDnext  Julian day of next lunar phase
+  !! \param phase   Next lunar phase: 0-NM ... 3-LQ (output)
+  !! \param JDnext  Julian day of next lunar phase (output)
   
   subroutine moon_phase_next(JD, phase, JDnext)
     use SUFR_kinds, only: double

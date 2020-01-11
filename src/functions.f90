@@ -216,7 +216,7 @@ contains
   !> \brief Convert a three-letter constellation abbreviation to a constellation ID number
   !!
   !! \param  myconabr  Constellation abbreviation (e.g. And)
-  !! \retval myconid   Constellation ID number
+  !! \param myconid   Constellation ID number (output)
   
   subroutine conabr2conid(myconabr, myconid)
     use TheSky_stardata, only: conabr, nconstel

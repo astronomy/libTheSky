@@ -34,19 +34,19 @@ contains
   !! \param  pl        Planet/object number  (-1 - 9: ES, Moon, Mer-Plu; >10000 asteroids)
   !! \param  rsAlt     Altitude to return rise/set data for (degrees; 0. is actual rise/set).  rsAlt>90: compute transit only
   !! 
-  !! \retval rt        Rise time (hours)
-  !! \retval tt        Transit time (hours)
-  !! \retval st        Set time (hours)
+  !! \param rt        Rise time (hours) (output)
+  !! \param tt        Transit time (hours) (output)
+  !! \param st        Set time (hours) (output)
   !! 
-  !! \retval rh        Rising wind direction (rad)
-  !! \retval ta        Transit altitude (rad)
-  !! \retval sh        Setting wind direction (rad)
+  !! \param rh        Rising wind direction (rad) (output)
+  !! \param ta        Transit altitude (rad) (output)
+  !! \param sh        Setting wind direction (rad) (output)
   !! 
   !! \param  ltime     Passed to planet_position(). If .true., include light time, doubling the CPU time while gaining a bit of 
   !!                     accuracy (optional; default: false)
   !! \param  cWarn     Warn upon convergence failure (optional; default: true)
   !! 
-  !! \retval converge  Number of iterations needed to converge (optional)
+  !! \param converge  Number of iterations needed to converge (optional) (output)
   !!
   !! \note
   !! - for rsAlt = 0.d0, rise and set times are computed
@@ -258,12 +258,12 @@ contains
   !! \param pl     Planet/object number  (-1 - 9: ES, Moon, Mer-Plu; >10000 asteroids)
   !! \param rsAlt  Altitude to return rise/set data for (degrees; 0. is actual rise/set).  rsAlt>90: compute transit only
   !!
-  !! \retval rt   Rise time (hours)
-  !! \retval tt   Transit time (hours)
-  !! \retval st   Set time (hours)
-  !! \retval rh   Rising wind direction (rad)
-  !! \retval ta   Transit altitude (rad)
-  !! \retval sh   Setting wind direction (rad)
+  !! \param rt   Rise time (hours) (output)
+  !! \param tt   Transit time (hours) (output)
+  !! \param st   Set time (hours) (output)
+  !! \param rh   Rising wind direction (rad) (output)
+  !! \param ta   Transit altitude (rad) (output)
+  !! \param sh   Setting wind direction (rad) (output)
   !! 
   !! \param ltime  Passed to planet_position(). If .true., include light time, doubling the CPU time while gaining a bit of accur.
   !! \param cWarn  Warn upon convergence failure (optional; default: true)
@@ -474,12 +474,12 @@ contains
   !! \param dec    Declination (rad)
   !! \param rsAlt  Altitude to return rise/set data for (degrees; 0. is actual rise/set).  rsAlt>90: compute transit only
   !!
-  !! \retval rt   Rise time (hours)
-  !! \retval tt   Transit time (hours)
-  !! \retval st   Set time (hours)
-  !! \retval rh   Rising wind direction (rad)
-  !! \retval ta   Transit altitude (rad)
-  !! \retval sh   Setting wind direction (rad)
+  !! \param rt   Rise time (hours) (output)
+  !! \param tt   Transit time (hours) (output)
+  !! \param st   Set time (hours) (output)
+  !! \param rh   Rising wind direction (rad) (output)
+  !! \param ta   Transit altitude (rad) (output)
+  !! \param sh   Setting wind direction (rad) (output)
   !!
   !! \param cWarn  Warn upon convergence failure (optional; default: true)
   !!
@@ -612,8 +612,8 @@ contains
   !! \param  jd00  Julian day?
   !! \param  ra0   Right ascension
   !!
-  !! \retval m     Month of best observation
-  !! \retval d     Day of month of best observation
+  !! \param m     Month of best observation (output)
+  !! \param d     Day of month of best observation (output)
   !!
   !! \note 
   !! - VERY SLOW!!! -> use best_obs_date_ra instead!!!  (but not (yet) in libTheSky...)

@@ -451,9 +451,9 @@ contains
   !> \brief  Calculate Pluto's position l,b,r at time t
   !! 
   !! \param  t   Dynamical time in Julian Centuries after 2000.0
-  !! \retval l   Heliocentric longitude (rad)
-  !! \retval b   Heliocentric latitude (rad)
-  !! \retval r   Heliocentric distance (AU?)
+  !! \param l   Heliocentric longitude (rad) (output)
+  !! \param b   Heliocentric latitude (rad) (output)
+  !! \param r   Heliocentric distance (AU?) (output)
   
   subroutine plutolbr(t,l,b,r)
     use SUFR_kinds, only: double
@@ -575,7 +575,7 @@ contains
   !! \param par         Phase angle (rad)
   !! \param meth        Method to use from Meeus (1: p.285,  2: p.286;  optional, default: 1)
   !!
-  !! \retval magnitude  Apparent visual planet magnitiude
+  !! \retval planet_magnitude  Apparent visual planet magnitiude
   !!
   !! \see  Meeus, Astronomical Algorithms, 1998, Ch.41
   
@@ -633,7 +633,7 @@ contains
   !! \param d           Distance from the Earth (AU)
   !! \param par         Phase angle (rad)
   !!
-  !! \retval magnitude  Apparent visual planet magnitiude
+  !! \retval planet_magnitude  Apparent visual planet magnitiude
   !!
   !! \see  Expl.Suppl.tt.Astr.Almanac, 3rd Ed, Eq. 10.4, Table 10.6 and Sect. 10.7.5
   
@@ -720,8 +720,8 @@ contains
   !! \param dm0  Distance of the Moon (AU)
   !! \param ds0  Distance of the Sun  (AU)
   !!
-  !! \retval r1  Umbra radius at distance of the Moon (rad)
-  !! \retval r2  Penumbra radius at distance of the Moon (rad)
+  !! \param r1  Umbra radius at distance of the Moon (rad) (output)
+  !! \param r2  Penumbra radius at distance of the Moon (rad) (output)
   !!
   !! \see  Expl.sup. to the Astronomical Almanac, p.428
   
@@ -756,15 +756,15 @@ contains
   !!
   !! \param  jd      Julian day for computation
   !!
-  !! \retval de      Jovocentric latitude of the Earth = inclination of planet axis to plane of the sky as seen from Earth
-  !! \retval ds      Jovocentric latitude of the Sun   = inclination of planet axis to plane of the sky as seen from Earth
-  !! \retval omg1    Longitude of central meridian of System I (equator+-10deg)
-  !! \retval omg2    Longitude of central meridian of System II
+  !! \param de      Jovocentric latitude of the Earth = inclination of planet axis to plane of the sky as seen from Earth (output)
+  !! \param ds      Jovocentric latitude of the Sun   = inclination of planet axis to plane of the sky as seen from Earth (output)
+  !! \param omg1    Longitude of central meridian of System I (equator+-10deg) (output)
+  !! \param omg2    Longitude of central meridian of System II (output)
   !!
-  !! \retval dphase  Phase correction
-  !! \retval pa      Position angle of Jupiter's north pole (from N to E)
-  !! \retval in      Inclination of Jupiter's rotation axis to the orbital plane
-  !! \retval om      Longitude of node of Jupiter's equator on ecliptic
+  !! \param dphase  Phase correction (output)
+  !! \param pa      Position angle of Jupiter's north pole (from N to E) (output)
+  !! \param in      Inclination of Jupiter's rotation axis to the orbital plane (output)
+  !! \param om      Longitude of node of Jupiter's equator on ecliptic (output)
   !!
   !! \see Meeus, Astronomical Algorithms, 1998, Ch.43, p.293-295
   
@@ -871,20 +871,20 @@ contains
   !!
   !! \param  jd    Julian day of computation
   !!
-  !! \retval be    Saturnicentric latitude of the Earth = inclination of planet axis to plane of the sky as seen from Earth
-  !! \retval bs    Saturnicentric latitude of the Sun   = inclination of planet axis to plane of the sky as seen from the Sun
+  !! \param be    Saturnicentric latitude of the Earth = inclination of planet axis to plane of the sky as seen from Earth (output)
+  !! \param bs    Saturnicentric latitude of the Sun   = inclination of planet axis to plane of the sky as seen from the Sun (output)
   !!
-  !! \retval pa    Position angle of Saturn's north pole (from N to E)
-  !! \retval in    Inclination of Saturn's rotation axis to the orbital plane
-  !! \retval om    Longitude of node of Saturn's equator on ecliptic
+  !! \param pa    Position angle of Saturn's north pole (from N to E) (output)
+  !! \param in    Inclination of Saturn's rotation axis to the orbital plane (output)
+  !! \param om    Longitude of node of Saturn's equator on ecliptic (output)
   !!
-  !! \retval ar    Projected major axis of ring (NOT semi-!!!)
-  !! \retval br    Projected minor axes of ring (NOT semi-!!!), = ar * sin(be)
-  !! \retval du    Difference between saturnicentric longitudes of Sun and Earth (Sun - Earth, NOT abs!!!)
+  !! \param ar    Projected major axis of ring (NOT semi-!!!) (output)
+  !! \param br    Projected minor axes of ring (NOT semi-!!!), = ar * sin(be) (output)
+  !! \param du    Difference between saturnicentric longitudes of Sun and Earth (Sun - Earth, NOT abs!!!) (output)
   !! 
-  !! \retval pa_s  Position angle of Saturn's north pole (from N to E), as seen from the SUN
-  !! \retval ar_s  Projected major axis of ring (NOT semi-!!!), as seen from the SUN
-  !! \retval br_s  Projected minor axes of ring (NOT semi-!!!), as seen from the SUN, = ar_s * sin(bs)
+  !! \param pa_s  Position angle of Saturn's north pole (from N to E), as seen from the SUN (output)
+  !! \param ar_s  Projected major axis of ring (NOT semi-!!!), as seen from the SUN (output)
+  !! \param br_s  Projected minor axes of ring (NOT semi-!!!), as seen from the SUN, = ar_s * sin(bs) (output)
   !!
   !!
   !! \see Meeus, Astronomical Algorithms, 1998, Ch.45  (The ring of Saturn)

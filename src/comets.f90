@@ -31,9 +31,9 @@ contains
   !! \param t1     Time in Julian millennia DT
   !! \param comID  Comet ID
   !! 
-  !! \retval x     Heliocentric x coordinate
-  !! \retval y     Heliocentric y coordinate
-  !! \retval z     Heliocentric z coordinate
+  !! \param x     Heliocentric x coordinate (output)
+  !! \param y     Heliocentric y coordinate (output)
+  !! \param z     Heliocentric z coordinate (output)
   !!
   !! \see Meeus, Astronomical Algorithms, 1998, Ch. 30, 33-35.  Equation and page numbers refer to this book.
   !!
@@ -240,10 +240,10 @@ contains
   !! \param  t0   True time in Julian millennia DT
   !! \param  com  Comet ID
   !!
-  !! \retval r    Apparent heliocentric distance of comet
-  !! \retval l    Apparent geocentric ecliptic longitude of comet
-  !! \retval b    Apparent geocentric ecliptic latitude of comet
-  !! \retval d    Apparent geocentric distance of comet
+  !! \param r    Apparent heliocentric distance of comet (output)
+  !! \param l    Apparent geocentric ecliptic longitude of comet (output)
+  !! \param b    Apparent geocentric ecliptic latitude of comet (output)
+  !! \param d    Apparent geocentric distance of comet (output)
   !! 
   
   subroutine cometgc(t,t0, com, r,l,b,d)

@@ -38,9 +38,9 @@ contains
   !! \param b0  Heliocentric latitude of Earth
   !! \param r0  Heliocentric distance of Earth
   !!
-  !! \retval x  Geocentric rectangular X of planet
-  !! \retval y  Geocentric rectangular Y of planet
-  !! \retval z  Geocentric rectangular Z of planet
+  !! \param x  Geocentric rectangular X of planet (output)
+  !! \param y  Geocentric rectangular Y of planet (output)
+  !! \param z  Geocentric rectangular Z of planet (output)
   
   subroutine hc_spher_2_gc_rect(l,b,r, l0,b0,r0, x,y,z)  
     use SUFR_kinds, only: double
@@ -65,9 +65,9 @@ contains
   !! \param r    Heliocentric distance of planet
   !! \param eps  Obliquity of the ecliptic
   !!
-  !! \retval x   Geocentric rectangular X of planet
-  !! \retval y   Geocentric rectangular Y of planet
-  !! \retval z   Geocentric rectangular Z of planet
+  !! \param x   Geocentric rectangular X of planet (output)
+  !! \param y   Geocentric rectangular Y of planet (output)
+  !! \param z   Geocentric rectangular Z of planet (output)
   
   subroutine ecl_spher_2_eq_rect(l,b,r, eps,  x,y,z)
     use SUFR_kinds, only: double
@@ -93,9 +93,9 @@ contains
   !! \param b0  Heliocentric latitude of Earth
   !! \param r0  Heliocentric distance of Earth
   !!
-  !! \retval x  Geocentric rectangular X of planet
-  !! \retval y  Geocentric rectangular Y of planet
-  !! \retval z  Geocentric rectangular Z of planet
+  !! \param x  Geocentric rectangular X of planet (output)
+  !! \param y  Geocentric rectangular Y of planet (output)
+  !! \param z  Geocentric rectangular Z of planet (output)
   !!
   !! \todo  To be disposed, has been replcaed by ecl_spher_2_eq_rect above 
   
@@ -138,9 +138,9 @@ contains
   !! \param jd1  Original Julian day 
   !! \param jd2  Target Julian day 
   !!
-  !! \retval x  Geocentric rectangular X
-  !! \retval y  Geocentric rectangular Y
-  !! \retval z  Geocentric rectangular Z
+  !! \param x  Geocentric rectangular X (output)
+  !! \param y  Geocentric rectangular Y (output)
+  !! \param z  Geocentric rectangular Z (output)
   !!
   !! \see Meeus, Astronomical Algorithms, 1998, Ch. 21
   
@@ -201,8 +201,8 @@ contains
   !!
   !! \param jd1  Original Julian day 
   !! \param jd2  Target Julian day 
-  !! \retval a1  Right ascension (IO, rad)
-  !! \retval d1  Declination (IO, rad)
+  !! \param a1  Right ascension (IO, rad) (output)
+  !! \param d1  Declination (IO, rad) (output)
   !!
   !! \see Meeus, Astronomical Algorithms, 1998, Ch.21, p.134
   
@@ -244,8 +244,8 @@ contains
   !!
   !! \param yr1  Original year
   !! \param yr2  Target year
-  !! \retval a1  Right ascension (IO, rad)
-  !! \retval d1  Declination (IO, rad)
+  !! \param a1  Right ascension (IO, rad) (output)
+  !! \param d1  Declination (IO, rad) (output)
   !!
   !! \see Meeus, Astronomical Algorithms, 1998, Ch.21, p.134
   
@@ -286,8 +286,8 @@ contains
   !!
   !! \param  jd1  Original Julian day 
   !! \param  jd2  Target Julian day 
-  !! \retval l    Ecliptic longitude (I/O, rad)
-  !! \retval b    Ecliptic latitude (I/O, rad)
+  !! \param l    Ecliptic longitude (I/O, rad) (output)
+  !! \param b    Ecliptic latitude (I/O, rad) (output)
   !!
   !! \see Meeus, Astronomical Algorithms, 1998, Ch.21, p.136
   
@@ -330,9 +330,9 @@ contains
   !! \param  jd1  Original Julian day 
   !! \param  jd2  Target Julian day 
   !!
-  !! \retval i    Inclination
-  !! \retval o1   Argument of perihelion
-  !! \retval o2   Longitude of ascending node
+  !! \param i    Inclination (output)
+  !! \param o1   Argument of perihelion (output)
+  !! \param o2   Longitude of ascending node (output)
   !!
   !! \see Meeus, Astronomical Algorithms, 1998, Ch.24
 
@@ -380,9 +380,9 @@ contains
   !! \param  y  Rectangular y coordinate (same unit as r)
   !! \param  z  Rectangular z coordinate (same unit as r)
   !!
-  !! \retval l  Longitude (rad)
-  !! \retval b  Latitude  (rad)
-  !! \retval r  Distance  (same unit as x,y,z)
+  !! \param l  Longitude (rad) (output)
+  !! \param b  Latitude  (rad) (output)
+  !! \param r  Distance  (same unit as x,y,z) (output)
   
   subroutine rect_2_spher(x,y,z, l,b,r) 
     use SUFR_kinds, only: double
@@ -417,8 +417,8 @@ contains
   !! \param  t   Dynamical time in Julian Millennia since 2000.0
   !! \param  l0  Earth longitude (rad)
   !!
-  !! \retval l   Longitude of the object (rad, I/O)
-  !! \retval b   Latitude of the object (rad, I/O)
+  !! \param l   Longitude of the object (rad, I/O) (output)
+  !! \param b   Latitude of the object (rad, I/O) (output)
   !!
   !! \see Meeus, Astronomical Algorithms, 1998, Ch.23
   
@@ -458,8 +458,8 @@ contains
   !! \param  ra    Right ascension of the object (rad)
   !! \param  dec   Declination of the object (rad)
   !!
-  !! \retval dra   Correction in right ascension due to aberration (rad)
-  !! \retval ddec  Correction in declination due to aberration(rad)
+  !! \param dra   Correction in right ascension due to aberration (rad) (output)
+  !! \param ddec  Correction in declination due to aberration(rad) (output)
   !!
   !! \param  eps0  The mean obliquity of the ecliptic
   !!
@@ -531,8 +531,8 @@ contains
   !> \brief  Convert coordinates to the FK5 system
   !!
   !! \param  t  Dynamical time in Julian Millennia since 2000.0
-  !! \retval l  Longitude (rad, I/O)
-  !! \retval b  Latitude (rad, I/O)
+  !! \param l  Longitude (rad, I/O) (output)
+  !! \param b  Latitude (rad, I/O) (output)
   
   subroutine fk5(t, l,b)
     use SUFR_kinds, only: double
@@ -562,8 +562,8 @@ contains
   !! \param  b    Latitude (rad)
   !! \param  eps  Obliquity of the ecliptic
   !!
-  !! \retval ra   Right ascension (rad)
-  !! \retval dec  Declination (rad)
+  !! \param ra   Right ascension (rad) (output)
+  !! \param dec  Declination (rad) (output)
   !!
   !! \see Expl. Supl. t.t. Astronimical Almanac 3rd Ed, Eq.14.43
   
@@ -589,8 +589,8 @@ contains
   !! \param  dec  Declination (rad)
   !! \param  eps  Obliquity of the ecliptic
   !!
-  !! \retval l    Longitude (rad)
-  !! \retval b    Latitude (rad)
+  !! \param l    Longitude (rad) (output)
+  !! \param b    Latitude (rad) (output)
   !!
   !! \see Expl. Supl. t.t. Astronimical Almanac 3rd Ed, Eq.14.42
   
@@ -616,9 +616,9 @@ contains
   !! \param  dec   Declination
   !! \param  agst  Greenwich sidereal time
   !!
-  !! \retval hh    Local hour angle
-  !! \retval az    Azimuth
-  !! \retval alt   Altitude
+  !! \param hh    Local hour angle (output)
+  !! \param az    Azimuth (output)
+  !! \param alt   Altitude (output)
   !!
   !! \param  lat   Geographical latitude (rad), optional
   !! \param  lon   Geographical longitude (rad), optional
@@ -667,9 +667,9 @@ contains
   !! \param  alt   Altitude
   !! \param  agst  Greenwich sidereal time
   !!
-  !! \retval hh    Local hour angle
-  !! \retval ra    Right ascension
-  !! \retval dec   Declination
+  !! \param hh    Local hour angle (output)
+  !! \param ra    Right ascension (output)
+  !! \param dec   Declination (output)
   !!
   !! \param  lat   Geographical latitude (rad), optional
   !! \param  lon   Geographical longitude (rad), optional
@@ -715,8 +715,8 @@ contains
   !! \param  ra    Right ascension
   !! \param  dec   Declination
   !!
-  !! \retval l     Longitude
-  !! \retval b     Latitude
+  !! \param l     Longitude (output)
+  !! \param b     Latitude (output)
   !!
   !! \see Meeus, Astronomical Algorithms, 1998, Ch.13
   
@@ -746,8 +746,8 @@ contains
   !! \param  l     Longitude
   !! \param  b     Latitude
   !!
-  !! \retval ra    Right ascension
-  !! \retval dec   Declination
+  !! \param ra    Right ascension (output)
+  !! \param dec   Declination (output)
   
   subroutine gal2eq(l,b, ra,dec)
     use SUFR_kinds, only: double
@@ -780,9 +780,9 @@ contains
   !! \param  eps   Obliquity of the ecliptic (rad)
   !! \param  lst   Local sidereal time (rad)
   !!
-  !! \retval tcl   Topocentric ecliptic longitude of the object (rad)
-  !! \retval tcb   Topocentric ecliptic latitude of the object (rad)
-  !! \retval tcs   Topocentric semi-diameter of the object (rad)
+  !! \param tcl   Topocentric ecliptic longitude of the object (rad) (output)
+  !! \param tcb   Topocentric ecliptic latitude of the object (rad) (output)
+  !! \param tcs   Topocentric semi-diameter of the object (rad) (output)
   !!
   !!
   !! \param lat   Latitude of the observer (rad, optional)
@@ -842,8 +842,8 @@ contains
   !! \param  gcr   Geocentric distance
   !! \param  gch   Geocentric hour angle
   !!
-  !! \retval tcra  Topocentric right ascension
-  !! \retval tcd   Topocentric declination
+  !! \param tcra  Topocentric right ascension (output)
+  !! \param tcd   Topocentric declination (output)
   !!
   !! \param lat   Latitude of the observer (rad, optional)
   !! \param hgt   Altitude/elevation of the observer above sea level (metres, optional)
@@ -1066,13 +1066,13 @@ contains
     ft = refi(rt,nt,dndrt)
     
     ! At the Tropopause in the Stratosphere:
-    call stratosfeer_model(rt,tt,nt,a(2),rt,nts,dndrts)
+    call stratosphere_model(rt,tt,nt,a(2),rt,nts,dndrts)
     zts = asin(sk0/(rt*nts))/dgr
     fts = refi(rt,nts,dndrts)
     
     ! At the stratosphere limit:
     rs = earthrm + hs
-    call stratosfeer_model(rt,tt,nt,a(2),rs,ns,dndrs)
+    call stratosphere_model(rt,tt,nt,a(2),rs,ns,dndrs)
     zs = asin(sk0/(rs*ns))/dgr
     fs = refi(rs,ns,dndrs)
     
@@ -1120,7 +1120,7 @@ contains
              if(k.eq.1) then
                 call troposphere_model(r0,t0,a,rg,tg,n,dndr)
              else if(k.eq.2) then
-                call stratosfeer_model(rt,tt,nt,a(2),rg,n,dndr)
+                call stratosphere_model(rt,tt,nt,a(2),rg,n,dndr)
              end if
              rg = rg - ( (rg*n - sk0/sin(z*dgr))/(n + rg*dndr) )
           end do
@@ -1130,7 +1130,7 @@ contains
           if(k.eq.1) then
              call troposphere_model(r0,t0,a,r,t,n,dndr)
           else if(k.eq.2) then
-             call stratosfeer_model(rt,tt,nt,a(2),r,n,dndr)
+             call stratosphere_model(rt,tt,nt,a(2),r,n,dndr)
           end if
           
           f = refi(r,n,dndr)
@@ -1193,9 +1193,9 @@ contains
   !! \param a      Constants defined at the observer
   !! \param r      The current distance from the centre of the Earth in metres
   !!
-  !! \retval t     The temperature at R in Kelvin
-  !! \retval n     The refractive index at R
-  !! \retval dndr  The rate the refractive index is changing at R
+  !! \param t     The temperature at R in Kelvin (output)
+  !! \param n     The refractive index at R (output)
+  !! \param dndr  The rate the refractive index is changing at R (output)
   
   subroutine troposphere_model(r0,t0, a,r, t,n,dndr)
     use SUFR_kinds, only: double
@@ -1225,10 +1225,10 @@ contains
   !! \param  a     Constant of the atmospheric model = G*MD/R
   !! \param  r     The current distance from the centre of the Earth in metres
   !!
-  !! \retval n     The refractive index at R
-  !! \retval dndr  The rate the refractive index is changing at R
+  !! \param n     The refractive index at R (output)
+  !! \param dndr  The rate the refractive index is changing at R (output)
   
-  subroutine stratosfeer_model(rt,tt,nt, a,r, n,dndr)
+  subroutine stratosphere_model(rt,tt,nt, a,r, n,dndr)
     use SUFR_kinds, only: double
     implicit none
     real(double), intent(in) :: rt,tt,nt, a,r
@@ -1239,7 +1239,7 @@ contains
     n    = 1.d0 + (nt - 1.d0)*exp(-b*(r-rt))
     dndr = -b*(nt-1.d0)*exp(-b*(r-rt))
     
-  end subroutine stratosfeer_model
+  end subroutine stratosphere_model
   !*********************************************************************************************************************************
   
 end module TheSky_coordinates

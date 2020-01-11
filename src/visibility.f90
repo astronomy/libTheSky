@@ -65,8 +65,8 @@ contains
   !! \param  jdin     Julian day to compute best moment for
   !! \param  plID     Planet to compute visibility for (0-Moon, 1-Mercury, etc.)
   !!
-  !! \retval jdout    Moment of best excess magnitude
-  !! \retval xsmag    Excess magnitude at that moment (magnitude - limiting magnitude; <0: ~visible to the naked eye)
+  !! \param jdout    Moment of best excess magnitude (output)
+  !! \param xsmag    Excess magnitude at that moment (magnitude - limiting magnitude; <0: ~visible to the naked eye) (output)
   !!
   !! \param  rsCWarn  Print convergence warnings in riset()  (optional; default = true)
   
@@ -196,16 +196,16 @@ contains
   !! \param  comp    Compute: 1-compute twilight/planet at plalt events only (1,4),  2-include actual rise/set times (2,5)
   !!                 11, 12 = 1, 2 + compute only for today, not tomorrow
   !!
-  !! \retval plvis   Planet visibility times (hours):    1-begin, 2-end;  plvis(1)*plvis(2) = 0 when invisible
-  !! \retval plazs   Planet visibility azimuths (rad):   1-begin of visibility,  2-end of visibility
+  !! \param plvis   Planet visibility times (hours):    1-begin, 2-end;  plvis(1)*plvis(2) = 0 when invisible (output)
+  !! \param plazs   Planet visibility azimuths (rad):   1-begin of visibility,  2-end of visibility (output)
   !!
-  !! \retval rts     "Rise times":       1-twilight (Sun at sunAlt), 2-Sun rise/set, 4-planet at plalt, 5-planet rise/set
-  !! \retval tts     Transit times:      1-2, of Sun,  4-5 of planet
-  !! \retval sts     "Set times":        1-twilight (Sun at sunAlt), 2-Sun rise/set, 4-planet at plalt, 5-planet rise/set
+  !! \param rts     "Rise times":       1-twilight (Sun at sunAlt), 2-Sun rise/set, 4-planet at plalt, 5-planet rise/set (output)
+  !! \param tts     Transit times:      1-2, of Sun,  4-5 of planet (output)
+  !! \param sts     "Set times":        1-twilight (Sun at sunAlt), 2-Sun rise/set, 4-planet at plalt, 5-planet rise/set (output)
   !!
-  !! \retval ras     Rise azimuths:      1-2, of Sun,  4-5 of planet
-  !! \retval tas     Transit altitudes:  1-2, of Sun,  4-5 of planet
-  !! \retval sas     Set azimuths:       1-2, of Sun,  4-5 of planet
+  !! \param ras     Rise azimuths:      1-2, of Sun,  4-5 of planet (output)
+  !! \param tas     Transit altitudes:  1-2, of Sun,  4-5 of planet (output)
+  !! \param sas     Set azimuths:       1-2, of Sun,  4-5 of planet (output)
   !!
   !! \param  rsCWarn  Print convergence warnings in riset()  (optional; default = true)
   
@@ -425,8 +425,8 @@ contains
   !! \param  year      Year (CE)
   !! \param  RA        Right ascension of the object
   !! \param  accuracy  Get an accurate (but more expensive) result: 0-no, 1-yes
-  !! \retval mon       Month of year
-  !! \retval dy        Day of month
+  !! \param mon       Month of year (output)
+  !! \param dy        Day of month (output)
   
   subroutine best_obs_date_ra(year, RA, accuracy,  mon, dy)
     use SUFR_kinds, only: double
@@ -741,8 +741,8 @@ contains
   !! \param  band1    First of UBVRI bands to compute (1-5); compute band1-band2
   !! \param  band2    Last of UBVRI bands to compute (1-5); compute band1-band2
   !!
-  !! \retval extCoef  Atmospheric extinction for UBVRI
-  !! \retval extMag   Delta magnitude due to atmospheric extinction for UBVRI
+  !! \param extCoef  Atmospheric extinction for UBVRI (output)
+  !! \param extMag   Delta magnitude due to atmospheric extinction for UBVRI (output)
   !!
   !! \see BASIC program VISLIMIT.BAS by Bradley E. Schaefer, Sky and Telescope, May 1998, p.57,
   !!      in turn based on Schaefer Sky&Tel 78, 522 (1989).
@@ -813,7 +813,7 @@ contains
   !!
   !! \param  extCoef    Extinction for UBVRI
   !!
-  !! \retval skyBr      Sky brightness for UBVRI
+  !! \param skyBr      Sky brightness for UBVRI (output)
   !!
   !! \see BASIC program VISLIMIT.BAS by Bradley E. Schaefer, Sky and Telescope, May 1998, p.57,
   !!      in turn based on Schaefer Sky&Tel 78, 522 (1989).
@@ -1111,7 +1111,6 @@ contains
   !! 
   !! \see http://www.go.ednet.ns.ca/~larry/astro/vislimit.html, 
   !!      a JavaScript version of a BASIC program by Bradley E. Schaefer, Sky and Telescope, May 1998, p.57
-  
   
   function limmag_sun(sunAlt)
     use SUFR_kinds, only: double

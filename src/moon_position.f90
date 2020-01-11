@@ -30,9 +30,9 @@ contains
   !! 
   !! \param  tjj  Time for calculation in Julian millenia after 2000.0
   !!
-  !! \retval ll   Apparent geocentric ecliptical longitude
-  !! \retval bb   Apparent geocentric ecliptical latitude
-  !! \retval rr   Apparent geocentric distance
+  !! \param ll   Apparent geocentric ecliptical longitude (output)
+  !! \param bb   Apparent geocentric ecliptical latitude (output)
+  !! \param rr   Apparent geocentric distance (output)
   !!
   !! \note
   !! - This is supposed to be the ELP2000-85 version, with the corrections from the 1998 paper (mean arguments up to t^4,
@@ -176,9 +176,9 @@ contains
   !! \param jd    Julian day to compute Moon position for
   !! \param mode  Index of the corrections to the constants: 0-Fit to LLR observations, 1-Fit to DE405 1950-2060 (historical)
   !!
-  !! \retval  lon  Ecliptic longitude (rad)
-  !! \retval  lat  Ecliptic latitude (rad)
-  !! \retval  rad  Distance (AU)
+  !! \param  lon  Ecliptic longitude (rad) (output)
+  !! \param  lat  Ecliptic latitude (rad) (output)
+  !! \param  rad  Distance (AU) (output)
   
   subroutine elp_mpp02_lbr(jd, mode, lon,lat,rad)
     use SUFR_kinds, only: double
@@ -214,15 +214,15 @@ contains
   !! \param jd    Julian day to compute Moon position for
   !! \param mode  Index of the corrections to the constants: 0-Fit to LLR observations, 1-Fit to DE405 1950-2060 (historical)
   !! 
-  !! \retval xyz   Geocentric rectangular coordinates:
+  !! \param xyz   Geocentric rectangular coordinates: (output)
   !!               - xyz(1) : Position X (km)
   !!               - xyz(2) : Position Y (km)
   !!               - xyz(3) : Position Z (km)
-  !! \retval vxyz  Geocentric rectangular velocities:
+  !! \param vxyz  Geocentric rectangular velocities: (output)
   !!               - vxyz(1) : Velocity X' (km/day)
   !!               - vxyz(2) : Velocity Y' (km/day)
   !!               - vxyz(3) : Velocity Z' (km/day)
-  !! \retval ierr  File error index - ierr=0: no error, ierr=1: file error
+  !! \param ierr  File error index - ierr=0: no error, ierr=1: file error (output)
   !!
   !! \note
   !!  - The subroutine elp_mpp02() uses two modules:
