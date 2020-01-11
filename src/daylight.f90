@@ -1,7 +1,7 @@
 !> \file daylight.f90  Procedures that deal with daylight for libTheSky
 
 
-!  Copyright (c) 2002-2018  Marc van der Sluys - marc.vandersluys.nl
+!  Copyright (c) 2002-2020  Marc van der Sluys - marc.vandersluys.nl
 !   
 !  This file is part of the libTheSky package, 
 !  see: http://libthesky.sf.net/
