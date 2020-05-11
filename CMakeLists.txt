@@ -127,7 +127,7 @@ if( CREATE_STATICLIB )
     set_target_properties( libTheSky_static PROPERTIES OUTPUT_NAME "TheSky" )
   endif( COMPILER_SPECIFIC_LIBS )
   set_target_properties( libTheSky_static PROPERTIES Fortran_MODULE_DIRECTORY ${MODULE_DIRECTORY} )
-  add_dependencies( libTheSky_static libTheSky_shared PKG_VERSION )  # Ensure it is build after the shared lib
+  add_dependencies( libTheSky_static libTheSky_shared PKG_VERSION )  # Ensure it is built after the shared lib
 endif( CREATE_STATICLIB )
 
 

@@ -292,17 +292,6 @@ contains
        diam = 2*rES1                            ! Umbra diameter to planpos(12)
     end if
     
-    ! Comets:
-    if(pl.gt.10) then
-       diam = 0.d0
-       if(cometDiedAtP(pl).ne.0 .and. jd.gt.cometElems(pl,7)) then
-          magn = 99.9d0                                                                 ! Comet died at perihelion
-       else
-          magn = cometElems(pl,8) + 5*log10(delta) + 2.5d0*cometElems(pl,9)*log10(hcr)  ! m = H + 5log(d) + 2.5*G*log(r)
-       end if
-       topdelta = delta
-    end if
-    
     ! Convert heliocentric to topocentric coordinates:
     call geoc2topoc_ecl(gcl,gcb, delta,diam/2.d0, eps,lst, topl,topb,topdiam, lat=llat,hgt=lhgt)  ! Geocentric to topoc: l, b, diam
     if(pl.eq.-1) topdiam = rES2                                                            ! Earth penumbra radius at Moon distance
@@ -338,7 +327,19 @@ contains
     !if(pl.gt.0.and.pl.lt.10) magn = planet_magnitude_new(pl,hcr,delta,pa)
     if(pl.eq.0) magn = moonmagn(pa,delta)                             ! Moon
     if(pl.eq.6) magn = satmagn(tjm*10., gcl,gcb, delta, hcl,hcb,hcr)  ! Calculate Saturn's magnitude
-    if(pl.gt.10000) magn = asteroid_magn(pl-10000,delta,hcr,pa)       ! Asteroid magnitude (valid for |pa|<120deg
+    if(pl.gt.10000) magn = asteroid_magn(pl-10000,delta,hcr,pa)       ! Asteroid magnitude (valid for |pa|<120°)
+    
+    ! Comet magnitude:
+    if(pl.gt.10 .and. pl.lt.10000) then
+       diam = 0.d0
+       if(cometDiedAtP(pl).ne.0 .and. jd.gt.cometElems(pl,7)) then
+          magn = 99.9d0                                                                 ! Comet died at perihelion
+       else
+          magn = cometElems(pl,8) + 5*log10(delta) + 2.5d0*cometElems(pl,9)*log10(hcr)  ! m = H + 5log(d) + 2.5*G*log(r)
+          magn = magn + comet_scatter_magnitude_correction(pa)
+       end if
+       topdelta = delta
+    end if
     
     
     ! Parallactic angle:
@@ -1097,6 +1098,40 @@ contains
   end subroutine planet_position_la
   !*********************************************************************************************************************************
   
+  !*********************************************************************************************************************************
+  !> \brief  Correction for comet magnitude due to forward and backscattering
+  !! 
+  !! \param phaseAng    Phae angle of the comet (rad)
+  !!
+  !! \retval            Magnitude correction, to be added to the magnitude (usually negative)
+  !!
+  !! \see https://ui.adsabs.harvard.edu/abs/2007ICQ....29..119M
+  !!
+    
+  function comet_scatter_magnitude_correction(phaseAng)
+    use SUFR_kinds, only: double
+    use SUFR_constants, only: pi, r2d
+    use SUFR_angles, only: rev2
+    
+    implicit none
+    real(double), intent(in) :: phaseAng
+    real(double) :: comet_scatter_magnitude_correction, theta,d90,gf,gb,k,phi
+    
+    theta = rev2(pi - phaseAng)  ! Scattering angle = 180° - phase angle
+    
+    d90   =  0.3d0   ! Dust-to-gas light ratio in the coma at theta=90°.  1 for a "normal" comet, ~10 for a "dusty" one.  3.3 ~ half way.  0.3 taken from http://astro.vanbuitenen.nl/comet/2020F8
+    gf    =  0.9d0   ! Forward-scattering asymmetry factor
+    gb    = -0.6d0   ! Backscattering asymmetry factor
+    k     =  0.95d0  ! Partition coefficient between forward and backscattering
+    
+    phi   = d90/(1+d90) * (k*((1+gf**2)/(1+gf**2 - 2*gf*cos(theta)))**1.5d0 + &
+         k*((1+gb**2)/(1+gb**2 - 2*gb*cos(theta)))**1.5d0 + 1.d0/d90)            ! Eq.1
+    
+    comet_scatter_magnitude_correction = -2.5d0*log10(phi)
+    
+    ! write(*,'(99F9.3)') phaseAng*r2d,theta*r2d,d90,gf,gb,k,phi,comet_scatter_magnitude_correction
+  end function comet_scatter_magnitude_correction
+  !*********************************************************************************************************************************
   
   
 end module TheSky_planets
