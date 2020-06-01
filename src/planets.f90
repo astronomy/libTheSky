@@ -1110,7 +1110,7 @@ contains
     
   function comet_scatter_magnitude_correction(phaseAng)
     use SUFR_kinds, only: double
-    use SUFR_constants, only: pi, r2d
+    use SUFR_constants, only: pi  ! , r2d
     use SUFR_angles, only: rev2
     
     implicit none

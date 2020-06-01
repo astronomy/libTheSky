@@ -42,6 +42,7 @@ if( Fortran_COMPILER_NAME MATCHES "gfortran" )
   
   
   set( CMAKE_Fortran_FLAGS_ALL "-std=f2008 -fall-intrinsics -pedantic" )
+  set( CMAKE_Fortran_FLAGS_ALL "${CMAKE_Fortran_FLAGS_ALL} -frecursive" )  # don't complain about Array larger than -fmax-stack-var-size
   if( COMPILER_VERSION VERSION_GREATER "4.4.99" )
     set( CMAKE_Fortran_FLAGS_ALL "${CMAKE_Fortran_FLAGS_ALL} -fwhole-file" )  # >= v.4.5
   endif( COMPILER_VERSION VERSION_GREATER "4.4.99" )

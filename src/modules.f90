@@ -174,7 +174,7 @@ module TheSky_moondata
   real(double) :: w(3,0:4),eart(0:4),peri(0:4),p(8,0:1), del(4,0:4),zeta(0:1),t(0:4)
   real(double) :: pre(3),coef(7),zone(6), pc1(6,1023),pc2(6,918),pc3(6,704), per1(3,19537),per2(3,6766),per3(3,8924)
   
-  integer :: ilu(4),ipla(11),nterm(3,12),nrang(3,12)
+  integer :: ilu(4),ipla(11),nterm(3,12),nrang(3,0:12)
   
   real(double) :: prec0
   integer :: ideb
