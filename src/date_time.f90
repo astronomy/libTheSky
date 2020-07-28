@@ -234,9 +234,9 @@ contains
   !> \brief  Calculate Greenwich Mean Sidereal Time for any instant, in radians
   !!
   !! \param  jd         Julian day of computation
-  !! \param  DeltaT     ΔT (s) (optional)
+  !! \param  DeltaT     ΔT (s) (optional - default: use DelTaT from TheSky_local)
   !! \retval calc_gmst  Greenwich Mean Sidereal Time (radians)
-  !!
+  !! 
   !! \see Explanatory Supplement to the Astronomical Almanac, 3rd edition, Eq. 6.66 (2012)
   
   function calc_gmst(jd, DeltaT)
@@ -853,25 +853,25 @@ contains
   
   !*********************************************************************************************************************************
   !> \brief  Display a banner with date, time and location of calculation.  Computes and returns UT, JD and JDE.
-  !!
+  !! 
   !! \param  op     Output unit (optional, default 6)
   !! \param  nlbef  Number of newlines before output (optional, default 0)
   !! \param  nlaf   Number of newlines after output (optional, default 0)
-  !!
-  !! \param ut     UT: Universal Time (optional) (output)
-  !! \param jd     JD: Julian day (optional) (output)
-  !! \param jde    JDE: Apparent Julian day (optional) (output)
-  !!
+  !! 
+  !! \retval ut     UT: Universal Time (optional)
+  !! \retval jd     JD: Julian day (optional)
+  !! \retval jde    JDE: Apparent Julian day (optional)
+  !! 
   !! \param  locname  Location name (optional)
   !! \param  tzname   Time-zone name (optional)
-  !!
+  !! 
   !! \note
   !! - uses the module local to obtain the variables year, month, etc.
   !! - calls calctime(), gettz()
   
   subroutine print_date_time_and_location(op,nlbef,nlaf, ut,jd,jde, locname,tzname)
     use SUFR_kinds, only: double
-    use SUFR_constants, only: r2d, endays,enmonths
+    use SUFR_constants, only: r2d,r2h, endays,enmonths
     use SUFR_time2string, only: hms
     use SUFR_text, only: d2s
     
@@ -883,7 +883,7 @@ contains
     real(double), intent(out), optional :: ut,jd,jde
     character, intent(in), optional :: locname*(*),tzname*(*)
     integer :: il,  opl, nlbefl,nlafl
-    real(double) :: lt,  utl,jdl,jdel
+    real(double) :: gmst, lt,  utl,jdl,jdel
     character :: locnamel*(999),tznamel*(99)
     
     ! Optional input parameters:
@@ -906,6 +906,8 @@ contains
     lt = hour + (minute + second/60.d0)/60.d0 + 1.d-50  ! so that 0 doesn't give --:--
     utl = utl + 1.d-50                                  ! so that 0 doesn't give --:--
     
+    gmst = calc_gmst(jdl, DeltaT)*r2h  ! Greenwich mean sidereal time in hours
+    
     do il=1,nlbefl
        write(opl,'(A)') ''  ! Newline
     end do
@@ -915,8 +917,9 @@ contains
          'Time:',hms(lt),second-int(second),'tz: '//trim(tznamel)//' '//d2s(tz,1),   &
          'Location:','l: ',d2s(lon0*r2d,4),'b: ',d2s(lat0*r2d,4), 'h: ',d2s(height,1),'m'
     
-    write(opl,'(A17,A9,F4.3,A7,F15.6, A12,F0.2,A1, A8,F15.6, 5x,A)') 'UNIVERSAL:  UT:',hms(utl),second-int(second),'JD:',jdl, &
-         'DeltaT: ',deltat,'s', 'JDE:',jdel, trim(locnamel)
+    write(opl,'(A17,A9,F4.3, A5,F15.6, A10,F0.2,A1, A6,F15.6, A7,F8.4, 5x,A)') &
+         'UNIVERSAL:  UT:',hms(utl),second-int(second), 'JD:',jdl, 'DeltaT: ',DeltaT,'s', &
+         'JDE:',jdel, 'GMST:',gmst, trim(locnamel)
     
     do il=1,nlafl
        write(opl,'(A)') ''  ! Newline
