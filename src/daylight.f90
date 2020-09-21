@@ -128,7 +128,7 @@ contains
   !*********************************************************************************************************************************
   
   
-  !***************************************************************************************************
+  !*********************************************************************************************************************************
   !> \brief  A simplified clear-sky model for direct and diffuse insolation on horizontal surfaces (a.k.a. as the Bird model)
   !!
   !! \param   alt    Sun altitude above the horizon (rad)
@@ -249,7 +249,7 @@ contains
     if(present(Igr))  Igr  = ItotL - (IdirL+IdifL)  ! Ground-reflected radiation from a horizontal surface
     
   end subroutine clearsky_bird
-  !***************************************************************************************************
+  !*********************************************************************************************************************************
   
   
   
@@ -402,6 +402,40 @@ contains
     
   end subroutine diffuse_radiation_Perez87
   !*********************************************************************************************************************************
+  
+  
+  
+  !*********************************************************************************************************************************
+  !> \brief  Compute the projection of direct solar radiation (DNI) on a (sloped) surface.
+  !!
+  !! This function returns the projection factor of direct sunlight on a surface with given orientation,
+  !! useful for e.g. insolation on solar panels, solar collectors or windows.  The projection factor equals
+  !! the cosine of the angle between the normal vector of the surface and the position vector of the Sun.
+  !! 
+  !! \param beta    Inclination angle of the surface (w.r.t. the horizontal) (radians)
+  !! \param gamma   Azimuth angle of the surface (0=south, pi/2=west, ±pi=north, -pi/2=east) (radians)
+  !! \param sunAz   Azimuth of the Sun (0=south, pi/2=west, ±pi=north, -pi/2=east) (radians)
+  !! \param sunAlt  Apparent altitude of the Sun (radians)
+  !!
+  !! \note
+  !! Note that different definitions for gamma and sunAz are possible, as long as they correspond.
+  !!
+  !! \see
+  !! Celestial mechanics in a nutshell, Sect. 4.3.  (http://CMiaNS.sf.net)
+  
+  function project_sunlight_on_surface(beta,gamma, sunAz,sunAlt)
+    use SUFR_kinds, only: double
+    
+    implicit none
+    real(double), intent(in) :: beta,gamma, sunAz,sunAlt
+    real(double) :: project_sunlight_on_surface
+    
+    project_sunlight_on_surface = sin(sunAlt)*cos(beta) + cos(sunAlt)*sin(beta)*cos(sunAz - gamma)
+
+    
+  end function project_sunlight_on_surface
+  !*********************************************************************************************************************************
+  
   
   
   
