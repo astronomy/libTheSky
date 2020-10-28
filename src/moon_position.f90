@@ -179,6 +179,8 @@ contains
   !! \param  lon  Ecliptic longitude (rad) (output)
   !! \param  lat  Ecliptic latitude (rad) (output)
   !! \param  rad  Distance (AU) (output)
+  !!
+  !! \ref Lunar Solution ELP 2000/MPP02, Chapront & Francou (2002): ftp://cyrano-se.obspm.fr/pub/2_lunar_solutions/2_elpmpp02/
   
   subroutine elp_mpp02_lbr(jd, mode, lon,lat,rad)
     use SUFR_kinds, only: double

@@ -1101,7 +1101,7 @@ contains
   !*********************************************************************************************************************************
   !> \brief  Correction for comet magnitude due to forward and backscattering
   !! 
-  !! \param phaseAng    Phae angle of the comet (rad)
+  !! \param phaseAng    Phase angle of the comet (rad)
   !!
   !! \retval            Magnitude correction, to be added to the magnitude (usually negative)
   !!

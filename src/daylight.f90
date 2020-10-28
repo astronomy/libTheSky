@@ -273,7 +273,7 @@ contains
   !! \param Gdif_inc_hz  Diffuse irradiation on the inclined surface - horizon-band part (optional; W/m2) (output)
   !!
   !! \see Perez et al. Solar Energy Vol. 39, Nr. 3, p. 221 (1987) - references to equations and tables are to this paper.
-  !! Most equations can be found in the Nomenclature section at the end of the paper (p.230).  We use a and c here, not b and d.
+  !! Most equations can be found in the Nomenclature section at the end of the paper (p.230).  I use a and c here, not b and d.
   !!
   !! \todo Implement Perez et al. Solar Energy Vol. 44, Nr. 5, p. 271 (1990)
   
@@ -421,7 +421,7 @@ contains
   !! Note that different definitions for gamma and sunAz are possible, as long as they correspond.
   !!
   !! \see
-  !! Celestial mechanics in a nutshell, Sect. 4.3.  (http://CMiaNS.sf.net)
+  !! Celestial mechanics in a nutshell, Sect. 4.3: Insolation on an inclined surface  (http://CMiaNS.sf.net).
   
   function project_sunlight_on_surface(beta,gamma, sunAz,sunAlt)
     use SUFR_kinds, only: double
