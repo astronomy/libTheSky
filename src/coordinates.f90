@@ -930,6 +930,45 @@ contains
   
   
   !*********************************************************************************************************************************
+  !> \brief  Compute the atmospheric refraction for a given true altitude, using single-precision values.  This
+  !!         is a wrapper for refract().
+  !!
+  !! \param   alt      True (computed) altitude (rad)
+  !! \param   press    Air pressure (hPa; optional)
+  !! \param   temp     Air temperature (degrees Celcius; optional)
+  !!
+  !! \retval  refract  Refraction in altitude (rad).  You should add the result to the uncorrected altitude.
+  !!
+  !! \see refract() for details.
+  
+  function refract_sp(alt, press,temp)
+    use SUFR_kinds, only: double
+    use SUFR_constants, only: rpio2
+    
+    implicit none
+    real, intent(in) :: alt
+    real, intent(in), optional :: press,temp
+    real :: refract_sp
+    real(double) :: lalt, lpress,ltemp
+    
+    if(abs(alt).ge.rpio2) then  ! |alt| >= 90° refraction is meaningless
+       refract_sp = 0.0
+    else
+       lalt = dble(alt)
+       lpress = 1010.d0  ! Default value for refract()
+       if(present(press)) lpress = dble(press)
+       ltemp = 10.d0     ! Default value for refract()
+       if(present(temp)) ltemp = dble(temp)
+       
+       refract_sp = real(refract(lalt, lpress,ltemp))
+    end if
+    
+  end function refract_sp
+  !*********************************************************************************************************************************
+  
+  
+  
+  !*********************************************************************************************************************************
   !> \brief  Compute the atmospheric refraction of light for a given true altitude.  Return 0 for alt<-0.9°.
   !!         This is a wrapper for aref(), which does the opposite (compute refraction for an observed zenithal angle).
   !!         This is an expensive way to go about(!)
