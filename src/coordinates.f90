@@ -921,9 +921,9 @@ contains
        if(present(temp))  refract = refract * 283.d0/(273.d0 + temp)     ! Correct for temperature
     end if
     
-    if(alt+refract.lt.-0.3d0*d2r) refract = 0.d0  ! No refraction if the object seems to be more than 0.3 deg below the horizon
-    !                                               (maximum apparent Moon radius ~ 0.29deg)
-    
+    ! if(alt+refract.lt.-0.3d0*d2r) refract = 0.d0  ! No refraction if the object seems to be more than 0.3 deg
+                                                  ! below the horizon (maximum apparent Moon radius ~ 0.29deg)
+    if(alt.lt.-0.935d0*d2r) refract = 0.63561d0*d2r
   end function refract
   !*********************************************************************************************************************************
   
