@@ -235,6 +235,7 @@ contains
   !!
   !! \param  jd         Julian day of computation
   !! \param  DeltaT     ΔT (s) (optional - default: use DelTaT from TheSky_local)
+  !! 
   !! \retval calc_gmst  Greenwich Mean Sidereal Time (radians)
   !! 
   !! \see Explanatory Supplement to the Astronomical Almanac, 3rd edition, Eq. 6.66 (2012)
@@ -858,9 +859,9 @@ contains
   !! \param  nlbef  Number of newlines before output (optional, default 0)
   !! \param  nlaf   Number of newlines after output (optional, default 0)
   !! 
-  !! \retval ut     UT: Universal Time (optional)
-  !! \retval jd     JD: Julian day (optional)
-  !! \retval jde    JDE: Apparent Julian day (optional)
+  !! \param  ut     UT: Universal Time (optional)
+  !! \param  jd     JD: Julian day (optional)
+  !! \param  jde    JDE: Apparent Julian day (optional)
   !! 
   !! \param  locname  Location name (optional)
   !! \param  tzname   Time-zone name (optional)
@@ -951,9 +952,9 @@ contains
     integer :: dow
     real(double) :: jd,jw
     
-    jd  = dble(nint(jd0+tz/24.d0))-0.5d0
-    jw  = (jd + 1.5d0)/7.d0
-    dow = nint(jd + 1.5d0 - floor(jw)*7.d0)
+    jd  = dble(nint(jd0+tz/24.d0))-0.5d0  ! ~ JD
+    jw  = (jd + 1.5d0)/7.d0               ! ~ 'Julian week'
+    dow = nint(jd + 1.5d0 - floor(jw)*7)  ! Day of week (0-6)
     
   end function dow
   !*********************************************************************************************************************************
@@ -979,6 +980,61 @@ contains
     woy = int(dble(doy(jd) + 7 - dow(jd))/7.d0)  ! Use int or floor ?
     
   end function woy
+  !*********************************************************************************************************************************
+  
+  
+  
+  !*********************************************************************************************************************************
+  !> \brief   Calculate the date of Easter using Gauss' method.
+  !!
+  !! \param year   Year to compute date of Easter for.
+  !!
+  !! \param month  Month of year of Easter Sunday.
+  !! \param day    Day of month of Easter Sunday.
+  !! 
+  !! \note  Taken from https://en.wikipedia.org/wiki/Date_of_Easter
+  !!
+  
+  subroutine easter_gauss(year,  month, day)
+    implicit none
+    integer, intent(in) :: year
+    integer, intent(out) :: month, day
+    integer :: a,b,c, k,p,q, M,N, d,e
+    
+    a = modulo(year, 19)
+    b = modulo(year, 4)
+    c = modulo(year, 7)
+    
+    if(year>1582) then  ! Gregorian calendar
+       k = floor(year / 100.d0)
+       p = floor((13 + 8*k) / 25.d0)
+       q = floor(k/4.d0)
+       M = modulo(15 + k - p - q, 30)
+       N = modulo(4 + k - q, 7)
+    else  ! Julian calendar
+       M = 15
+       N = 6
+    end if
+    
+    d = modulo(19 * a + M, 30)
+    e = modulo(2 * b + 4 * c + 6 * d + N, 7)
+    
+    month = 4
+    day = 22 + d + e
+    
+    
+    ! Sort out the details:
+    if((d.eq.29) .and. (e.eq.6)) then  ! Replace 26 with 19 April in some cases
+       day = 19
+    else if( (d.eq.28) .and. (e.eq.6) .and. (a.gt.10) ) then  ! Replace 25 with 18 April in some cases
+       day = 18
+    else if(day.gt.31) then  ! If day > 31, we're in April
+       day = day - 31
+    else                     ! If not, we're in March
+       month = 3
+    end if
+    
+  end subroutine easter_gauss
   !*********************************************************************************************************************************
   
   
