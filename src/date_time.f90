@@ -987,12 +987,15 @@ contains
   !*********************************************************************************************************************************
   !> \brief   Calculate the date of Easter using Gauss' method.
   !!
-  !! \param year   Year to compute date of Easter for.
+  !! \param year   Julian/Gregorian year to compute date of Easter for.
   !!
-  !! \param month  Month of year of Easter Sunday.
-  !! \param day    Day of month of Easter Sunday.
+  !! \param month  Julian/Gregorian month of year of Easter Sunday.
+  !! \param day    Julian/Gregorian day of month of Easter Sunday.
   !! 
-  !! \note  Taken from https://en.wikipedia.org/wiki/Date_of_Easter
+  !! \note
+  !!  - Based on Gauß, C.F., 1816. Berichtigung zu dem Aufsatze: Berechnung des Osterfestes. Zeitschrift für
+  !!             Astronomie und verwandte Wissenschaften, Bd, 1, p.158.
+  !!  - Taken from https://en.wikipedia.org/wiki/Date_of_Easter
   !!
   
   subroutine easter_gauss(year,  month, day)
@@ -1008,16 +1011,16 @@ contains
     if(year>1582) then  ! Gregorian calendar
        k = floor(year / 100.d0)
        p = floor((13 + 8*k) / 25.d0)
-       q = floor(k/4.d0)
+       q = floor(k / 4.d0)
        M = modulo(15 + k - p - q, 30)
-       N = modulo(4 + k - q, 7)
+       N = modulo( 4 + k     - q,  7)
     else  ! Julian calendar
        M = 15
        N = 6
     end if
     
-    d = modulo(19 * a + M, 30)
-    e = modulo(2 * b + 4 * c + 6 * d + N, 7)
+    d = modulo(19*a + M, 30)
+    e = modulo(2*b + 4*c + 6*d + N, 7)
     
     month = 4
     day = 22 + d + e
@@ -1037,6 +1040,69 @@ contains
   end subroutine easter_gauss
   !*********************************************************************************************************************************
   
+  
+  
+  !*********************************************************************************************************************************
+  !> \brief   Calculate the date of Passover or Pesach (Jewish Easter) using Gauss' method.
+  !! 
+  !! \param year   Julian/Gregorian year to compute date of Passover for.
+  !! 
+  !! \param month  Julian/Gregorian month of year of the DAY of Passover.
+  !! \param day    Julian/Gregorian day of month of the DAY of Passover.
+  !! 
+  !! \note
+  !! - Based on Gauss, C.F., 1802. Berechnung des Judischen Osterfestes. Werke, pp.80-81, as described in Meeus, Ch.9.
+  !! - Passover is always on 15 Nisan.  Note that this is the DAY of Passover, the day AFTER the evening of the (first) Seder.
+  !! - Valid for the Julian and Gregorian calendar.
+  !! - The Jewish year is the Julian/Gregorian year + 3760.
+  !! - For the years -4000 - +4000, this corresponds EXACTLY to Har’El, Z., 2005. Gauss Formula for the Julian Date
+  !!   of Passover. A∆(A), 1, p.0.  Har’El also computes the day of week, which for the same years corresponds exactly
+  !!   to dow(cal2jd(year,month,day)) with cal2jd from libSUFR/date_and_time, dow() from libTheSky/datetimeSky, and
+  !!   year,month,day as in the current subroutine.  Note that Passover day can only fall on Sun, Tue, Thu or Sat.
+  
+  subroutine passover_gauss(year,  month, day)
+    use SUFR_kinds, only: double
+    
+    implicit none
+    integer, intent(in) :: year
+    integer, intent(out) :: month, day
+    integer :: C,S, a,b, j
+    real(double) :: Q, r
+    
+    if(year.lt.1583) then         ! Use the Julian calendar
+       S = 0
+    else                          ! Gregorian calendar
+       C = floor(year / 100.d0)
+       S = floor((3*C - 5)/4.d0)  !   difference between Julian and Gregorian calendars, in days
+    end if
+    
+    a = modulo(12*year + 12, 19)
+    b = modulo(year, 4)
+    
+    Q = -1.904412361576d0 + 1.554241796621d0*a + 0.25d0*b - 0.003177794022d0*year + S
+    j = modulo(floor(Q) + 3*year + 5*b + 2 - S, 7)
+    r = Q - floor(Q)  ! Decimal fraction of Q
+    
+    
+    if(j.eq.2 .or. j.eq.4 .or. j.eq.6) then
+       day = floor(Q) + 23
+    else if(j.eq.1 .and. a.gt.6 .and. r.gt.0.632870370d0) then
+       day = floor(Q) + 24
+    else if(j.eq.0 .and. a.gt.11 .and. r.gt.0.897723765d0) then
+       day = floor(Q) + 23
+    else
+       day = floor(Q) + 22
+    end if
+    
+    if(day.gt.31) then  ! We're in April
+       month = 4
+       day = day - 31
+    else                ! We're in March
+       month = 3
+    end if
+    
+  end subroutine passover_gauss
+  !*********************************************************************************************************************************
   
   
 end module TheSky_datetime
