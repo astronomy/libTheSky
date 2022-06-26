@@ -969,8 +969,8 @@ contains
   
   
   !*********************************************************************************************************************************
-  !> \brief  Compute the atmospheric refraction of light for a given true altitude.  Return 0 for alt<-0.9°.
-  !!         This is a wrapper for aref(), which does the opposite (compute refraction for an observed zenithal angle).
+  !> \brief  Compute the atmospheric refraction of light for a given *true* altitude.  Return 0 for alt<-0.9°.
+  !!         This is a wrapper for aref(), which does the opposite (compute refraction for an *apparent* zenith angle).
   !!         This is an expensive way to go about(!)
   !!
   !! \param  alt0  The true (theoretical, computed) altitude of the object in radians
@@ -978,17 +978,17 @@ contains
   !! \param  h0    The height of the observer above sea level in metres
   !! \param  lat0  The latitude of the observer in radians
   !!
-  !! \param  t0    The temperature at the observer in degrees Celcius
-  !! \param  p0    The pressure at the observer in millibars
-  !! \param  rh    The relative humidity at the observer (%)
+  !! \param  t0    The temperature at the observer in degrees Celsius (e.g. 10)
+  !! \param  p0    The pressure at the observer in millibars (e.g. 1010)
+  !! \param  rh    The relative humidity at the observer in percent (e.g. 50)
   !!
-  !! \param  lam   The wavelength of the light at the observer in nanometres
-  !! \param  dTdh  The temperature lapse rate dT/dh in Kelvin/metre in the troposphere (only the absolute value is used)
+  !! \param  lam   The wavelength of the light at the observer in nanometres (e.g. 550)
+  !! \param  dTdh  The temperature lapse rate dT/dh in Kelvin/metre in the troposphere (only the absolute value is used; e.g. 0.0065)
   !!
-  !! \param  eps   The desired precision in arcseconds
+  !! \param  eps   The desired precision in arcseconds (e.g. 1.d-3)
   !!
   !! \retval atmospheric_refraction  The refraction at the observer in radians
-  !!
+  !! 
   !!
   !! \todo  Adapt aref() to compute the integral the other way around for a direct method(?)
   !!
@@ -1030,14 +1030,14 @@ contains
   
   
   !*********************************************************************************************************************************
-  !> \brief  Compute the atmospheric refraction of light for a given observed zenith angle.
+  !> \brief  Compute the atmospheric refraction of light for a given *apparent* (observed) zenith angle.
   !!         The method is based on N.A.O Technical Notes 59 and 63 and a paper by Standish and Auer 'Astronomical Refraction: 
   !!         Computational Method for all Zenith Angles'.  Return 0 if z0>90°.
   !!
-  !! \param  z0    The observed zenith distance of the object in degrees
+  !! \param  z0    The observed zenith distance of the object in *degrees*(!)
   !!
   !! \param  h0    The height of the observer above sea level in metres
-  !! \param  ph    The latitude of the observer in degrees
+  !! \param  ph    The latitude of the observer in *degrees*(!)
   !!
   !! \param  t0    The temperature at the observer in Kelvin
   !! \param  p0    The pressure at the observer in millibars
@@ -1048,7 +1048,7 @@ contains
   !!
   !! \param  eps   The desired precision in arcseconds
   !!
-  !! \retval aref  The refraction at the observer in degrees
+  !! \retval aref  The refraction at the observer in *degrees*(!)
   !!
   !! \see  Hohenkerk & Sinclair, HMNAO technical note 63 (1985)
   !!

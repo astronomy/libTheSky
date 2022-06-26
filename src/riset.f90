@@ -114,11 +114,13 @@ contains
     tc = 0        ! 0: geocentric, 1: topocentric, seems to give wrong results (for the Moon), see also different rsa
     event = ['Transit time ','Rise time    ','Set time     ']
     
-    rsa = -0.5667d0*d2r                      ! Standard rise/set altitude for planets
-    if(pl.eq.3) rsa = rsa - 16.d0*am2r       ! Compensate for radius of Sun, -16 arcminutes  ! rsa = -0.8333d0*d2r - default for Sun
-    if(pl.eq.0) rsa = 0.125d0*d2r            ! Approximate standard rise/set altitude for Moon
-    
-    if(abs(rsAlt).gt.1.d-9) rsa = rsAlt*d2r  ! Use a user-specified altitude
+    if(abs(rsAlt).gt.1.d-9) then
+       rsa = rsAlt*d2r  ! Use a user-specified altitude
+    else
+       rsa = -0.5667d0*d2r                      ! Standard rise/set altitude for planets
+       if(pl.eq.3) rsa = rsa - 16.d0*am2r       ! Compensate for radius of Sun, -16 arcminutes  ! rsa = -0.8333d0*d2r - default for Sun
+       if(pl.eq.0) rsa = 0.125d0*d2r            ! Approximate standard rise/set altitude for Moon, including parallax
+    end if
     
     evMax = 3                     ! 'Maximum' event to compute: transit only: evMax=1, +rise/set: evMax=3
     if(rsAlt.gt.90.d0) evMax = 1  ! Compute transit time and altitude only
