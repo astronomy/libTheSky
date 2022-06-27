@@ -1068,7 +1068,8 @@ contains
     real(double) :: pw0,r,r0,refo,refp,reft,rg,rs,rt,  sk0,step,t,t0o,tg,tt,z,z1,zs,zt,zts, earthrm
     
     aref = 0.d0
-    if(z0.gt.180.d0) return  ! Object below the nadir causes trouble...
+    ! if(z0.gt.180.d0) return  ! Object below the nadir causes trouble...
+    if(z0.gt.90.d0) return  ! Cannot *observe* object below horizon
     
     ! Always defined:
     z = 0.d0; reft=0.d0
