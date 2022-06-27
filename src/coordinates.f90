@@ -899,10 +899,12 @@ contains
   !! \param   press    Air pressure (hPa; optional)
   !! \param   temp     Air temperature (degrees Celcius; optional)
   !!
-  !! \retval  refract  Refraction in altitude (rad).  You should add the result to the uncorrected altitude.
+  !! \retval  refract  Refraction in altitude (rad).  You should *add* the result to the uncorrected altitude.
   !!
-  !! \see Meeus (1998), Eq. 16.4 ff, based on T. Saemundsson, "Atmospheric refraction", Sky & Telescope vol.72, p.70 (1986);
-  !!                                          converted to radians
+  !! \see
+  !!   - T. Saemundsson, "Atmospheric refraction", Sky & Telescope vol.72, p.70 (1986), converted to radians;
+  !!   - Meeus (1998), Eq. 16.4 ff.
+  !!                                          
   
   function refract(alt, press,temp)
     use SUFR_kinds, only: double
@@ -913,17 +915,21 @@ contains
     real(double), intent(in), optional :: press,temp
     real(double) :: refract
     
-    if(abs(alt).ge.pio2) then  ! |alt| >= 90° refraction is meaningless
+    if(abs(alt).gt.pio2) then  ! for |alt| > 90° refraction is meaningless
        refract = 0.d0
     else
-       refract = 2.9670597d-4/tan(alt + 3.137559d-3/(alt + 8.91863d-2))  ! Overstated accuracy in translation from degrees
+       if(alt.lt.-1.102d0*d2r) then  ! Maximum possible refraction on Earth, for T=-90°C and P=1085 mbar
+          ! Without this, refract reaches a maximum around alt=-1.9° and becomes similar to the value for |alt| for lower alt (is this bad?).
+          ! See https://en.wikipedia.org/wiki/Lowest_temperature_recorded_on_Earth, https://en.wikipedia.org/wiki/Atmospheric_pressure
+          refract = 0.663455d0*d2r   ! Refraction for alt=-1.102°, but P=1010 mbar and T=10°C.
+       else
+          refract = 2.9670597d-4/tan(alt + 3.137559d-3/(alt + 8.91863d-2))  ! Overstated accuracy in translation from degrees
+       end if
+       
        if(present(press)) refract = refract * press/1010.d0              ! Correct for pressure
        if(present(temp))  refract = refract * 283.d0/(273.d0 + temp)     ! Correct for temperature
     end if
     
-    ! if(alt+refract.lt.-0.3d0*d2r) refract = 0.d0  ! No refraction if the object seems to be more than 0.3 deg
-                                                  ! below the horizon (maximum apparent Moon radius ~ 0.29deg)
-    if(alt.lt.-0.935d0*d2r) refract = 0.63561d0*d2r
   end function refract
   !*********************************************************************************************************************************
   
@@ -985,12 +991,12 @@ contains
   !! \param  lam   The wavelength of the light at the observer in nanometres (e.g. 550)
   !! \param  dTdh  The temperature lapse rate dT/dh in Kelvin/metre in the troposphere (only the absolute value is used; e.g. 0.0065)
   !!
-  !! \param  eps   The desired precision in arcseconds (e.g. 1.d-3)
+  !! \param  eps   The desired precision in *arcseconds* (e.g. 1.d-3)
   !!
   !! \retval atmospheric_refraction  The refraction at the observer in radians
   !! 
   !!
-  !! \todo  Adapt aref() to compute the integral the other way around for a direct method(?)
+  !! \todo  Adapt aref() to compute the integral in the other direction for a direct method(?)
   !!
   
   function atmospheric_refraction(alt0, h0,lat0, t0,p0,rh, lam,dTdh, eps)
@@ -1006,24 +1012,25 @@ contains
     if(alt0.lt.-0.9d0*d2r) return  ! No refraction if alt < -0.9° - allowing this can cause aref() to fail
     
     ! Convert some variables/units:
-    z0   = 90.d0 - alt0*r2d  ! Altitude (rad) -> zenith angle (deg)
-    ph   = lat0*r2d          ! Latitude: rad -> deg
+    z0   = 90.d0 - alt0*r2d  ! Altitude (rad) -> zenith angle (in *degrees!*)
+    ph   = lat0*r2d          ! Latitude: rad -> *degrees!*
     lamm = lam / 1000.d0     ! Wavelength: nanometre -> micrometre
     t0K  = t0 + 273.15d0     ! Temperature: degC -> K
     rhfr = rh/100.d0         ! Relative humidity: % -> fraction
     
+    ! Set initial values for the iteration:
     zi  = z0
     zio = huge(zio)
     dz  = huge(dz)
     
-    do while(dz.gt.eps)
-       atmospheric_refraction = aref(zi, h0,ph, t0K,p0,rhfr, lamm,dTdh, eps)
-       zi = z0 - atmospheric_refraction
-       dz = abs(zi-zio)
-       zio = zi
+    do while(dz.gt.eps/3600.d0)  ! Iterate until the desired accuracy is achieved
+       atmospheric_refraction = aref(zi, h0,ph, t0K,p0,rhfr, lamm,dTdh, eps)  ! Do the *inverse* calculation: refraction for given *apparent* alt (in *degrees!*)
+       zi = z0 - atmospheric_refraction  ! Compute the new zenith angle
+       dz = abs(zi-zio)                  ! Compute the absolute difference with the previous iteration
+       zio = zi                          ! Store the current value as the 'old value' for the next iteration
     end do
     
-    atmospheric_refraction = atmospheric_refraction * d2r
+    atmospheric_refraction = atmospheric_refraction * d2r  ! Convert result back to radians
     
   end function atmospheric_refraction
   !*********************************************************************************************************************************
@@ -1069,7 +1076,7 @@ contains
     
     aref = 0.d0
     ! if(z0.gt.180.d0) return  ! Object below the nadir causes trouble...
-    if(z0.gt.90.d0) return  ! Cannot *observe* object below horizon
+    if(z0.gt.91.d0) return  ! Cannot *observe* object below horizon.  However, for the *inverse* case, using atmospheric_refraction() to iterate on this function, we may start slightly above z0=90.
     
     ! Always defined:
     z = 0.d0; reft=0.d0
@@ -1078,16 +1085,16 @@ contains
     gb = 9.784d0*(1.d0 - 0.0026d0*cos(2.d0*ph*dgr) - 0.00000028d0*h0)
     z1 = (287.604d0 + 1.6288d0/(lam**2) + 0.0136d0/(lam**4)) * (273.15d0/1013.25d0)*1.d-6
     
-    a(1) = abs(dTdh)
-    a(2) = (gb*md)/gcr
-    a(3) = a(2)/a(1)
-    a(4) = gamma
-    pw0  = rh*(t0/247.1d0)**a(4)
-    a(5) = pw0*(1.d0 - mw/md)*a(3)/(a(4)-a(3))
-    a(6) = p0 + a(5)
-    a(7) = z1*a(6)/t0
-    a(8) = ( z1*a(5) + z2*pw0)/t0
-    a(9) = (a(3) - 1.d0)*a(1)*a(7)/t0
+    a(1)  = abs(dTdh)
+    a(2)  = (gb*md)/gcr
+    a(3)  = a(2)/a(1)
+    a(4)  = gamma
+    pw0   = rh*(t0/247.1d0)**a(4)
+    a(5)  = pw0*(1.d0 - mw/md)*a(3)/(a(4)-a(3))
+    a(6)  = p0 + a(5)
+    a(7)  = z1*a(6)/t0
+    a(8)  = ( z1*a(5) + z2*pw0)/t0
+    a(9)  = (a(3) - 1.d0)*a(1)*a(7)/t0
     a(10) = (a(4) - 1.d0)*a(1)*a(8)/t0
     
     ! At the Observer:
@@ -1116,8 +1123,8 @@ contains
     zs = asin(sk0/(rs*ns))/dgr
     fs = refi(rs,ns,dndrs)
     
-    ! Integrate the refraction integral in the troposhere and stratosphere
-    ! ie Ref = Ref troposhere + Ref stratopshere
+    ! Integrate the refraction integral in the troposhere and stratosphere,
+    !   i.e. total refraction = refraction troposhere + refraction stratopshere
     
     ! Initial step lengths etc:
     refo = -huge(refo)
