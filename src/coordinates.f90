@@ -1275,152 +1275,15 @@ contains
   
   function aref(z0, h0,ph, t0,p0,rh, lam,dTdh,eps)
     use SUFR_kinds, only: double
-    use SUFR_constants, only: earthr
+    use SUFR_constants, only: d2r,r2d
     
     implicit none
     real(double), intent(in) :: z0, h0,ph, t0,p0, rh,lam, dTdh, eps
+    real(double) :: aref, alt0
     
-    real(double), parameter :: gcr=8314.36d0, md=28.966d0, mw=18.016d0, gamma=18.36d0
-    real(double), parameter :: ht=11000.d0, hs=80000.d0, dgr=0.01745329252d0, z2=11.2684d-06
-    
-    integer :: i,in,is,istart, j,k
-    real(double) :: aref, n,n0,nt,nts,ns,a(10), dndr,dndr0,dndrs,dndrt,dndrts, f,f0, fb,fe,ff,fo,fs,ft,fts,gb, h
-    real(double) :: pw0,r,r0,refo,refp,reft,rg,rs,rt,  sk0,step,t,t0o,tg,tt,z,z1,zs,zt,zts, earthrm
-    
-    aref = 0.d0
-    ! if(z0.gt.180.d0) return  ! Object below the nadir causes trouble...
-    if(z0.gt.91.102d0) return  ! Cannot *observe* object below horizon.  However, for the *inverse* case, using atmospheric_refraction() to iterate on this function, we may start slightly above z0=90.
-    ! 1.102° is the maximum possible refraction on Earth, for T=-90°C and P=1085 mbar, according to refract().
-    
-    ! Always defined:
-    z = 0.d0; reft=0.d0
-    
-    ! Set up parameters defined at the observer for the atmosphere:
-    gb = 9.784d0*(1.d0 - 0.0026d0*cos(2.d0*ph*dgr) - 0.00000028d0*h0)
-    z1 = (287.604d0 + 1.6288d0/(lam**2) + 0.0136d0/(lam**4)) * (273.15d0/1013.25d0)*1.d-6
-    
-    a(1)  = abs(dTdh)
-    a(2)  = (gb*md)/gcr
-    a(3)  = a(2)/a(1)
-    a(4)  = gamma
-    pw0   = rh*(t0/247.1d0)**a(4)
-    a(5)  = pw0*(1.d0 - mw/md)*a(3)/(a(4)-a(3))
-    a(6)  = p0 + a(5)
-    a(7)  = z1*a(6)/t0
-    a(8)  = ( z1*a(5) + z2*pw0)/t0
-    a(9)  = (a(3) - 1.d0)*a(1)*a(7)/t0
-    a(10) = (a(4) - 1.d0)*a(1)*a(8)/t0
-    
-    ! At the Observer:
-    earthrm = earthr*1.d-2  ! cm -> m
-    r0 = earthrm + h0
-    call troposphere_model(r0,t0,a,r0,t0o,n0,dndr0)
-    sk0 = n0 * r0 * sin(z0*dgr)
-    
-    
-    f0 = refi(r0,n0,dndr0)
-    
-    ! At the Tropopause in the Troposphere:
-    rt = earthrm + ht
-    call troposphere_model(r0,t0,a,rt,tt,nt,dndrt)
-    zt = asin(sk0/(rt*nt))/dgr
-    ft = refi(rt,nt,dndrt)
-    
-    ! At the Tropopause in the Stratosphere:
-    call stratosphere_model(rt,tt,nt,a(2),rt,nts,dndrts)
-    zts = asin(sk0/(rt*nts))/dgr
-    fts = refi(rt,nts,dndrts)
-    
-    ! At the stratosphere limit:
-    rs = earthrm + hs
-    call stratosphere_model(rt,tt,nt,a(2),rs,ns,dndrs)
-    zs = asin(sk0/(rs*ns))/dgr
-    fs = refi(rs,ns,dndrs)
-    
-    ! Integrate the refraction integral in the troposhere and stratosphere,
-    !   i.e. total refraction = refraction troposhere + refraction stratopshere
-    
-    ! Initial step lengths etc:
-    refo = -huge(refo)
-    is = 16
-    do k = 1,2
-       istart = 0
-       fe = 0.d0
-       fo = 0.d0
-       
-       if(k.eq.1) then
-          h = (zt - z0)/dble(is)
-          fb = f0
-          ff = ft
-       else if(k.eq.2) then
-          h = (zs - zts )/dble(is)
-          fb = fts
-          ff = fs
-       end if
-       
-       in = is - 1
-       is = is/2
-       step = h
-       
-200    continue
-       
-       do i = 1,in
-          if(i.eq.1.and.k.eq.1) then
-             z = z0 + h
-             r = r0
-          else if(i.eq.1.and.k.eq.2) then
-             z = zts + h
-             r = rt
-          else
-             z = z + step
-          end if
-          
-          ! Given the Zenith distance (Z) find R:
-          rg = r
-          do j = 1,4
-             if(k.eq.1) then
-                call troposphere_model(r0,t0,a,rg,tg,n,dndr)
-             else if(k.eq.2) then
-                call stratosphere_model(rt,tt,nt,a(2),rg,n,dndr)
-             end if
-             rg = rg - ( (rg*n - sk0/sin(z*dgr))/(n + rg*dndr) )
-          end do
-          r = rg
-          
-          ! Find Refractive index and Integrand at R:
-          if(k.eq.1) then
-             call troposphere_model(r0,t0,a,r,t,n,dndr)
-          else if(k.eq.2) then
-             call stratosphere_model(rt,tt,nt,a(2),r,n,dndr)
-          end if
-          
-          f = refi(r,n,dndr)
-          
-          if(istart.eq.0.and.mod(i,2).eq.0) then
-             fe = fe + f
-          else
-             fo = fo + f
-          end if
-       end do
-       
-       ! Evaluate the integrand using Simpson's Rule:
-       refp = h*(fb + 4.d0*fo + 2.d0*fe + ff)/3.d0
-       
-       if(abs(refp-refo).gt.0.5d0*eps/3600.d0) then
-          is = 2*is
-          in = is
-          step = h
-          h = h/2.d0
-          fe = fe + fo
-          fo = 0.d0
-          refo = refp
-          if(istart.eq.0) istart = 1
-          goto 200
-       end if
-       if(k.eq.1) reft = refp
-    end do
-    
-    aref = reft + refp
+    alt0 = (90.d0-z0)*d2r  ! za -> alt; deg -> rad
+    ! input: deg->rad, K->°C, μm->nm;  output: rad -> deg:
+    aref = atmospheric_refraction_apparent(alt0, h0,ph*d2r, t0-273.15d0,p0,rh, lam*1.d3, dTdh, eps*d2r)*r2d
     
   end function aref
   !*********************************************************************************************************************************
