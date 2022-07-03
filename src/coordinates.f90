@@ -1037,28 +1037,212 @@ contains
   
   
   !*********************************************************************************************************************************
-  !> \brief  Compute the atmospheric refraction of light for a given *apparent* (observed) zenith angle.
+  !> \brief  Compute the atmospheric refraction of light for a given *apparent* (observed) altitude.
+  !!         Note that you will usually want to use the *true* altitude as input.
   !!         The method is based on N.A.O Technical Notes 59 and 63 and a paper by Standish and Auer 'Astronomical Refraction: 
   !!         Computational Method for all Zenith Angles'.  Return 0 if z0>90°.
   !!
-  !! \param  z0    The observed zenith distance of the object in *degrees*(!)
+  !! \param  alt0  The observed (apparent) altitude of the object (rad).  *degrees*
   !!
+  !! \param  h0    The height of the observer above sea level (metres).
+  !! \param  ph    The latitude of the observer (rad).  *degrees*
+  !!
+  !! \param  t0    The temperature at the observer (°C).  *kelvin*
+  !! \param  p0    The pressure at the observer (mbar).
+  !! \param  rh    The relative humidity at the observer (fraction: 0-1).
+  !!
+  !! \param  lam   The wavelength of the light at the observer (nm).  *μm*
+  !! \param  dTdh  The temperature lapse rate dT/dh in the troposphere; the absolute value is used (Kelvin/metre).
+  !!
+  !! \param  eps   The desired precision (rad).  *arcseconds*
+  !! 
+  !! \retval aref  The refraction at the observer (rad).  *degrees*
+  !!
+  !! \see  Hohenkerk & Sinclair, HMNAO technical note 63 (1985).
+  
+  function atmospheric_refraction_apparent(alt0, h0,ph, t0,p0,rh, lam,dTdh,eps)
+    use SUFR_kinds, only: double
+    use SUFR_constants, only: pio2, d2r,r2d, earthr
+    
+    implicit none
+    real(double), intent(in) :: alt0, h0,ph, t0,p0, rh,lam, dTdh, eps
+    
+    real(double), parameter :: gcr=8314.36d0, md=28.966d0, mw=18.016d0, gamma=18.36d0
+    real(double), parameter :: ht=11000.d0, hs=80000.d0, dgr=0.01745329252d0, z2=11.2684d-06
+    
+    integer :: i,in,is,istart, j,k
+    real(double) :: atmospheric_refraction_apparent, z0,t0l,laml, n,n0,nt,nts,ns,a(10), dndr,dndr0,dndrs,dndrt,dndrts, f,f0, fb,fe,ff,fo,fs,ft,fts,gb, h
+    real(double) :: pw0,r,r0,refo,refp,reft,rg,rs,rt,  sk0,step,t,t0o,tg,tt,z,z1,zs,zt,zts, earthrm
+    
+    atmospheric_refraction_apparent = 0.d0
+    ! if(z0.gt.180.d0) return  ! Object below the nadir causes trouble...
+    if(alt0.lt.-1.102d0*d2r) return  ! Cannot *observe* object below horizon.  However, for the *inverse* case, using atmospheric_refraction() to iterate on this function, we may start slightly below h=0.
+    ! 1.102° is the maximum possible refraction on Earth, for T=-90°C and P=1085 mbar, according to refract().
+    
+    ! Original algorithm was in degrees and kelvin and used the zenith angle as input iso altitude:
+    z0 = (pio2 - alt0)*r2d  ! alt -> za; rad -> deg
+    ! phl = ph*r2d         ! radians -> degrees
+    t0l = t0 + 273.15d0  ! °C -> K
+    laml = lam*1.d-3     ! nm -> μm
+    ! epsl = eps*r2as      ! radians -> arcseconds
+    
+    
+    ! Always defined:
+    z = 0.d0; reft=0.d0
+    
+    ! Set up parameters defined at the observer for the atmosphere:
+    gb = 9.784d0*(1.d0 - 0.0026d0*cos(2.d0*ph) - 0.00000028d0*h0)
+    z1 = (287.604d0 + 1.6288d0/(laml**2) + 0.0136d0/(laml**4)) * (273.15d0/1013.25d0)*1.d-6
+    
+    a(1)  = abs(dTdh)
+    a(2)  = (gb*md)/gcr
+    a(3)  = a(2)/a(1)
+    a(4)  = gamma
+    pw0   = rh*(t0l/247.1d0)**a(4)
+    a(5)  = pw0*(1.d0 - mw/md)*a(3)/(a(4)-a(3))
+    a(6)  = p0 + a(5)
+    a(7)  = z1*a(6)/t0l
+    a(8)  = ( z1*a(5) + z2*pw0)/t0l
+    a(9)  = (a(3) - 1.d0)*a(1)*a(7)/t0l
+    a(10) = (a(4) - 1.d0)*a(1)*a(8)/t0l
+    
+    ! At the Observer:
+    earthrm = earthr*1.d-2  ! cm -> m
+    r0 = earthrm + h0
+    call troposphere_model(r0,t0l,a,r0,t0o,n0,dndr0)
+    sk0 = n0 * r0 * sin(z0*dgr)
+    
+    
+    f0 = refi(r0,n0,dndr0)
+    
+    ! At the Tropopause in the Troposphere:
+    rt = earthrm + ht
+    call troposphere_model(r0,t0l,a,rt,tt,nt,dndrt)
+    zt = asin(sk0/(rt*nt))/dgr
+    ft = refi(rt,nt,dndrt)
+    
+    ! At the Tropopause in the Stratosphere:
+    call stratosphere_model(rt,tt,nt,a(2),rt,nts,dndrts)
+    zts = asin(sk0/(rt*nts))/dgr
+    fts = refi(rt,nts,dndrts)
+    
+    ! At the stratosphere limit:
+    rs = earthrm + hs
+    call stratosphere_model(rt,tt,nt,a(2),rs,ns,dndrs)
+    zs = asin(sk0/(rs*ns))/dgr
+    fs = refi(rs,ns,dndrs)
+    
+    ! Integrate the refraction integral in the troposhere and stratosphere,
+    !   i.e. total refraction = refraction troposhere + refraction stratopshere
+    
+    ! Initial step lengths etc:
+    refo = -huge(refo)
+    is = 16
+    do k = 1,2
+       istart = 0
+       fe = 0.d0
+       fo = 0.d0
+       
+       if(k.eq.1) then
+          h = (zt - z0)/dble(is)
+          fb = f0
+          ff = ft
+       else if(k.eq.2) then
+          h = (zs - zts )/dble(is)
+          fb = fts
+          ff = fs
+       end if
+       
+       in = is - 1
+       is = is/2
+       step = h
+       
+200    continue
+       
+       do i = 1,in
+          if(i.eq.1.and.k.eq.1) then
+             z = z0 + h
+             r = r0
+          else if(i.eq.1.and.k.eq.2) then
+             z = zts + h
+             r = rt
+          else
+             z = z + step
+          end if
+          
+          ! Given the Zenith distance (Z) find R:
+          rg = r
+          do j = 1,4
+             if(k.eq.1) then
+                call troposphere_model(r0,t0l,a,rg,tg,n,dndr)
+             else if(k.eq.2) then
+                call stratosphere_model(rt,tt,nt,a(2),rg,n,dndr)
+             end if
+             rg = rg - ( (rg*n - sk0/sin(z*dgr))/(n + rg*dndr) )
+          end do
+          r = rg
+          
+          ! Find Refractive index and Integrand at R:
+          if(k.eq.1) then
+             call troposphere_model(r0,t0l,a,r,t,n,dndr)
+          else if(k.eq.2) then
+             call stratosphere_model(rt,tt,nt,a(2),r,n,dndr)
+          end if
+          
+          f = refi(r,n,dndr)
+          
+          if(istart.eq.0.and.mod(i,2).eq.0) then
+             fe = fe + f
+          else
+             fo = fo + f
+          end if
+       end do
+       
+       ! Evaluate the integrand using Simpson's Rule:
+       refp = h*(fb + 4.d0*fo + 2.d0*fe + ff)/3.d0
+       
+       if(abs(refp-refo).gt.0.5d0*eps*r2d) then
+          is = 2*is
+          in = is
+          step = h
+          h = h/2.d0
+          fe = fe + fo
+          fo = 0.d0
+          refo = refp
+          if(istart.eq.0) istart = 1
+          goto 200
+       end if
+       if(k.eq.1) reft = refp
+    end do
+    
+    atmospheric_refraction_apparent = (reft + refp)*d2r  ! Convert result from degrees to radians
+    
+  end function atmospheric_refraction_apparent
+  !*********************************************************************************************************************************
+  
+  
+  !*********************************************************************************************************************************
+  !> \brief  Compute the atmospheric refraction of light for a given *apparent* (observed) zenith angle.
+  !!         The method is based on N.A.O Technical Notes 59 and 63 and a paper by Standish and Auer 'Astronomical Refraction: 
+  !!         Computational Method for all Zenith Angles'.  Return 0 if z0>91.102°.
+  !!
+  !! \param  z0    The observed zenith distance of the object in *degrees*(!)
+  !! 
   !! \param  h0    The height of the observer above sea level in metres
   !! \param  ph    The latitude of the observer in *degrees*(!)
-  !!
+  !! 
   !! \param  t0    The temperature at the observer in Kelvin
   !! \param  p0    The pressure at the observer in millibars
-  !! \param  rh    The relative humidity at the observer
-  !!
+  !! \param  rh    The relative humidity at the observer as a fraction (0-1)
+  !! 
   !! \param  lam   The wavelength of the light at the observer in micrometres
-  !! \param  dTdh  The temperature lapse rate dT/dh in Kelvin/metre in the troposphere, the absolute value is used
-  !!
-  !! \param  eps   The desired precision in arcseconds
-  !!
+  !! \param  dTdh  The temperature lapse rate dT/dh in Kelvin/metre in the troposphere; the absolute value is used
+  !! 
+  !! \param  eps   The desired precision in *arcseconds*(!)
+  !! 
   !! \retval aref  The refraction at the observer in *degrees*(!)
-  !!
+  !! 
   !! \see  Hohenkerk & Sinclair, HMNAO technical note 63 (1985)
-  !!
   
   function aref(z0, h0,ph, t0,p0,rh, lam,dTdh,eps)
     use SUFR_kinds, only: double
@@ -1076,7 +1260,8 @@ contains
     
     aref = 0.d0
     ! if(z0.gt.180.d0) return  ! Object below the nadir causes trouble...
-    if(z0.gt.91.d0) return  ! Cannot *observe* object below horizon.  However, for the *inverse* case, using atmospheric_refraction() to iterate on this function, we may start slightly above z0=90.
+    if(z0.gt.91.102d0) return  ! Cannot *observe* object below horizon.  However, for the *inverse* case, using atmospheric_refraction() to iterate on this function, we may start slightly above z0=90.
+    ! 1.102° is the maximum possible refraction on Earth, for T=-90°C and P=1085 mbar, according to refract().
     
     ! Always defined:
     z = 0.d0; reft=0.d0
