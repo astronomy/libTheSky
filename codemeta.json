@@ -1,0 +1,25 @@
+{
+    "@context": "https://doi.org/10.5063/schema/codemeta-2.0",
+    "@type": "SoftwareSourceCode",
+    "name": "libTheSky: Compute positions of celestial bodies and events",
+    "description": "libTheSky computes the positions of celestial bodies, such as the Moon, planets, and stars, and events, including conjunctions and eclipses, with great accuracy. Written in Fortran, libTheSky can use different reference frames (heliocentric, geocentric, topocentric) and coordinate systems (ecliptic, equatorial, galactic; spherical, rectangular), and the user can choose low- or high-accuracy calculations, depending on need.",
+    "identifier": "ascl:2209.018",
+    "author": [
+        {
+            "@type": "Person",
+            "givenName": "Marc",
+            "familyName": "van der Sluys",
+            "@id": "https://orcid.org/0000-0003-1231-0762"
+        }
+    ],
+    "citation": "https://ui.adsabs.harvard.edu/abs/2022ascl.soft09018V",
+    "relatedLink": [
+        "https://libthesky.sourceforge.net/"
+    ],
+    "codeRepository": [
+        "https://sourceforge.net/projects/libthesky/",
+        "https://github.com/MarcvdSluys/libTheSky"
+    ],
+    "version": "0.4.2",
+    "license": "https://spdx.org/licenses/GPL-3.0-or-later.htmlPLACEHOLDER: Add license (ideally as a URL to the SPDX page - e.g. https://spdx.org/licenses/MIT.html) here"
+}

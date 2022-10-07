@@ -1,0 +1,14 @@
+cff-version: 1.1.0
+message: "Please cite the following works when using this software: https://ui.adsabs.harvard.edu/abs/2022ascl.soft09018V"
+authors:
+- family-names: van der Sluys
+  given-names: Marc
+title: "libTheSky: Compute positions of celestial bodies and events"
+version: 0.4.2
+date-released: 2021-08-22
+identifiers:
+ - type: "ascl-id"
+   value: "2209.018"
+ - type: "bibcode"
+   value: "2022ascl.soft09018V"
+abstract: "libTheSky computes the positions of celestial bodies, such as the Moon, planets, and stars, and events, including conjunctions and eclipses, with great accuracy. Written in Fortran, libTheSky can use different reference frames (heliocentric, geocentric, topocentric) and coordinate systems (ecliptic, equatorial, galactic; spherical, rectangular), and the user can choose low- or high-accuracy calculations, depending on need."
