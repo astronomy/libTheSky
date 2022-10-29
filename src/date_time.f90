@@ -520,9 +520,8 @@ contains
     real(double), intent(out) :: s
     real(double) :: dd,tm
     
-    if(mm.lt.1 .or. mm.gt.12) call quit_program_error('libTheSky: jd2dtm(): month must be between 1 and 12.', 1)  ! Needed because of mlen()
-    
     call jd2cal(jd + tz/24.d0,  yy,mm,dd)  ! in LT
+    if(mm.lt.1 .or. mm.gt.12) call quit_program_error('libTheSky: jd2dtm(): something went wrong in the jd2cal() call: month must be between 1 and 12.', 1)  ! Needed because of mlen()
     
     ! jd2cal returns zeroes if JD not defined (i.e., JD=-huge), and mlen(mm) is not defined - catch this:
     if(yy.eq.0.and.mm.eq.0) then
@@ -532,6 +531,7 @@ contains
        s = 0.0_dbl
        return
     end if
+    
     
     mlen(2) = 28 + leapyr(yy)
     
@@ -576,7 +576,7 @@ contains
   !! \param h    Hour (LT) (output)
   !! \param m    Minute (LT) (output)
   
-  subroutine jd2dthm(jd,yy,mm, d,h,m)
+  subroutine jd2dthm(jd, yy,mm, d,h,m)
     use SUFR_kinds, only: double
     use SUFR_system, only: quit_program_error
     use SUFR_constants, only: mlen
@@ -588,9 +588,8 @@ contains
     integer, intent(out) :: yy,mm,d,h,m
     real(double) :: dd,tm
     
-    if(mm.lt.1 .or. mm.gt.12) call quit_program_error('libTheSky: jd2dtm(): month must be between 1 and 12.', 1)  ! Needed because of mlen()
-    
     call jd2cal(jd+tz/24.d0, yy,mm,dd)  ! in LT
+    if(mm.lt.1 .or. mm.gt.12) call quit_program_error('libTheSky: jd2dthm(): something went wrong in the jd2cal() call: month must be between 1 and 12.', 1)  ! Needed because of mlen()
     
     ! jd2cal returns zeroes if JD not defined (i.e., JD=-huge), and mlen(mm) is not defined - catch this:
     if(yy.eq.0 .and. m.eq.0) then
