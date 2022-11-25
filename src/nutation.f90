@@ -32,7 +32,7 @@ contains
   !*********************************************************************************************************************************
   !> \brief  Calculate nutation - cheap routine from Meeus
   !! 
-  !! \param  t     Time in Julian Millennia since 2000.0 in dynamical time
+  !! \param t     Time in Julian Millennia since 2000.0 in dynamical time
   !! \param dpsi  Nutation in longitude (output)
   !! \param eps0  Obliquity of the ecliptic (output)
   !! \param deps  Nutation in obliquity (output)
@@ -63,7 +63,7 @@ contains
     dpsi=0.d0
     deps=0.d0
     nu = nutationdat
-    do i=1,63  ! Use data from Meeus' Table 22.A, p.145 (see nutation.dat)
+    do i=1,63  ! Use data from the IAU1980 model (Seidelmann 1981; see nutation.dat)
        tmpvar = nu(1,i)*d + nu(2,i)*ms + nu(3,i)*mm + nu(4,i)*f + nu(5,i)*omg
        dpsi = dpsi + (nu(6,i) + nu(7,i)*tt) * sin(tmpvar)
        deps = deps + (nu(8,i) + nu(9,i)*tt) * cos(tmpvar)
@@ -72,10 +72,10 @@ contains
     conv = pi/(1.d4*3600.d0*180.d0)    ! Convert from 0.0001" to radians
     dpsi = dpsi*conv
     deps = deps*conv
-    u   = t/10.d0
     
+    u   = t/10.d0  ! Dynamical time since 2000 in units of 10,000 years
     eps0 = 0.409092804222d0 - 0.022693789d0*u - 7.5146d-6*u*u + 0.0096926375d0*u**3 - 2.49097d-4*u**4 - 0.0012104343d0*u**5 -  &
-         1.893197d-4*u**6 + 3.452d-5*u**7 + 1.3512d-4*u**8 + 2.8071d-5*u**9 + 1.1878d-5*u**10  ! Meeus, Eq. 22.3
+         1.893197d-4*u**6 + 3.452d-5*u**7 + 1.3512d-4*u**8 + 2.8071d-5*u**9 + 1.1878d-5*u**10  ! Laskar, A&A 157 59 (1986), Tab.8.
     
   end subroutine nutation
   !*********************************************************************************************************************************
@@ -2972,11 +2972,11 @@ contains
     
     !****  DATA statements for the fundamental arguments.
     
-    data elc    /     0.064d0,    31.310d0,    715922.633d0,  485866.733d0,    1325.0d0 /
+    data elc    /     0.064d0,    31.310d0,    715922.633d0,  485866.733d0,     1325.0d0 /
     data elpc   /    -0.012d0,    -0.577d0,   1292581.224d0,  1287099.804d0,      99.0d0 /
-    data fc     /     0.011d0,   -13.257d0,    295263.137d0,  335778.877d0,    1342.0d0/
-    data dc     /     0.019d0,    -6.891d0,    1105601.328d0,  1072261.307d0,    1236.0d0/
-    data omc    /     0.008d0,     7.455d0,    -482890.539d0,  450160.280d0,      -5.0d0/
+    data fc     /     0.011d0,   -13.257d0,    295263.137d0,  335778.877d0,     1342.0d0 /
+    data dc     /     0.019d0,    -6.891d0,   1105601.328d0,  1072261.307d0,    1236.0d0 /
+    data omc    /     0.008d0,     7.455d0,   -482890.539d0,  450160.280d0,       -5.0d0 /
     
     !****  Get the number of centuries to current time
     

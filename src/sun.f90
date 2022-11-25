@@ -151,7 +151,7 @@ contains
     
     
     ! Obliquity of the ecliptic and nutation:
-    eps0 = 0.409092804222d0 - 2.26965525d-4*tjc - 2.86d-9*tjc2 + 8.78967d-9*tjc3           ! Mean obliq. o.t. eclip, Meeus, Eq.22.2
+    eps0 = 0.409092804222d0 - 2.26965525d-4*tjc - 2.86d-9*tjc2 + 8.78967d-9*tjc3           ! Mean obliq. o.t. eclip  (Lieske et al, 1977)
     deps = 4.46d-5*cos(omg) + 2.76d-6*cos(2*l0) + 4.848d-7*cos(2*lm) - 4.36d-7*cos(2*omg)  ! Nutation in obliquity, Meeus, p.144
     eps  = eps0 + deps                                                                     ! True obliquity of the ecliptic
     

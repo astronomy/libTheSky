@@ -528,7 +528,7 @@ contains
     
     
     ! Obliquity of the ecliptic:
-    eps0 = 0.409092804222d0 - 2.26965525d-4*tjc - 2.86d-9*tjc2 + 8.78967d-9*tjc3            ! Mean obliquity of the ecliptic
+    eps0 = 0.409092804222d0 - 2.26965525d-4*tjc - 2.86d-9*tjc2 + 8.78967d-9*tjc3            ! Mean obliquity of the ecliptic (Lieske et al, 1977)
     deps = 4.468d-5*cos(omg) + 2.76d-6*cos(2*ls) + 4.848d-7*cos(2*lm) - 4.36d-7*cos(2*omg)  ! Nutation in obliquity
     eps  = eps0 + deps                                                                      ! True obliquity of the ecliptic
     
