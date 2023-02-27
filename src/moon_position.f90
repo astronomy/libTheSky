@@ -454,18 +454,18 @@ contains
     ! Moon's mean longitude, Meeus p.338:
     lm = rev(3.8103408236d0 + 8399.7091116339958d0*tjc - 2.755176757d-5*tjc2 + 3.239043d-8*tjc3 - 2.6771d-10*tjc4)
     
-    ! Delauney arguments [d, ms, mm, f] (Meeus p.144) = [D, l', l, F] in Simon et al. 1994, Sect. 3.5:
-    !d  = rev(5.19846946025d0 + 7771.37714617d0*tjc - 3.340909d-5*tjc2    + 9.2114446d-8*tjc3)     ! Moon's mean elongation
-    !ms = rev(6.24003588115d0 + 628.301956024d0*tjc - 2.79776d-6*tjc2     - 5.8177641733d-8*tjc3)  ! Sun's mean anomaly
-    !mm = rev(2.3555483693d0  + 8328.69142288d0*tjc + 1.517947757d-4*tjc2 + 3.102807559d-7*tjc3)   ! Moon's mean anomaly
-    !f  = rev(1.62790192912d0 + 8433.46615832d0*tjc - 6.42717497d-5*tjc2  + 5.3329949d-8*tjc3)     ! Moon's argument of latitute
+    ! Delaunay arguments [d, ms, mm, f] (Meeus p.144) = [D, l', l, F] in Simon et al. 1994, Sect. 3.5:
+    ! d  = rev(5.19846946025d0 + 7771.37714617d0*tjc - 3.340909d-5*tjc2    + 9.2114446d-8*tjc3)     ! Moon's mean elongation
+    ! ms = rev(6.24003588115d0 + 628.301956024d0*tjc - 2.79776d-6*tjc2     - 5.8177641733d-8*tjc3)  ! Sun's mean anomaly
+    ! mm = rev(2.3555483693d0  + 8328.69142288d0*tjc + 1.517947757d-4*tjc2 + 3.102807559d-7*tjc3)   ! Moon's mean anomaly
+    ! f  = rev(1.62790192912d0 + 8433.46615832d0*tjc - 6.42717497d-5*tjc2  + 5.3329949d-8*tjc3)     ! Moon's argument of latitude
     
     ! Meeus p.338, compares better to ELP-MPP02:
     d  = rev(5.1984665298d0  + 7771.377144834d0*tjc - 3.2845d-5*tjc2  + 3.197347d-8*tjc3    - 1.5436512d-10*tjc4)  ! Moon's mean elongation
     ms = rev(6.240060127d0   + 628.301955167d0*tjc  - 2.681d-6*tjc2   + 7.1267017d-10*tjc3)                        ! Sun's mean anomaly
     mm = rev(2.355555637d0   + 8328.691424759d0*tjc + 1.52566d-4*tjc2 + 2.5041d-7*tjc3      - 1.18633d-9*tjc4)     ! Moon's mean anomaly
-    f  = rev(1.627905158d0   + 8433.466158061d0*tjc - 6.3773d-5*tjc2  - 4.94988d-9*tjc3     + 2.02167d-11*tjc4)    ! Moon's argument of latitute
-    args = [d,ms,mm,f]  ! Delauney arguments
+    f  = rev(1.627905158d0   + 8433.466158061d0*tjc - 6.3773d-5*tjc2  - 4.94988d-9*tjc3     + 2.02167d-11*tjc4)    ! Moon's argument of latitude
+    args = [d,ms,mm,f]  ! Delaunay arguments
     
     e  = 1.d0 - 0.002516d0*tjc - 0.0000074d0*tjc2
     
