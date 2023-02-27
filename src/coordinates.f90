@@ -438,8 +438,8 @@ contains
     k    = 9.93650849745d-5  ! Constant of aberration, radians
     odot = rev(l0+pi)        ! Longitude of the Sun
     
-    e    = 0.016708634d0 - 4.2037d-5 * tt   - 1.267d-7 * tt2   ! Eccentricity
-    pii  = 1.79659568d0  + 3.001024d-2 * tt + 8.0285d-6 * tt2  ! Longitude of perihelion
+    e    = 0.016708634d0 - 4.2037d-5   * tt - 1.267d-7  * tt2  ! Eccentricity of the Earth's orbit
+    pii  = 1.79659568d0  + 3.001024d-2 * tt + 8.0285d-6 * tt2  ! Longitude of perihelion of "
     
     dl   =  k * ( -cos(odot-l)  +  e * cos(pii-l)) / cos(b)  ! Meeus, Eq. 23.2
     db   = -k * sin(b) * (sin(odot-l)  -  e * sin(pii-l))
@@ -499,8 +499,8 @@ contains
        
        ! Meeus, p.151:
        k     =  9.93650849745d-5  ! Constant of aberration, in radians (kappa in Meeus)
-       ee    =  0.016708634d0 - 4.2037d-5 * tjc   - 1.267d-7 * tjc2
-       pii   =  1.79659568d0  + 3.001024d-2 * tjc + 8.0285d-6 * tjc2
+       ee    =  0.016708634d0 - 4.2037d-5   * tjc - 1.267d-7  * tjc2   ! Eccentricity of the Earth's orbit
+       pii   =  1.79659568d0  + 3.001024d-2 * tjc + 8.0285d-6 * tjc2   ! Longitude of perihelion of "
        
        
        ! If eps0 is provided, use it - otherwise compute it:
@@ -516,11 +516,11 @@ contains
     
     ! Note that eps in Meeus is actually eps0, the *mean* obliquity of the ecliptic
     ! Meeus, Eq. 23.3:
-    dra =      k * ( -(cos(ra) * cos(odot) * cos(eps)  +  sin(ra) * sin(odot))  / cos(dec)  &
-         +    ee *    (cos(ra) * cos(pii)  * cos(eps)  +  sin(ra) * sin(pii))   / cos(dec) )
+    dra  =   k * ( -(cos(ra) * cos(odot) * cos(eps)  +  sin(ra) * sin(odot))  / cos(dec)  &
+         +  ee *    (cos(ra) * cos(pii)  * cos(eps)  +  sin(ra) * sin(pii))   / cos(dec) )
     
-    ddec =      k * ( -(cos(odot) * cos(eps) * (tan(eps) * cos(dec)  -  sin(ra) * sin(dec))  +  cos(ra) * sin(dec) * sin(odot))  &
-         +     ee *    (cos(pii)  * cos(eps) * (tan(eps) * cos(dec)  -  sin(ra) * sin(dec))  +  cos(ra) * sin(dec) * sin(pii)) )
+    ddec =   k * ( -(cos(odot) * cos(eps) * (tan(eps) * cos(dec)  -  sin(ra) * sin(dec))  +  cos(ra) * sin(dec) * sin(odot))  &
+         +  ee *    (cos(pii)  * cos(eps) * (tan(eps) * cos(dec)  -  sin(ra) * sin(dec))  +  cos(ra) * sin(dec) * sin(pii)) )
     
   end subroutine aberration_eq
   !*********************************************************************************************************************************
