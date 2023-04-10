@@ -530,7 +530,7 @@ contains
   !*********************************************************************************************************************************
   !> \brief  Convert coordinates to the FK5 system
   !!
-  !! \param  t  Dynamical time in Julian Millennia since 2000.0
+  !! \param t  Dynamical time in Julian Millennia since 2000.0
   !! \param l  Longitude (rad, I/O) (output)
   !! \param b  Latitude (rad, I/O) (output)
   

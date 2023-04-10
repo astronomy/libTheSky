@@ -1020,8 +1020,8 @@ contains
     integer :: a,b,c, k,p,q, M,N, d,e
     
     a = modulo(year, 19)
-    b = modulo(year, 4)
-    c = modulo(year, 7)
+    b = modulo(year,  4)
+    c = modulo(year,  7)
     
     if(year>1582) then  ! Gregorian calendar
        k = floor(year / 100.d0)
