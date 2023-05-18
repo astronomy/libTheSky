@@ -126,10 +126,10 @@ contains
     else  ! e >= 1: Parabolic or hyperbolic orbits:
        
        ! Get a starting value for s, for parabolic or hyperbolic orbits:
-       w = 3.d0*k/(q*sqrt(2.d0*q))*t  ! Eq. 34.1
+       w = 3*k/(q*sqrt(2*q))*t  ! Eq. 34.1
        s = w/3.d0  ! 0.d0  Starting value for auxillary variable s = tan(nu/2)
        do i=1,1000
-          s1 = (2.d0*s**3 + w)/(3.d0*(s**2+1.d0))  ! Eq. 34.4
+          s1 = (2*s**3 + w)/(3*(s**2+1.d0))  ! Eq. 34.4
           if(abs(s-s1).lt.del) exit
           s = s1
        end do  ! i
@@ -150,17 +150,19 @@ contains
           
           iloop: do i=1,nint(1e7)           ! Program p.246, loop lines 40-64
              s0 = s
-             q3 = q2 + 2.d0*g*s**3/3.d0     ! Eq. 35.1b, but version from program on next page (246), line 42
+             ! q3 = q2 - (1.d0 - 2*g)*s**3/3.d0  ! Eq. 35.1b
+             q3 = q2 + 2.d0*g*s**3/3.d0        ! Eq. 35.1b, but version from program on next page (246), line 42
              
              j1loop: do j=3,1000            ! Eq. 35.1c, d, ...  -  program p.246, loop lines 44-56
                 jj = dble(j)
-                dq3 = (-1)**(j-1) * g**(j-2) * ((jj-1.d0) - jj*g) * s**(2*j-1) / (2.d0*jj-1.d0)
+                dq3 = (-1)**(j-1) * g**(j-2) * ((jj-1.d0) - j*g) * s**(2*j-1) / (2*jj-1.d0)
                 if(isnan(dq3)) return  ! NaN -> will not converge...
                 
                 q3 = q3 + dq3               ! Program p.246, loop line 52
                 if(abs(dq3).lt.del) exit  j1loop  ! j
                 
                 if(j.eq.1000) j1 = j1+1
+                
                 if(j1.eq.100) then
                    if(TheSky_verbosity.gt.0) write(0,*) 'cometxyz(): j1-iteration did not converge: ', &
                         i, abs(dq3/q3),'>',del
@@ -279,8 +281,10 @@ contains
     call fk5(t, l0,b0)
     call nutation(t,dpsi,eps0,deps)
     eps = eps0 + deps
+    
     ! call calcsunxyz(t, l0,b0,r0, x0,y0,z0)
     call cometxyz(t,com, x,y,z)                                  ! Heliocentric equatorial rectangular coordinates
+    
     call ecl_spher_2_eq_rect(rev(l0+pi),-b0,r0, eps0, x0,y0,z0)  ! l0+pi,-b0,r0 is geocentric SPHERICAL ECLIPTICAL pos. of Sun,
     !                                                              convert to geocentric RECTANGULAR EQUATORIAL position of Sun
     jd1 = t*365250.d0 + jd2000                                   ! From equinox of date...
