@@ -74,8 +74,13 @@ contains
     nlpname(11) = trim(cometNames(comID))  ! Warning: cometNames is much longer than nlpname
     enpname(11) = trim(cometNames(comID))  ! Warning: cometNames is much longer than enpname
     
-    !write(0,'(I9,9F15.5)') comID, o1,o2,in,q,e,tp,comepoche
-    !write(6,'(I9,2x,A50,9F15.5)') comID, trim(cometNames(comID)), q,e,in*r2d, o1*r2d,o2*r2d, tp,comepoche
+    ! Calculation did not (yet) converge:
+    x = 0.d0
+    y = 0.d0
+    z = 0.d0
+    
+    ! write(0,'(I9,9F15.5)') comID, o1,o2,in,q,e,tp,comepoche
+    ! write(6,'(I9,2x,A50,9F15.5)') comID, trim(cometNames(comID)), q,e,in*r2d, o1*r2d,o2*r2d, tp,comepoche
     
     
     
@@ -83,7 +88,7 @@ contains
     t = jde - tp  ! In days since perihelion
     nu = 0.d0     ! Avoid 'may be used uninitialized' warnings
     
-    !call precess_orb(comepoche,jde,in,o1,o2)
+    ! call precess_orb(comepoche,jde,in,o1,o2)
     
     
     if(e.lt.1.0d0) then
@@ -122,9 +127,9 @@ contains
        
        ! Get a starting value for s, for parabolic or hyperbolic orbits:
        w = 3.d0*k/(q*sqrt(2.d0*q))*t  ! Eq. 34.1
-       s = w/3.d0  !0.d0  Starting value for auxillary variable s = tan(nu/2)
+       s = w/3.d0  ! 0.d0  Starting value for auxillary variable s = tan(nu/2)
        do i=1,1000
-          s1 = (2.d0*s**3+w)/(3.d0*(s**2+1.d0))  ! Eq. 34.4
+          s1 = (2.d0*s**3 + w)/(3.d0*(s**2+1.d0))  ! Eq. 34.4
           if(abs(s-s1).lt.del) exit
           s = s1
        end do  ! i
@@ -150,12 +155,15 @@ contains
              j1loop: do j=3,1000            ! Eq. 35.1c, d, ...  -  program p.246, loop lines 44-56
                 jj = dble(j)
                 dq3 = (-1)**(j-1) * g**(j-2) * ((jj-1.d0) - jj*g) * s**(2*j-1) / (2.d0*jj-1.d0)
+                if(isnan(dq3)) return  ! NaN -> will not converge...
+                
                 q3 = q3 + dq3               ! Program p.246, loop line 52
                 if(abs(dq3).lt.del) exit  j1loop  ! j
                 
                 if(j.eq.1000) j1 = j1+1
                 if(j1.eq.100) then
-                   if(TheSky_verbosity.gt.0) write(0,*) "COMETS: j1-iteration didn't converge"
+                   if(TheSky_verbosity.gt.0) write(0,*) 'cometxyz(): j1-iteration did not converge: ', &
+                        i, abs(dq3/q3),'>',del
                    return
                 end if
              end do  j1loop  ! j
@@ -167,7 +175,8 @@ contains
                 
                 if(j.eq.1000) j2 = j2+1
                 if(j2.eq.100) then
-                   if(TheSky_verbosity.gt.0) write(0,*) "COMETS: j2-iteration didn't converge",abs(s-s1)
+                   if(TheSky_verbosity.gt.0) write(0,*) 'cometxyz(): j2-iteration did not converge: ', &
+                        i, abs((s-s1)/s), '>', del
                    return
                 end if
              end do  j2loop  ! j
@@ -178,7 +187,8 @@ contains
              end if
              
              if(i.ge.nint(1e7)) then
-                if(TheSky_verbosity.gt.0) write(0,*) "COMETS: i-Iteration didn't converge: ",abs(s-s1)
+                if(TheSky_verbosity.gt.0) write(0,*) 'cometxyz(): i-Iteration did not converge: ', &
+                     i, abs((s-s1)/s), '>', del
                 return
              end if
              
@@ -187,7 +197,7 @@ contains
        
     end if  ! e >= 1  ! Parabolic or hyperbolic orbit
     
-    !r = a * (1.d0 - e*cos(ee))  ! Eq. 30.2
+    ! r = a * (1.d0 - e*cos(ee))  ! Eq. 30.2
     r = q * (1.d0+e) / (1.d0 + e*cos(nu))  ! Eq. 30.4
     
     call nutation(te,dpsi,eps0,deps)
@@ -211,9 +221,9 @@ contains
     c2 = sqrt(hh*hh + rr*rr)    ! c
     
     ! Eq. 33.9:
-    x = r * a2 * sin(a1+o1+nu)
-    y = r * b2 * sin(b1+o1+nu)
-    z = r * c2 * sin(c1+o1+nu)
+    x = r * a2 * sin(a1 + o1 + nu)
+    y = r * b2 * sin(b1 + o1 + nu)
+    z = r * c2 * sin(c1 + o1 + nu)
     
   end subroutine cometxyz
   !*********************************************************************************************************************************
@@ -269,7 +279,7 @@ contains
     call fk5(t, l0,b0)
     call nutation(t,dpsi,eps0,deps)
     eps = eps0 + deps
-    !call calcsunxyz(t,l0,b0,r0,x0,y0,z0)
+    ! call calcsunxyz(t, l0,b0,r0, x0,y0,z0)
     call cometxyz(t,com, x,y,z)                                  ! Heliocentric equatorial rectangular coordinates
     call ecl_spher_2_eq_rect(rev(l0+pi),-b0,r0, eps0, x0,y0,z0)  ! l0+pi,-b0,r0 is geocentric SPHERICAL ECLIPTICAL pos. of Sun,
     !                                                              convert to geocentric RECTANGULAR EQUATORIAL position of Sun
@@ -284,9 +294,9 @@ contains
     y = y + y0
     z = z + z0
     
-    d   = sqrt(x*x+y*y+z*z)  ! 'Delta' - geocentric distance
-    ra  = atan2(y,x)         ! Right ascension
-    dec = asin(z/d)          ! Declination
+    d   = sqrt(x*x + y*y + z*z)  ! 'Delta' - geocentric distance
+    ra  = atan2(y,x)             ! Right ascension
+    dec = asin(z/d)              ! Declination
     
     !call nutation(t,dpsi,eps0,deps)
     !eps = eps0 + deps
