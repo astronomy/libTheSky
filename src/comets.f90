@@ -53,8 +53,9 @@ contains
     integer, intent(in) :: comID
     real(double), intent(out) :: x,y,z
     
+    integer, parameter :: max_try_i = nint(1e5)  ! Was 1e7 until 2023-05, but can take ages if diverging
     integer :: i,j,j1,j2
-    real(double) :: k,jj,del,  tp,q,a,e,o1,o2,in,nu,r,t,jde,te,  m,n,ee,ee1,de,  qq,g,s,s0,s1,w,q2,q3,dq3
+    real(double) :: k,jj,del,  tp,q,a,e,o1,o2,in,nu,r,t,jde,te,  m,n,ee,ee1,de,  qq,gamma,tannu2,tannu2_0,tannu2_1,w,q2,q3,dq3
     real(double) :: eps,dpsi,eps0,deps,  ff,gg,hh,pp,qqq,rr,a1,a2,b1,b2,c1,c2
     
     jde = t1*365250.d0 + jd2000  ! t1 is in Julian Millennia after 2000.0 in dynamical time
@@ -99,7 +100,7 @@ contains
        
        ! Solve Kepler's equation for mildly elliptic orbits ("first method", p.196):
        if(e.lt.0.5d0) then
-          do i=1,nint(1e7)
+          do i=1,max_try_i
              ee1 = m + e*sin(ee)  ! Eq. 30.6
              
              if(abs(ee-ee1).lt.del) exit
@@ -110,14 +111,14 @@ contains
           
           !  Solve Kepler's equation for strongly elliptic orbits ("second method", p.199):
        else  ! CHECK or 0.5 - 0.98?
-          do i=1,nint(1e7)
+          do i=1,max_try_i
              de = (m + e*sin(ee) - ee) / (1.d0 - e*cos(ee))  ! Eq. 30.7
              ee = ee + de
              if(abs(de).lt.del) exit
           end do
        end if
        
-       if(i.ge.nint(1e7)) write(0,'(A,I0,A,F8.5)') '  cometxyz():  WARNING:  Kepler solution did not converge for comet '// &
+       if(i.ge.max_try_i) write(0,'(A,I0,A,F8.5)') '  cometxyz():  WARNING:  Kepler solution did not converge for comet '// &
             trim(cometNames(comID))//' (',comID,'), with e =', e
        
        nu = 2.d0 * atan( sqrt( (1.d0+e)/(1.d0-e) ) * tan(ee/2.d0) )  ! True anomaly, elliptic orbits, Eq. 30.1
@@ -125,37 +126,37 @@ contains
        
     else  ! e >= 1: Parabolic or hyperbolic orbits:
        
-       ! Get a starting value for s, for parabolic or hyperbolic orbits:
+       ! Get a starting value for tannu2 (s), for parabolic or hyperbolic orbits:
        w = 3*k/(q*sqrt(2*q))*t  ! Eq. 34.1
-       s = w/3.d0  ! 0.d0  Starting value for auxillary variable s = tan(nu/2)
+       tannu2 = w/3.d0  ! 0.d0  Starting value for auxillary variable tannu2 = tan(nu/2) = s
        do i=1,1000
-          s1 = (2*s**3 + w)/(3*(s**2+1.d0))  ! Eq. 34.4
-          if(abs(s-s1).lt.del) exit
-          s = s1
+          tannu2_1 = (2*tannu2**3 + w)/(3*(tannu2**2+1.d0))  ! Eq. 34.4
+          if(abs(tannu2-tannu2_1).lt.del) exit
+          tannu2 = tannu2_1
        end do  ! i
-       s = s1
+       tannu2 = tannu2_1
        
        
        ! Parabolic orbit:
        if(deq(e,1.d0)) then
-          !write(6,*)'iter, delta: ',i,s-s0
-          nu = 2.d0*atan(s)    ! True anomaly, parabolic orbits, Eq. 34.2
+          !write(6,*)'iter, delta: ',i,tannu2-tannu2_0
+          nu = 2.d0*atan(tannu2)    ! True anomaly, parabolic orbits, Eq. 34.2
           
           
        ! Hyperbolic orbit:
        else  ! e > 1   CHECK - use this too for 0.98 < e < 1 ?
           qq = k/(2.d0*q)*sqrt((1.d0+e)/q)  ! Eq. "35.0a" - Q
-          g  = (1.d0-e)/(1.d0+e)            ! Eq. "35.0b" - gamma
+          gamma  = (1.d0-e)/(1.d0+e)        ! Eq. "35.0b" - gamma
           q2 = qq*t                         ! Eq.  35.1a
           
-          iloop: do i=1,nint(1e7)           ! Program p.246, loop lines 40-64
-             s0 = s
-             ! q3 = q2 - (1.d0 - 2*g)*s**3/3.d0  ! Eq. 35.1b
-             q3 = q2 + 2.d0*g*s**3/3.d0        ! Eq. 35.1b, but version from program on next page (246), line 42
+          iloop: do i=1,max_try_i           ! Program p.246, loop lines 40-64
+             tannu2_0 = tannu2
+             ! q3 = q2 - (1.d0 - 2*gamma)*tannu2**3/3.d0  ! Eq. 35.1b
+             q3 = q2 + 2.d0*gamma*tannu2**3/3.d0     ! Eq. 35.1b, but version from program on next page (246), line 42
              
              j1loop: do j=3,1000            ! Eq. 35.1c, d, ...  -  program p.246, loop lines 44-56
                 jj = dble(j)
-                dq3 = (-1)**(j-1) * g**(j-2) * ((jj-1.d0) - j*g) * s**(2*j-1) / (2*jj-1.d0)
+                dq3 = (-1)**(j-1) * gamma**(j-2) * ((jj-1.d0) - j*gamma) * tannu2**(2*j-1) / (2*jj-1.d0)
                 if(isnan(dq3)) return  ! NaN -> will not converge...
                 
                 q3 = q3 + dq3               ! Program p.246, loop line 52
@@ -165,32 +166,32 @@ contains
                 
                 if(j1.eq.100) then
                    if(TheSky_verbosity.gt.0) write(0,*) 'cometxyz(): j1-iteration did not converge: ', &
-                        i, abs(dq3/q3),'>',del
+                        i, abs(dq3),'>',del
                    return
                 end if
              end do  j1loop  ! j
              
              j2loop: do j=1,1000                       ! Program p.246, loop lines 60-62
-                s1 = s
-                s = (2.d0/3.d0*s**3+q3) / (s**2+1.d0)  ! Program p.246, loop line 60
-                if(abs(s-s1).lt.del) exit  j2loop  ! j
+                tannu2_1 = tannu2
+                tannu2 = (2.d0/3.d0*tannu2**3+q3) / (tannu2**2+1.d0)  ! Program p.246, loop line 60
+                if(abs(tannu2-tannu2_1).lt.del) exit  j2loop  ! j
                 
                 if(j.eq.1000) j2 = j2+1
                 if(j2.eq.100) then
                    if(TheSky_verbosity.gt.0) write(0,*) 'cometxyz(): j2-iteration did not converge: ', &
-                        i, abs((s-s1)/s), '>', del
+                        i, abs(tannu2-tannu2_1), '>', del
                    return
                 end if
              end do  j2loop  ! j
              
-             if(abs(s-s0).lt.del) then
-                nu = 2.d0*atan(s)    ! True anomaly, hyperbolic orbits, Eq. "35.2" / 34.2
+             if(abs(tannu2-tannu2_0).lt.del) then
+                nu = 2.d0*atan(tannu2)    ! True anomaly, hyperbolic orbits, Eq. "35.2" / 34.2
                 exit  iloop  ! i
              end if
              
-             if(i.ge.nint(1e7)) then
+             if(i.ge.max_try_i) then
                 if(TheSky_verbosity.gt.0) write(0,*) 'cometxyz(): i-Iteration did not converge: ', &
-                     i, abs((s-s1)/s), '>', del
+                     i, abs(tannu2-tannu2_0), '>', del
                 return
              end if
              
@@ -261,6 +262,7 @@ contains
   subroutine cometgc(t,t0, com, r,l,b,d)
     use SUFR_kinds, only: double
     use SUFR_constants, only: pi, jd2000
+    use SUFR_numerics, only: deq0
     use SUFR_angles, only: rev
     
     use TheSky_coordinates, only: ecl_spher_2_eq_rect, fk5, precess_xyz, eq_2_ecl
