@@ -35,6 +35,8 @@ contains
   !! \param y     Heliocentric y coordinate (output)
   !! \param z     Heliocentric z coordinate (output)
   !!
+  !! \note  x=y=z=0 is returned if the calculation does not converge.
+  !!
   !! \see Meeus, Astronomical Algorithms, 1998, Ch. 30, 33-35.  Equation and page numbers refer to this book.
   !!
   !! \todo  Use "hyperbolic method" for 0.98 < e < 1 as well? - see CHECK
@@ -102,8 +104,8 @@ contains
        if(e.lt.0.5d0) then
           do i=1,max_try_i
              ee1 = m + e*sin(ee)  ! Eq. 30.6
-             
-             if(abs(ee-ee1).lt.del) exit
+             de = ee-ee1
+             if(abs(de).lt.del) exit
              ee = ee1
           end do
           ee = ee1
@@ -119,7 +121,7 @@ contains
        end if
        
        if(i.ge.max_try_i) write(0,'(A,I0,A,F8.5)') '  cometxyz():  WARNING:  Kepler solution did not converge for comet '// &
-            trim(cometNames(comID))//' (',comID,'), with e =', e
+            trim(cometNames(comID))//' (',comID,'), with e =', e, '  (',i,' iterations; ', abs(de), ' >', del,').'
        
        nu = 2.d0 * atan( sqrt( (1.d0+e)/(1.d0-e) ) * tan(ee/2.d0) )  ! True anomaly, elliptic orbits, Eq. 30.1
        
@@ -165,8 +167,8 @@ contains
                 if(j.eq.1000) j1 = j1+1
                 
                 if(j1.eq.100) then
-                   if(TheSky_verbosity.gt.0) write(0,*) 'cometxyz(): j1-iteration did not converge: ', &
-                        i, abs(dq3),'>',del
+                   if(TheSky_verbosity.gt.0) write(0,'(A,I0,A,F8.5,A, I0,A, 2(ES10.3,A))') '  cometxyz():  WARNING:  j1-iteration did not converge for comet '// &
+                        trim(cometNames(comID))//' (',comID,'), with e =', e, '  (',i,' iterations; ', abs(dq3), ' >', del,').'
                    return
                 end if
              end do  j1loop  ! j
@@ -178,8 +180,8 @@ contains
                 
                 if(j.eq.1000) j2 = j2+1
                 if(j2.eq.100) then
-                   if(TheSky_verbosity.gt.0) write(0,*) 'cometxyz(): j2-iteration did not converge: ', &
-                        i, abs(tannu2-tannu2_1), '>', del
+                   if(TheSky_verbosity.gt.0) write(0,'(A,I0,A,F8.5,A, I0,A, 2(ES10.3,A))') '  cometxyz():  WARNING:  j2-iteration did not converge for comet '// &
+                        trim(cometNames(comID))//' (',comID,'), with e =', e, '  (',i,' iterations; ', abs(tannu2-tannu2_1), ' >', del,').'
                    return
                 end if
              end do  j2loop  ! j
@@ -190,8 +192,8 @@ contains
              end if
              
              if(i.ge.max_try_i) then
-                if(TheSky_verbosity.gt.0) write(0,*) 'cometxyz(): i-Iteration did not converge: ', &
-                     i, abs(tannu2-tannu2_0), '>', del
+                if(TheSky_verbosity.gt.0) write(0,'(A,I0,A,F8.5,A, I0,A, 2(ES10.3,A))') '  cometxyz():  WARNING:  i-iteration did not converge for comet '// &
+                     trim(cometNames(comID))//' (',comID,'), with e =', e, '  (',i,' iterations; ', abs(tannu2-tannu2_0), ' >', del,').'
                 return
              end if
              
@@ -249,9 +251,9 @@ contains
   !! This a computational detour to allow correction for aberration, 
   !!   fk5 and nutation in planet_position (and keep overview there)
   !!
-  !! \param  t    Apparent time (taking light time into account) in Julian millennia Dynamical Time
-  !! \param  t0   True time in Julian millennia DT
-  !! \param  com  Comet ID
+  !! \param  t      Apparent time (taking light time into account) in Julian millennia Dynamical Time
+  !! \param  t0     True time in Julian millennia DT
+  !! \param  comID  Comet ID
   !!
   !! \param r    Apparent heliocentric distance of comet (output)
   !! \param l    Apparent geocentric ecliptic longitude of comet (output)
@@ -259,7 +261,7 @@ contains
   !! \param d    Apparent geocentric distance of comet (output)
   !! 
   
-  subroutine cometgc(t,t0, com, r,l,b,d)
+  subroutine cometgc(t,t0, comID, r,l,b,d)
     use SUFR_kinds, only: double
     use SUFR_constants, only: pi, jd2000
     use SUFR_numerics, only: deq0
@@ -272,7 +274,7 @@ contains
     
     implicit none
     real(double), intent(in) :: t,t0
-    integer, intent(in) :: com
+    integer, intent(in) :: comID
     real(double),intent(out) :: l,b,r,d
     
     real(double) :: l0,b0,r0,x0,y0,z0,x,y,z
@@ -281,11 +283,11 @@ contains
     
     call vsop87d_lbr(t0,3, l0,b0,r0)  ! Earth
     call fk5(t, l0,b0)
-    call nutation(t,dpsi,eps0,deps)
+    call nutation(t, dpsi,eps0,deps)
     eps = eps0 + deps
     
     ! call calcsunxyz(t, l0,b0,r0, x0,y0,z0)
-    call cometxyz(t,com, x,y,z)                                  ! Heliocentric equatorial rectangular coordinates
+    call cometxyz(t,comID, x,y,z)                                ! Heliocentric equatorial rectangular coordinates
     
     call ecl_spher_2_eq_rect(rev(l0+pi),-b0,r0, eps0, x0,y0,z0)  ! l0+pi,-b0,r0 is geocentric SPHERICAL ECLIPTICAL pos. of Sun,
     !                                                              convert to geocentric RECTANGULAR EQUATORIAL position of Sun
@@ -304,8 +306,8 @@ contains
     ra  = atan2(y,x)             ! Right ascension
     dec = asin(z/d)              ! Declination
     
-    !call nutation(t,dpsi,eps0,deps)
-    !eps = eps0 + deps
+    ! call nutation(t,dpsi,eps0,deps)
+    ! eps = eps0 + deps
     call eq_2_ecl(ra,dec,eps, l,b)
     
   end subroutine cometgc
