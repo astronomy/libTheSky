@@ -255,7 +255,7 @@ contains
   !! \param  t0     True time in Julian millennia DT
   !! \param  comID  Comet ID
   !!
-  !! \param r    Apparent heliocentric distance of comet (output)
+  !! \param r    Apparent heliocentric distance of comet (output).  Note: r=0 if calculation diverged!
   !! \param l    Apparent geocentric ecliptic longitude of comet (output)
   !! \param b    Apparent geocentric ecliptic latitude of comet (output)
   !! \param d    Apparent geocentric distance of comet (output)
@@ -288,6 +288,7 @@ contains
     
     ! call calcsunxyz(t, l0,b0,r0, x0,y0,z0)
     call cometxyz(t,comID, x,y,z)                                ! Heliocentric equatorial rectangular coordinates
+    ! NOTE: x=y=z=0 indicate divergence! -> r=0
     
     call ecl_spher_2_eq_rect(rev(l0+pi),-b0,r0, eps0, x0,y0,z0)  ! l0+pi,-b0,r0 is geocentric SPHERICAL ECLIPTICAL pos. of Sun,
     !                                                              convert to geocentric RECTANGULAR EQUATORIAL position of Sun
@@ -295,7 +296,7 @@ contains
     jd2 = comepoche                                              !  ... to equinox of elements
     call precess_xyz(jd1,jd2, x0,y0,z0)                          ! Precess geocentric position of the Sun
     
-    r = sqrt(x*x + y*y + z*z)                                    ! Heliocentric distance comet
+    r = sqrt(x*x + y*y + z*z)                                    ! Heliocentric distance comet == 0 if computation diverged
     
     ! Heliocentric -> geocentric position of the comet:
     x = x + x0
