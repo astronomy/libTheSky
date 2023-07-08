@@ -667,22 +667,26 @@ contains
   !! \param  objAlt      Altitude of the observed object (rad)
   !!
   !! \param  humid       Relative humidity  (%; optional, default: 70)
-  !! \param  airTemp     Air temperature  (degrees Celcius; optional, default: 10)
+  !! \param  airTemp     Air temperature  (degrees Celsius; optional, default: 10)
   !! \param  snrat       Snellen ratio for vision  (optional, default: 1)
+  !!
+  !! \param  verbosity   Verbosity  (optional, default: 0=quiet)
   !!
   !! \retval limmag_full  Limiting magnitude - return >= 99 if the object is below the horizon
   !!
   !! \see BASIC program VISLIMIT.BAS by Bradley E. Schaefer, Sky and Telescope, May 1998, p.57,
   !!      in turn based on Schaefer Sky&Tel 78, 522 (1989).
   
-  function limmag_full(year,month, obsElev,obsLat, sunAlt,sunElon, moonPhase,moonAlt,moonElon, objAlt, humid,airTemp,snrat)
+  function limmag_full(year,month, obsElev,obsLat, sunAlt,sunElon, moonPhase,moonAlt,moonElon, objAlt, humid,airTemp,snrat, verbosity)
     use SUFR_kinds, only: double
     
     implicit none
     integer, intent(in) :: year, month
     real(double), intent(in) :: obselev,obslat, sunAlt,sunElon, moonPhase,moonAlt,moonElon, objalt
+    integer, intent(in), optional :: verbosity
     real(double), intent(in), optional :: humid,airTemp,snrat
     
+    integer :: verb
     real(double) :: limmag_full,  skyBr(5),extCoef(5),extMag(5),  relHum,temp,sn, c1,c2,th
     
     if(objAlt.lt.0.d0) then
@@ -701,6 +705,8 @@ contains
     sn = 1.d0                            ! Snellen ratio quantifies vision and observing experience
     if(present(snrat)) sn = snrat
     
+    verb = 0
+    if(present(verbosity)) verb = verbosity  ! Verbosity
     
     ! Compute the extinction and sky brightness:
     call limmag_extinction(month, obsLat,obsElev, objAlt, relHum,temp, 3,3,  extCoef, extMag)  ! Compute only V band (3)
@@ -717,9 +723,18 @@ contains
        c1 = 10.d0**(-8.35d0)
        c2 = 10.d0**(-5.9d0)
     end if
-    th = c1*(1.d0 + sqrt(c2*skyBr(3)))**2  ! in foot-candles
+    th = c1*(1.d0 + sqrt(c2*skyBr(3)))**2  ! Visual sky brightness in foot-candles
     
     limmag_full = -16.57d0 - 2.5d0*log10(th) - extMag(3) + 5*log10(sn)  ! Limiting visual magnitude (V)
+    
+    if(verb>0) then
+       write(*,'(A,F12.5)')  'Extinction coefficient (V band):                       ', extCoef(3)
+       write(*,'(A,F12.5)')  'Extinction in V magnitudes:                            ', extMag(3)
+       write(*,'(A,ES12.5)') 'Sky surface brightness (V) in erg/s/cm^2/μ/arcsec^2:   ', skyBr(3)*1.02d-15  !   Should this be 1.02d-15 iso 1.11d-15? - http://www.archaeocosmology.org/eng/vislimitbas.htm
+       write(*,'(A,F12.5)')  'Sky surface brightness (V) in nL:                      ', skyBr(3)
+       write(*,'(A,ES12.5)') 'Sky brightness (V) in foot candles:                    ', th
+       write(*,'(A,F12.5)')  'V magnitude limit:                                     ', limmag_full
+    end if
     
   end function limmag_full
   !*********************************************************************************************************************************
@@ -783,7 +798,7 @@ contains
     do iBand=band1l,band2l
        kr = 0.1066d0 * exp(-obsElev/8200.d0) * (wa(iBand)/0.55d0)**(-4)
        ka = 0.1d0 * (wa(iBand)/0.55d0)**(-1.3d0) * exp(-obsElev/1500.d0)
-       ka = ka * (1.d0 - 0.32d0/log(relHum/100.d0))**1.33d0 * (1.d0 + 0.33d0 * sl * sin(ra))
+       ka = ka * (1.d0 - 0.32d0/log(relHum/100.d0))**1.33d0 * (1.d0 + 0.33d0 * sl * sin(ra))  ! Correction from http://www.archaeocosmology.org/eng/vislimitbas.htm
        ko = oz(iBand) * (3.d0 + 0.4d0 * (obsLat*cos(ra) - cos(3*obsLat)) )/3.d0
        kw = wt(iBand) * 0.94d0 * (relHum/100.d0) * exp(temp/15.d0 - obsElev/8200.d0)
        
@@ -798,22 +813,22 @@ contains
   !*********************************************************************************************************************************
   !> \brief  Calculate sky brightness based on Sun altitude and Moon phase
   !!
-  !! \param  year       Year CE (for the solar cycle)
+  !! \param year       Year CE (for the solar cycle)
   !!
-  !! \param  objAlt     Altitude of the observed object (rad)
-  !! \param  moonAlt    Moon altitude (rad)
-  !! \param  sunAlt     Sun altitude (rad)
+  !! \param objAlt     Altitude of the observed object (rad)
+  !! \param moonAlt    Moon altitude (rad)
+  !! \param sunAlt     Sun altitude (rad)
   !!
-  !! \param  moonPhase  Moon illuminated fraction (0-1)
-  !! \param  moonElon   Moon elongation from observed object (rad)
-  !! \param  sunElon    Sun elongation from observed object (rad)
+  !! \param moonPhase  Moon illuminated fraction (0-1)
+  !! \param moonElon   Moon elongation from observed object (rad)
+  !! \param sunElon    Sun elongation from observed object (rad)
   !!
-  !! \param  band1      First of UBVRI bands to compute (1-5); compute band1-band2
-  !! \param  band2      Last of UBVRI bands to compute (1-5); compute band1-band2
+  !! \param band1      First of UBVRI bands to compute (1-5); compute band1-band2
+  !! \param band2      Last of UBVRI bands to compute (1-5); compute band1-band2
   !!
-  !! \param  extCoef    Extinction for UBVRI
+  !! \param extCoef    Extinction for UBVRI
   !!
-  !! \param skyBr      Sky brightness for UBVRI (output)
+  !! \param skyBr      Sky brightness for UBVRI in nanoLambert (output)
   !!
   !! \see BASIC program VISLIMIT.BAS by Bradley E. Schaefer, Sky and Telescope, May 1998, p.57,
   !!      in turn based on Schaefer Sky&Tel 78, 522 (1989).
@@ -833,16 +848,16 @@ contains
     real(double) :: mo(5),bo(5),cm(5),ms(5),  objAM,moonAM,sunAM,bn, moonPA,mm,c3, moonElonM, fm,bm,bt,c4,fs,bd
     
     ! UBVRI bands are 1-5:
-    band1l = max(1,band1)
-    band2l = min(5,band2)
+    band1l = max(1, band1)
+    band2l = min(5, band2)
     
     
     ! Initialise data:
     skyBr = 0.d0
-    mo = [ -10.93d0, -10.45d0, -11.05d0, -11.90d0, -12.70d0 ]
-    bo = [  8.0d-14,  7.0d-14,  1.0d-13,  1.0d-13,  3.0d-13 ]
-    cm = [   1.36d0,   0.91d0,   0.00d0,  -0.76d0,  -1.17d0 ]        ! UBVRI colour correction for the Moon
-    ms = [ -25.96d0, -26.09d0, -26.74d0, -27.26d0, -27.55d0 ]
+    mo = [ -10.93d0, -10.45d0, -11.05d0, -11.90d0, -12.70d0 ]  ! Moon magnitudes(?)
+    bo = [  8.0d-14,  7.0d-14,  1.0d-13,  1.0d-13,  3.0d-13 ]  ! Dark sky (erg/s/cm^2/μ/arcsec^2)
+    cm = [   1.36d0,   0.91d0,   0.00d0,  -0.76d0,  -1.17d0 ]  ! UBVRI colour correction for the Moon
+    ms = [ -25.96d0, -26.09d0, -26.74d0, -27.26d0, -27.55d0 ]  ! Sun magnitude
     
     ! Air mass for the observed object:
     objAM  = 1.d0/(sin(objAlt) + 0.025d0*exp(-11.d0*sin(objAlt)))
@@ -862,7 +877,7 @@ contains
     end if
     
     
-    ! UBVRI (1-5) sky brightness for each band:
+    ! UBVRI (1-5) sky brightness for each band (erg/s/cm^2/μ/arcsec^2):
     do iBand=band1l,band2l
        
        ! Dark night-sky brightness:
@@ -872,42 +887,42 @@ contains
        
        ! Moonlight brightness:
        if(moonAlt.ge.0.d0) then                           ! Moon is up
-          moonPA = (1.d0 - moonPhase)*pi                                  ! Approximate phase angle of the Moon (rad)
-          mm = moonmagn(moonPA,2.5696d-3) + cm(iBand)                     ! Moon magnitude for mean distance + colour correction
-
+          moonPA = (1.d0 - moonPhase)*pi                           ! Approximate phase angle of the Moon (rad)
+          mm = moonmagn(moonPA,2.5696d-3) + cm(iBand)              ! Moon magnitude for mean distance (2.57e-3 AU) + colour correction
+          
           c3 = 10.d0**(-0.4d0*extCoef(iBand)*moonAM)
           
-          moonElonM = max(moonElon,4.36d-3)                         ! Elongation Moon-object (rad) - can't be <~0.25d ~ 4.36e-3 rad
+          moonElonM = max(moonElon,4.36d-3)                        ! Elongation Moon-object (rad) - can't be <~0.25d ~ 4.36e-3 rad
           fm = 1.888628d4/moonElonM**2 + 10.d0**(6.15d0 - moonElonM/0.6981317d0)
           fm = fm + 10.d0**5.36d0 * (1.06d0 + cos(moonElonM)**2)
           
-          bm = 10.d0**( -0.4d0 * (mm - mo(iBand) + 43.27d0) )
+          bm = 10.d0**( -0.4d0 * (mm - mo(iBand) + 43.27d0) )      ! Brightness of the Moon (erg/s/cm^2/μ/arcsec^2)
           bm = bm * (1.d0 - 10.d0**(-0.4d0*extCoef(iBand)*objAM))
           bm = bm * (fm*c3 + 440000.d0*(1.d0-c3))
        else
           bm = 0.d0  ! No contribution from the Moon if below the horizon
        end if
        
-       ! Twilight brightness:
+       ! Twilight brightness (erg/s/cm^2/μ/arcsec^2):
        bt = 10.d0**( -0.4d0*(ms(iBand) - mo(iBand) + 32.5d0 - sunAlt*r2d - ((pio2-objAlt)/(pi2*extCoef(iBand))) ) )
-       bt = bt * (1.745329252d0/sunElon) * (1.d0 - 10.d0**((-0.4d0*extCoef(iBand))*objAM))
+       bt = bt * (1.745329252d0/sunElon) * (1.d0 - 10.d0**((-0.4d0*extCoef(iBand))*objAM))    ! Correction from http://www.archaeocosmology.org/eng/vislimitbas.htm
        
-       ! Daylight brightness:
+       ! Daylight brightness (erg/s/cm^2/μ/arcsec^2):
        c4 = 10.d0**(-0.4d0*extCoef(iBand)*sunAM)
        fs = 1.888628d4/sunElon**2 + 10.d0**(6.15d0 - sunElon/0.6981317d0)
        fs = fs + 10.d0**5.36d0 * (1.06d0 + cos(sunElon)**2)
-       bd = 10.d0**(-0.4d0*(ms(iBand) -mo(iBand) + 43.27d0))
+       bd = 10.d0**(-0.4d0*(ms(iBand) - mo(iBand) + 43.27d0))
        bd = bd * (1.d0 - 10.d0**(-0.4d0*extCoef(iBand)*objAM))
        bd = bd * (fs*c4 + 440000.d0*(1.d0-c4))
        
-       ! Total sky brightness:
+       ! Total sky brightness (erg/s/cm^2/μ/arcsec^2):
        if(bd.lt.bt) then
-          skyBr(iBand) = bn + bd + bm
+          skyBr(iBand) = bn + bd + bm  ! Daylight
        else
-          skyBr(iBand) = bn + bt + bm
+          skyBr(iBand) = bn + bt + bm  ! Twilight
        end if
        
-       skyBr(iBand) = skyBr(iBand) * 1.d12 / 1.11d-3    ! Convert sky brightness from ergs to picoergs, to nanolamberts
+       skyBr(iBand) = skyBr(iBand) / 1.02d-15  ! Convert sky brightness from erg/s/cm2/μ/arcsec^2 to nanolamberts.  Should this be 1.02d-15 iso 1.11d-15? - http://www.archaeocosmology.org/eng/vislimitbas.htm
        
     end do  ! iBand
     
@@ -1120,11 +1135,11 @@ contains
     real(double), intent(in) :: sunAlt
     real(double) :: limmag_sun,  dm,bn,bt,bd,bl,c1,c2,th
     
-    dm = 0.285667465769191d0     ! Extinction
-    bn = 7.686577723230466d-14   ! Dark night sky brightness: no solar cycle, star in zenith
-    bt = 10.d0**(-0.4d0*(-26.74d0 + 11.05d0 + 32.5d0 - sunAlt*r2d )) * 0.12852345982053d0  ! Twilight brightness
-    bd = 9.456022312552874d-7    ! Daylight brightness
-    bl = 1.d12*(bn + min(bd,bt))/1.11d-3   ! Total sky brightness in V, convert to nanolamberts
+    dm = 0.285667465769191d0         ! Extinction
+    bn = 7.686577723230466d-14       ! Dark night sky brightness: no solar cycle, star in zenith
+    bt = 10.d0**(-0.4d0*(-26.74d0 + 11.05d0 + 32.5d0 - sunAlt*r2d )) * 0.12852345982053d0  ! Twilight brightness (erg/s/cm^2/μ/arcsec^2)
+    bd = 9.456022312552874d-7        ! Daylight brightness
+    bl = (bn + min(bd,bt))/1.02d-15  ! Total sky brightness in V, convert from erg/s/cm2/μ/arcsec^2 to nanolamberts.  Should this be 1.02d-15 iso 1.11d-15? - http://www.archaeocosmology.org/eng/vislimitbas.htm
     
     ! Visual limiting magnitude
     if(bl.lt.1500.d0) then
