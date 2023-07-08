@@ -897,7 +897,7 @@ contains
   !!
   !! \param   alt      True (computed) altitude (rad)
   !! \param   press    Air pressure (hPa; optional)
-  !! \param   temp     Air temperature (degrees Celcius; optional)
+  !! \param   temp     Air temperature (degrees Celsius; optional)
   !!
   !! \retval  refract  Refraction in altitude (rad).  You should *add* the result to the uncorrected altitude.
   !!
@@ -941,7 +941,7 @@ contains
   !!
   !! \param   alt      True (computed) altitude (rad)
   !! \param   press    Air pressure (hPa; optional)
-  !! \param   temp     Air temperature (degrees Celcius; optional)
+  !! \param   temp     Air temperature (degrees Celsius; optional)
   !!
   !! \retval  refract  Refraction in altitude (rad).  You should add the result to the uncorrected altitude.
   !!
