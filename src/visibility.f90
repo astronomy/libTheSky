@@ -730,7 +730,7 @@ contains
     if(verb>0) then
        write(*,'(A,F12.5)')  'Extinction coefficient (V band):                       ', extCoef(3)
        write(*,'(A,F12.5)')  'Extinction in V magnitudes:                            ', extMag(3)
-       write(*,'(A,ES12.5)') 'Sky surface brightness (V) in erg/s/cm^2/μ/arcsec^2:   ', skyBr(3)*1.02d-15  !   Should this be 1.02d-15 iso 1.11d-15? - http://www.archaeocosmology.org/eng/vislimitbas.htm
+       write(*,'(A,ES12.5)') 'Sky surface brightness (V) in erg/s/cm^2/μ/arcsec^2:   ', skyBr(3)*1.02d-15  !   Should this be 1.02d-15 iso 1.11d-15?  Or 4.54d-16? - http://www.archaeocosmology.org/eng/vislimitbas.htm
        write(*,'(A,F12.5)')  'Sky surface brightness (V) in nL:                      ', skyBr(3)
        write(*,'(A,ES12.5)') 'Sky brightness (V) in foot candles:                    ', th
        write(*,'(A,F12.5)')  'V magnitude limit:                                     ', limmag_full
@@ -922,7 +922,7 @@ contains
           skyBr(iBand) = bn + bt + bm  ! Twilight
        end if
        
-       skyBr(iBand) = skyBr(iBand) / 1.02d-15  ! Convert sky brightness from erg/s/cm2/μ/arcsec^2 to nanolamberts.  Should this be 1.02d-15 iso 1.11d-15? - http://www.archaeocosmology.org/eng/vislimitbas.htm
+       skyBr(iBand) = skyBr(iBand) / 1.02d-15  ! Convert sky brightness from erg/s/cm2/μ/arcsec^2 to nanolamberts.  Should this be 1.02d-15 iso 1.11d-15?  Or 4.54d-16? - http://www.archaeocosmology.org/eng/vislimitbas.htm
        
     end do  ! iBand
     
@@ -1139,7 +1139,7 @@ contains
     bn = 7.686577723230466d-14       ! Dark night sky brightness: no solar cycle, star in zenith
     bt = 10.d0**(-0.4d0*(-26.74d0 + 11.05d0 + 32.5d0 - sunAlt*r2d )) * 0.12852345982053d0  ! Twilight brightness (erg/s/cm^2/μ/arcsec^2)
     bd = 9.456022312552874d-7        ! Daylight brightness
-    bl = (bn + min(bd,bt))/1.02d-15  ! Total sky brightness in V, convert from erg/s/cm2/μ/arcsec^2 to nanolamberts.  Should this be 1.02d-15 iso 1.11d-15? - http://www.archaeocosmology.org/eng/vislimitbas.htm
+    bl = (bn + min(bd,bt))/1.02d-15  ! Total sky brightness in V, convert from erg/s/cm2/μ/arcsec^2 to nanolamberts.  Should this be 1.02d-15 iso 1.11d-15?  Or 4.54d-16? - http://www.archaeocosmology.org/eng/vislimitbas.htm
     
     ! Visual limiting magnitude
     if(bl.lt.1500.d0) then
@@ -1366,6 +1366,94 @@ contains
     
   end function skybrightness2mlim
   !*********************************************************************************************************************************
+  
+  !*********************************************************************************************************************************
+  !> \brief  Convert sky brightness in candela per square meter to naked-eye visual limiting magnitude (V)
+  !!
+  !! \param  cdm2    Sky brightness in cd/m^2
+  !! \retval Naked-eye visual limiting magnitude (V)
+  !!
+  !! \note
+  !!    Adapted from Weaver (1947) and Garsteng (1986):
+  !!    - shift to match data by Weaver (1947): 7.930 -> 7.706;  4.305 -> 4.115;
+  !!    - use candela per square meter instead of nanolambert.
+  
+  elemental function skybrightness_cdm2_to_mlim(cdm2)
+    use SUFR_kinds, only: double
+    
+    implicit none
+    real(double), intent(in) :: cdm2
+    real(double) :: skybrightness_cdm2_to_mlim, nL, Mlim
+    
+    nL = sky_brightness_nL_from_cdm2(cdm2)  ! Convert from candela per square meter to nanolambert
+    
+    Mlim = 7.706d0 - 5*log10(1.d0 + 0.1122d0   * sqrt(nL))                      ! b <= 1479 nL = Mlim>4.0
+    if(nL.gt.1479) Mlim = 4.115d0 - 5*log10(1.d0 + 0.001122d0 * sqrt(nL))    ! b >  1479 nL = Mlim<4.0
+    
+    skybrightness_cdm2_to_mlim = Mlim
+  end function skybrightness_cdm2_to_mlim
+  
+
+  !*********************************************************************************************************************************
+  !> \brief  Convert limiting visual magnitude to sky brightness in candela per square meter
+  !!
+  !! \param mlim  Naked-eye visual limiting magnitude (V)
+  !! \retval      Sky brightness in cd/m^2
+  !!
+  !! \note  Inverse of skybrightness_cdm2_to_mlim()
+  
+  elemental function mlim_to_skybrightness_cdm2(Mlim)
+    use SUFR_kinds, only: double
+    
+    implicit none
+    real(double), intent(in) :: Mlim
+    real(double) :: mlim_to_skybrightness_cdm2, nL, cdm2
+    
+    nL = ((10.d0**(-(mlim - 7.706d0)/5.d0) - 1.d0)/0.1122d0)**2                      ! Mlim >= 4.0; b <= 1479 nL
+    if(mlim.lt.4) nL = ((10.d0**(-(mlim  - 4.115d0)/5.d0) - 1.d0)/0.001122d0)**2  ! Mlim < 4.0;  b >  1479 nL
+    
+    cdm2 = sky_brightness_cdm2_from_nL(nL)  ! Convert nanolambert to candela per square meter
+    
+    mlim_to_skybrightness_cdm2 = cdm2
+  end function mlim_to_skybrightness_cdm2
+  
+    
+  
+  !*********************************************************************************************************************************
+  !> \brief  Convert sky brightness in nanolambert to candela per square meter
+  !!
+  !! \param  nL  Sky brightness in nanolambert (nL)
+  !! \retval     Sky brightness in candela per square meter (cd/m^2)
+  
+  elemental function sky_brightness_cdm2_from_nL(nL)
+    use SUFR_kinds, only: double
+    use SUFR_constants, only: pi
+    
+    implicit none
+    real(double), intent(in) :: nL
+    real(double) :: sky_brightness_cdm2_from_nL
+    
+    sky_brightness_cdm2_from_nL = nL * 1d-5/pi
+  end function sky_brightness_cdm2_from_nL
+  
+  
+  !*********************************************************************************************************************************
+  !> \brief  Convert sky brightness in candela per square meter to nanolambert
+  !!
+  !! \param  cdm2  Sky brightness in candela per square meter (cd/m^2)
+  !! \retval       Sky brightness in nanolambert (nL)
+  
+  elemental function sky_brightness_nL_from_cdm2(cdm2)
+    use SUFR_kinds, only: double
+    use SUFR_constants, only: pi
+    
+    implicit none
+    real(double), intent(in) :: cdm2
+    real(double) :: sky_brightness_nL_from_cdm2
+    
+    sky_brightness_nL_from_cdm2 = cdm2 * 1d5 * pi
+  end function sky_brightness_nL_from_cdm2
+  
   
 end module TheSky_visibility
 !***********************************************************************************************************************************
