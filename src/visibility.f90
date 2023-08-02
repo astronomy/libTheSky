@@ -16,38 +16,42 @@
 !  <http://www.gnu.org/licenses/>.
 
 
-!  best_planet_xsmag:            Find the moment (JD) of best excess magnitude (mag-lim.mag) for a planet
-!  best_planet_visibility:       Find the best moment (JD) to observe a planet on a given day (JD)
-!  planet_visibility_tonight:    Compute when a given planet is visible in a given night
-!  comet_invisible:              Determine whether a comet is invisible, given a magnitude and altitude limit
+!  best_planet_xsmag:             Find the moment (JD) of best excess magnitude (mag-lim.mag) for a planet
+!  best_planet_visibility:        Find the best moment (JD) to observe a planet on a given day (JD)
+!  planet_visibility_tonight:     Compute when a given planet is visible in a given night
+!  comet_invisible:               Determine whether a comet is invisible, given a magnitude and altitude limit
 !
-!  transitalt:                   Compute the transit altitude for a given geographic latitude and declination
-!  best_obs_date_ra:             Compute the best date to observe an object with a given right ascension
-!  get_dra_obj:                  Compute the difference between a given right ascension and the RA of the Sun
+!  transitalt:                    Compute the transit altitude for a given geographic latitude and declination
+!  best_obs_date_ra:              Compute the best date to observe an object with a given right ascension
+!  get_dra_obj:                   Compute the difference between a given right ascension and the RA of the Sun
 !
-!  airmass:                      Compute the airmass for a celestial object with a given TRUE altitude
-!  airmass_la:                   Compute the airmass for a celestial object with given APP alt; low-accuracy alt. for airmass()
-!  extinction_magPam:            Compute the extinction in magnitudes per unit airmass for an observer with given elevation
-!  extinction_mag:               Compute the extinction in magnitudes for a given object altitude and observer elevation
-!  extinction_fac:               Compute the extinction factor for an observer with given elevation and object with given altitude
+!  airmass:                       Compute the airmass for a celestial object with a given TRUE altitude
+!  airmass_la:                    Compute the airmass for a celestial object with given APP alt; low-accuracy alt. for airmass()
+!  extinction_magPam:             Compute the extinction in magnitudes per unit airmass for an observer with given elevation
+!  extinction_mag:                Compute the extinction in magnitudes for a given object altitude and observer elevation
+!  extinction_fac:                Compute the extinction factor for an observer with given elevation and object with given altitude
 !
-!  limmag_full:                  Calculate limiting magnitude, full function
-!  limmag_extinction:            Calculate limiting magnitude based on Sun altitude and Moon phase
-!  limmag_skyBrightness:         Calculate sky brightness based on Sun altitude and Moon phase
-!  limmag_jd:                    Calculate limiting magnitude based on JD and object altitude, wrapper for limmag_full()
-!  limmag_zenith_jd:             Calculate limiting magnitude for the local zenith, based on JD and observer's location
-!  limmag_jd_pl:                 Calculate limiting magnitude based on JD and planet ID, wrapper for limmag_jd()
-!  limmag_sun_airmass:           Calculate limiting magnitude based on Sun altitude and object altitude (airmass); assume New Moon
-!  limmag_sun:                   Calculate limiting magnitude, based on the altitude of the Sun only
+!  limmag_full:                   Calculate limiting magnitude, full function
+!  limmag_extinction:             Calculate limiting magnitude based on Sun altitude and Moon phase
+!  limmag_skyBrightness:          Calculate sky brightness based on Sun altitude and Moon phase
+!  limmag_jd:                     Calculate limiting magnitude based on JD and object altitude, wrapper for limmag_full()
+!  limmag_zenith_jd:              Calculate limiting magnitude for the local zenith, based on JD and observer's location
+!  limmag_jd_pl:                  Calculate limiting magnitude based on JD and planet ID, wrapper for limmag_jd()
+!  limmag_sun_airmass:            Calculate limiting magnitude based on Sun altitude and object altitude (airmass); assume New Moon
+!  limmag_sun:                    Calculate limiting magnitude, based on the altitude of the Sun only
 !
-!  pl_xsmag:                     Compute the excess magnitude (mag-lim.mag) for planet pl at JD, considering Sun, Moon and airmass
-!  pl_xsmag_pl:                  Compute the excess magnitude at JD, wrapper for pl_xsmag() for solvers
-!  pl_xsmag_la:                  Compute the excess magnitude, considering airmass and Sun altitude only
-!  pl_xsmag_la_pl:               Compute the excess magnitude, wrapper for pl_xsmag_la() for solvers
+!  pl_xsmag:                      Compute the excess magnitude (mag-lim.mag) for planet pl at JD, considering Sun, Moon and airmass
+!  pl_xsmag_pl:                   Compute the excess magnitude at JD, wrapper for pl_xsmag() for solvers
+!  pl_xsmag_la:                   Compute the excess magnitude, considering airmass and Sun altitude only
+!  pl_xsmag_la_pl:                Compute the excess magnitude, wrapper for pl_xsmag_la() for solvers
 !
-!  aperture:                     Aperture needed to observe an object with given excess magnitude
-!  mlim2skybrightness:           Convert naked-eye limiting magnitude to sky surface brightness in magnitudes per square arcsecond
-!  skybrightness2mlim:           Convert sky surface brightness in magnitudes per square arcsecond to naked-eye limiting magnitude
+!  aperture:                      Aperture needed to observe an object with given excess magnitude
+!  skybrightness_mas2_from_mlim:  Convert naked-eye limiting magnitude to sky surface brightness in magnitudes per square arcsecond
+!  skybrightness_mlim_from_mas2:  Convert sky surface brightness in magnitudes per square arcsecond to naked-eye limiting magnitude
+!  skybrightness_mlim_from_cdm2:  Convert sky brightness in candela per square meter to naked-eye visual limiting magnitude
+!  skybrightness_cdm2_from_mlim:  Convert limiting visual magnitude to sky brightness in candela per square meter
+!  skybrightness_cdm2_from_nL:    Convert sky brightness in nanolambert to candela per square meter
+!  skybrightness_nL_from_cdm2:    Convert sky brightness in candela per square meter to nanolambert
 
 !***********************************************************************************************************************************
 !> \brief  Procedures to determine the visibility of objects
@@ -1323,48 +1327,48 @@ contains
   !*********************************************************************************************************************************
   !> \brief  Convert naked-eye visual limiting magnitude (V) to sky surface brightness in (B) magnitudes per square arcsecond
   !!
-  !! \param  Mlim                Naked-eye visual limiting magnitude (V)
-  !! \retval Mlim2skybrightness  Sky surface brightness in (B) magnitudes per square arcsecond
+  !! \param  Mlim                          Naked-eye visual limiting magnitude (V)
+  !! \retval skybrightness_mas2_from_mlim  Sky surface brightness in (B) magnitudes per square arcsecond
   !!
   !! \see   http://adsabs.harvard.edu/abs/1990PASP..102..212S
   !! \note  Sky surface brightness is sometimes referred to as sqm (which is in fact a device to measure it)
   
-  function mlim2skybrightness(Mlim)
+  function skybrightness_mas2_from_mlim(Mlim)
     use SUFR_kinds, only: double
     
     implicit none
     real(double), intent(in) :: Mlim
-    real(double) :: Mlim2skybrightness
+    real(double) :: skybrightness_mas2_from_mlim
     
     if(Mlim.lt.7.93d0) then
-       Mlim2skybrightness = 21.58d0 - 5*log10(10.d0**(1.586d0-Mlim/5.d0) - 1.d0)
+       skybrightness_mas2_from_mlim = 21.58d0 - 5*log10(10.d0**(1.586d0-Mlim/5.d0) - 1.d0)
     else
-       Mlim2skybrightness = 99.99d0
+       skybrightness_mas2_from_mlim = 99.99d0
     end if
         
-  end function mlim2skybrightness
+  end function skybrightness_mas2_from_mlim
   !*********************************************************************************************************************************
   
   
   !*********************************************************************************************************************************
   !> \brief  Convert sky surface brightness in (B) magnitudes per square arcsecond to naked-eye visual limiting magnitude (V)
   !!
-  !! \param  skyBright           Sky surface brightness in (B) magnitudes per square arcsecond
-  !! \retval skybrightness2mlim  Naked-eye visual limiting magnitude (V)
+  !! \param  skyBright                     Sky surface brightness in (B) magnitudes per square arcsecond
+  !! \retval skybrightness_mlim_from_mas2  Naked-eye visual limiting magnitude (V)
   !!
   !! \see   http://adsabs.harvard.edu/abs/1990PASP..102..212S
   !! \note  Sky surface brightness is sometimes referred to as sqm (which is in fact a device to measure it)
   
-  function skybrightness2mlim(skyBright)
+  function skybrightness_mlim_from_mas2(skyBright)
     use SUFR_kinds, only: double
     
     implicit none
     real(double), intent(in) :: skyBright
-    real(double) :: skybrightness2mlim
+    real(double) :: skybrightness_mlim_from_mas2
     
-    skybrightness2mlim = 7.93d0 - 5*log10(10.d0**(4.316d0-skyBright/5.d0) + 1.d0)
+    skybrightness_mlim_from_mas2 = 7.93d0 - 5*log10(10.d0**(4.316d0-skyBright/5.d0) + 1.d0)
     
-  end function skybrightness2mlim
+  end function skybrightness_mlim_from_mas2
   !*********************************************************************************************************************************
   
   !*********************************************************************************************************************************
@@ -1378,44 +1382,44 @@ contains
   !!    - shift to match data by Weaver (1947): 7.930 -> 7.706;  4.305 -> 4.115;
   !!    - use candela per square meter instead of nanolambert.
   
-  elemental function skybrightness_cdm2_to_mlim(cdm2)
+  elemental function skybrightness_mlim_from_cdm2(cdm2)
     use SUFR_kinds, only: double
     
     implicit none
     real(double), intent(in) :: cdm2
-    real(double) :: skybrightness_cdm2_to_mlim, nL, Mlim
+    real(double) :: skybrightness_mlim_from_cdm2, nL, Mlim
     
-    nL = sky_brightness_nL_from_cdm2(cdm2)  ! Convert from candela per square meter to nanolambert
+    nL = skybrightness_nL_from_cdm2(cdm2)  ! Convert from candela per square meter to nanolambert
     
     Mlim = 7.706d0 - 5*log10(1.d0 + 0.1122d0   * sqrt(nL))                      ! b <= 1479 nL = Mlim>4.0
     if(nL.gt.1479) Mlim = 4.115d0 - 5*log10(1.d0 + 0.001122d0 * sqrt(nL))    ! b >  1479 nL = Mlim<4.0
     
-    skybrightness_cdm2_to_mlim = Mlim
-  end function skybrightness_cdm2_to_mlim
+    skybrightness_mlim_from_cdm2 = Mlim
+  end function skybrightness_mlim_from_cdm2
   
-
+  
   !*********************************************************************************************************************************
   !> \brief  Convert limiting visual magnitude to sky brightness in candela per square meter
   !!
   !! \param mlim  Naked-eye visual limiting magnitude (V)
   !! \retval      Sky brightness in cd/m^2
   !!
-  !! \note  Inverse of skybrightness_cdm2_to_mlim()
+  !! \note  Inverse of skybrightness_mlim_from_cdm2()
   
-  elemental function mlim_to_skybrightness_cdm2(Mlim)
+  elemental function skybrightness_cdm2_from_mlim(Mlim)
     use SUFR_kinds, only: double
     
     implicit none
     real(double), intent(in) :: Mlim
-    real(double) :: mlim_to_skybrightness_cdm2, nL, cdm2
+    real(double) :: skybrightness_cdm2_from_mlim, nL, cdm2
     
     nL = ((10.d0**(-(mlim - 7.706d0)/5.d0) - 1.d0)/0.1122d0)**2                      ! Mlim >= 4.0; b <= 1479 nL
     if(mlim.lt.4) nL = ((10.d0**(-(mlim  - 4.115d0)/5.d0) - 1.d0)/0.001122d0)**2  ! Mlim < 4.0;  b >  1479 nL
     
-    cdm2 = sky_brightness_cdm2_from_nL(nL)  ! Convert nanolambert to candela per square meter
+    cdm2 = skybrightness_cdm2_from_nL(nL)  ! Convert nanolambert to candela per square meter
     
-    mlim_to_skybrightness_cdm2 = cdm2
-  end function mlim_to_skybrightness_cdm2
+    skybrightness_cdm2_from_mlim = cdm2
+  end function skybrightness_cdm2_from_mlim
   
     
   
@@ -1425,16 +1429,16 @@ contains
   !! \param  nL  Sky brightness in nanolambert (nL)
   !! \retval     Sky brightness in candela per square meter (cd/m^2)
   
-  elemental function sky_brightness_cdm2_from_nL(nL)
+  elemental function skybrightness_cdm2_from_nL(nL)
     use SUFR_kinds, only: double
     use SUFR_constants, only: pi
     
     implicit none
     real(double), intent(in) :: nL
-    real(double) :: sky_brightness_cdm2_from_nL
+    real(double) :: skybrightness_cdm2_from_nL
     
-    sky_brightness_cdm2_from_nL = nL * 1d-5/pi
-  end function sky_brightness_cdm2_from_nL
+    skybrightness_cdm2_from_nL = nL * 1d-5/pi
+  end function skybrightness_cdm2_from_nL
   
   
   !*********************************************************************************************************************************
@@ -1443,16 +1447,16 @@ contains
   !! \param  cdm2  Sky brightness in candela per square meter (cd/m^2)
   !! \retval       Sky brightness in nanolambert (nL)
   
-  elemental function sky_brightness_nL_from_cdm2(cdm2)
+  elemental function skybrightness_nL_from_cdm2(cdm2)
     use SUFR_kinds, only: double
     use SUFR_constants, only: pi
     
     implicit none
     real(double), intent(in) :: cdm2
-    real(double) :: sky_brightness_nL_from_cdm2
+    real(double) :: skybrightness_nL_from_cdm2
     
-    sky_brightness_nL_from_cdm2 = cdm2 * 1d5 * pi
-  end function sky_brightness_nL_from_cdm2
+    skybrightness_nL_from_cdm2 = cdm2 * 1d5 * pi
+  end function skybrightness_nL_from_cdm2
   
   
 end module TheSky_visibility
