@@ -623,7 +623,11 @@ contains
     moonmagn = -12.73d0 + 1.489690267d0*abs(pa) + 0.04310727d0*pa**4  ! Allen, 1976, par.66 (d2r)
     
     ! Correct for variable distance and the 'opposition effect' or 'opposition surge' which occurs when pa < 7d:
-    moonmagn = moonmagn - 2.5*log10( (2.5696d-3/delta)**2  *  max(1.d0, 1.35d0 - 2.864789d0*abs(pa) ) )  ! (1-1.35)/2.865 ~ 7d
+    ! Not sure what the original reference is.  See e.g.:
+    ! - Whitaker, E. A. 1969, in Analysis of Apollo 8 Photography and Visual Observations, NASA SP-201, 38, p.39
+    ! - Schaefer, PASP 102 212 (1990)
+    ! - Krisciunas & Schaefer, PASP 103, 1033 (1991): ""
+    moonmagn = moonmagn - 2.5*log10( (2.5696d-3/delta)**2  *  max(1.d0, 1.35d0 - 2.864789d0*abs(pa) ) )  ! (1-1.35)/2.865 ~ 7deg
     
   end function moonmagn
   !*********************************************************************************************************************************

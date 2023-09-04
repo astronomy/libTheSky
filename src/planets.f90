@@ -43,6 +43,7 @@ contains
   !! \param ltime    Set to .false. to disable light-time correction, and save ~50% in CPU time at the cost of some accuracy
   !! 
   !! \param lunar_theory    Choose Lunar theory:  1: ELP82b,  2: ELP-MPP02/LLR,  3: ELP-MPP02/DE405 ('historical' - default)
+  !! \param verbosity       Verboity for debug output (0-3).  Defaults to 0: silent.
   !! 
   !!
   !! \note
@@ -51,12 +52,13 @@ contains
   !! - results are returned in the array planpos() in the module TheSky_planetdata
   !!
   
-  subroutine planet_position(jd,pl, lat,lon,hgt, LBaccur,Raccur, ltime, lunar_theory)
+  subroutine planet_position(jd,pl, lat,lon,hgt, LBaccur,Raccur, ltime, lunar_theory, verbosity)
     use SUFR_kinds, only: double
-    use SUFR_constants, only: pi, au,earthr,pland, enpname, jd2000
+    use SUFR_constants, only: pi,pi2, r2d,r2h, au,earthr,pland, enpname, jd2000
     use SUFR_system, only: warn, quit_program_error
     use SUFR_angles, only: rev, rev2
     use SUFR_dummy, only: dumdbl1,dumdbl2
+    use SUFR_text, only: d2s
     
     use TheSky_vsop, only: vsop87d_lbr
     use TheSky_local, only: lon0,lat0,height, deltat
@@ -76,9 +78,9 @@ contains
     integer, intent(in) :: pl
     real(double), intent(in), optional :: lat,lon,hgt, LBaccur,Raccur
     logical, intent(in), optional :: ltime
-    integer, intent(in), optional :: lunar_theory
+    integer, intent(in), optional :: lunar_theory, verbosity
     
-    integer :: j, llunar_theory
+    integer :: j, llunar_theory, lverb
     real(double) :: tjm,jde,jde_lt,tjm0,  llat,llon,lhgt, lLBaccur,lRaccur,  dpsi,eps0,deps,eps,tau,tau1
     real(double) :: hcl0,hcb0,hcr0, hcl,hcb,hcr, hcl00,hcb00,hcr00, sun_gcl,sun_gcb, gcx,gcy,gcz, gcx0,gcy0,gcz0, dhcr
     real(double) :: gcl,gcb,delta,gcl0,gcb0,delta0
@@ -117,16 +119,21 @@ contains
     lltime = .true.                    ! Take into account light time by default
     if(present(ltime)) lltime = ltime
     
-    !llunar_theory = 1  ! Use (corrected) ELP82b as default
+    ! llunar_theory = 1  ! Use (corrected) ELP82b as default
     llunar_theory = 3  ! Use ELP-MPP02/DE405 ('historical') as default.  This should be the "default default" :-)
     if(present(lunar_theory)) llunar_theory = lunar_theory
     if(llunar_theory.lt.1 .or. llunar_theory.gt.3) &
          call quit_program_error('planet_position(): lunar_theory must be 1, 2 or 3', 1)
     
+    lverb = 0  ! Silent
+    if(present(verbosity)) lverb = verbosity
+    
+    
+    
     ! Calc JDE and tjm:
     deltat = calc_deltat(jd)
-    !deltat = 0.d0
-    !write(*,'(/,A,/)') '*** WARNING: libTheSky/planets.f90: setting DeltaT to 0 ***'
+    ! deltat = 0.d0
+    ! write(*,'(/,A,/)') '*** WARNING: libTheSky/planets.f90: setting DeltaT to 0 ***'
     
     jde    = jd + deltat/86400.d0
     tjm    = (jde-jd2000)/365250.d0                                    ! Julian Millennia after 2000.0 in dyn. time, tau in Meeus
@@ -137,7 +144,7 @@ contains
     
     
     ! Iterate to get the light time tau, hence apparent positions:
-    tau  = 6.d-3                                                       ! Initial guess for light distance in days - typical planet: ~500s ~ 0.006 days
+    tau  = 6.d-3                                                       ! Initial guess for light time in days - typical planet: ~500s ~ 0.006 days
     tau1 = 0.d0                                                        ! On first iteration, tau=0 to get true positions
     j = 0                                                              ! Takes care of escape in case of infinite loop
     do while(abs((tau-tau1)/tau).gt.1.d-10)                            ! Moon's tau ~10^-5; 1.d-10~10^-5 sec, 1.d-7~10^-2 sec
@@ -202,7 +209,7 @@ contains
           hcl00  = hcl                                                 ! Heliocentric l,b,r
           hcb00  = hcb
           hcr00  = hcr
-          
+
           gcx0   = gcx                                                 ! Geocentric x,y,z
           gcy0   = gcy
           gcz0   = gcz
@@ -210,6 +217,23 @@ contains
           delta0 = delta                                               ! Geocentric l,b,r
           gcl0   = gcl
           gcb0   = gcb
+          
+          if(lverb.gt.3) then
+             print*
+             print*, 'True heliocentric longitude, not converted to FK5: ', d2s(modulo(hcl00,pi2)*r2d, 9)
+             print*, 'True heliocentric latitude,  not converted to FK5: ', d2s(hcb00*r2d, 9)
+             print*, 'True heliocentric distance:                        ', d2s(hcr00, 9)
+             print*
+             print*, 'True geocentric x: ', d2s(gcx0, 9)
+             print*, 'True geocentric y: ', d2s(gcy0, 9)
+             print*, 'True geocentric z: ', d2s(gcz0, 9)
+             print*
+             print*, 'True geocentric longitude, not converted to FK5: ', d2s(modulo(gcl0,pi2)*r2d, 9)
+             print*, 'True geocentric latitude,  not converted to FK5: ', d2s(gcb0*r2d, 9)
+             print*, 'True geocentric distance:                        ', d2s(delta0, 9)
+             print*
+          end if
+          
        end if
        
        tau1 = 5.77551830441d-3 * delta                                 ! Light time in days
@@ -226,6 +250,12 @@ contains
     tau = tau1
     tjm = tjm0                                                  ! Still Julian Millennia since 2000.0 in dynamical time
     
+    if(lverb.gt.3) then
+       print*
+       print*, 'Final light time: ', d2s(tau, 9)
+       print*, 'Final t_Jm:       ', d2s(tjm, 9)
+       print*
+    end if
     
     if(pl.eq.-1) then  ! Earth's shadow
        select case(llunar_theory)
@@ -272,6 +302,14 @@ contains
     call fk5(tjm, hcl,hcb)
     call fk5(tjm, hcl0,hcb0)
     call fk5(tjm, hcl00,hcb00)
+    
+    if(lverb.gt.3) then
+       print*
+       print*, 'True heliocentric longitude, converted to FK5: ', d2s(modulo(hcl00,pi2)*r2d, 9)
+       print*, 'True heliocentric latitude,  converted to FK5: ', d2s(hcb00*r2d, 9)
+       print*, 'True heliocentric distance:                    ', d2s(hcr00, 9)
+       print*
+    end if
     
     
     ! Convert geocentric ecliptical to equatorial coordinates:
@@ -366,9 +404,10 @@ contains
     ! Save variables:
     ! Geocentric:
     planpos     = 0.d0              ! 1-12 are geocentric, repeated as topocentric in 21-32
-    planpos(1)  = rev(gcl)          ! Ecliptic longitude
-    planpos(2)  = rev2(gcb)         ! Ecliptic latitude
-    planpos(3)  = hcr               ! Distance to the Sun
+    
+    planpos(1)  = rev(gcl)          ! Ecliptical longitude
+    planpos(2)  = rev2(gcb)         ! Ecliptical latitude
+    planpos(3)  = hcr               ! Distance to the Sun (heliocentric!)
     planpos(4)  = delta             ! Apparent geocentric distance
     planpos(5)  = rev(ra)           ! R.A.
     planpos(6)  = dec               ! Declination
@@ -378,13 +417,25 @@ contains
     planpos(10) = alt               ! Altitude
     planpos(11) = rev(elon)         ! Elongation
     planpos(12) = diam              ! Apparent diameter            
+    if(lverb.gt.1) then
+       print*
+       print*, 'Final apparent geocentric longitude:  ', d2s(rev(gcl)*r2d, 9)
+       print*, 'Final apparent geocentric latitude:   ', d2s(rev2(gcb)*r2d, 9)
+       print*, 'Final apparent geocentric distance:   ', d2s(delta, 9)
+       print*, 'Final apparent heliocentric distance: ', d2s(hcr, 9)
+       print*
+       print*, 'Final apparent geocentric right ascension:  ', d2s(rev(ra)*r2h, 9)
+       print*, 'Final apparent geocentric declination:      ', d2s(dec*r2d, 9)
+       print*
+    end if
+
     
     planpos(13) = magn              ! Apparent visual magnitude
     planpos(14) = illfr             ! Illuminated fraction
     planpos(15) = rev(pa)           ! Phase angle
     planpos(16) = parang            ! Topocentric parallactic angle (between celestial pole and zenith)
     planpos(17) = hp                ! Horizontal parallax
-    planpos(18) = parang_ecl        ! Topocentric ecliptic "parallactic angle" (between celestial and ecliptical pole)
+    planpos(18) = parang_ecl        ! Topocentric ecliptical "parallactic angle" (between celestial and ecliptical pole)
     
     ! Topocentric:
     planpos(21) = rev(topl)   
