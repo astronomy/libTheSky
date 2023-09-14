@@ -37,7 +37,9 @@ contains
   !! \param eps0  Obliquity of the ecliptic (output)
   !! \param deps  Nutation in obliquity (output)
   !!
-  !! \see  Meeus, Astronomical Algorithms, 1998, Ch. 22
+  !! \see
+  !! - IAU 1980 nutation model: Seidelmann (1981);
+  !! - Abbreviated by Meeus, Astronomical Algorithms, 1998, Ch. 22.
   
   subroutine nutation(t, dpsi,eps0,deps)
     use SUFR_kinds, only: double
