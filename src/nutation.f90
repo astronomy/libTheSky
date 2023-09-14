@@ -30,7 +30,7 @@ contains
   
   
   !*********************************************************************************************************************************
-  !> \brief  Calculate nutation - cheap routine from Meeus
+  !> \brief  Calculate nutation - cheap routine from Meeus - as well as the mean obliquity of the ecliptic
   !! 
   !! \param t     Time in Julian Millennia since 2000.0 in dynamical time
   !! \param dpsi  Nutation in longitude (output)
@@ -49,33 +49,37 @@ contains
     implicit none
     real(double), intent(in) :: t
     real(double), intent(out) :: dpsi,eps0,deps
-    real(double) :: tt,tt2,tt3,u, d,ms,mm,f,omg,tmpvar, nu(9,63), conv
+    real(double) :: tjc,tjc2,tjc3,u, d,ms,mm,f,omg,tmpvar, nu(9,63), conv
     integer :: i
     
-    tt  = t*10.d0  ! Julian Centuries since 2000.0 in dynamical time
-    tt2 = tt**2
-    tt3 = tt*tt2
+    tjc  = t*10.d0  ! Julian Centuries since 2000.0 in dynamical time
+    tjc2 = tjc**2
+    tjc3 = tjc*tjc2
     
-    d   = 5.19846946025d0  +  7771.37714617d0 *tt  -  3.340909d-5    *tt2  +  9.2114446d-8     *tt3  ! D in Meeus, p.144
-    ms  = 6.24003588115d0  +  628.301956024d0 *tt  -  2.79776d-6     *tt2  -  5.8177641733d-8  *tt3  ! M in Meeus, p.144
-    mm  = 2.3555483693d0   +  8328.69142288d0 *tt  +  1.517947757d-4 *tt2  +  3.102807559d-7   *tt3  ! M' in Meeus, p.144
-    f   = 1.62790192912d0  +  8433.46615832d0 *tt  -  6.42717497d-5  *tt2  +  5.3329949d-8     *tt3  ! F in Meeus, p.144
-    omg = 2.18243858558d0  -  33.7570459367d0 *tt  +  3.6142278d-5   *tt2  +  3.87850944888d-8 *tt3  ! Omega in Meeus, p.144
+    d   = 5.19846946025d0  +  7771.37714617d0 *tjc  -  3.340909d-5    *tjc2  +  9.2114446d-8     *tjc3  ! D in Meeus, p.144
+    ms  = 6.24003588115d0  +  628.301956024d0 *tjc  -  2.79776d-6     *tjc2  -  5.8177641733d-8  *tjc3  ! M in Meeus, p.144
+    mm  = 2.3555483693d0   +  8328.69142288d0 *tjc  +  1.517947757d-4 *tjc2  +  3.102807559d-7   *tjc3  ! M' in Meeus, p.144
+    f   = 1.62790192912d0  +  8433.46615832d0 *tjc  -  6.42717497d-5  *tjc2  +  5.3329949d-8     *tjc3  ! F in Meeus, p.144
+    omg = 2.18243858558d0  -  33.7570459367d0 *tjc  +  3.6142278d-5   *tjc2  +  3.87850944888d-8 *tjc3  ! Omega in Meeus, p.144
     
     dpsi=0.d0
     deps=0.d0
     nu = nutationdat
     do i=1,63  ! Use data from the IAU1980 model (Seidelmann 1981; see nutation.dat)
        tmpvar = nu(1,i)*d + nu(2,i)*ms + nu(3,i)*mm + nu(4,i)*f + nu(5,i)*omg
-       dpsi = dpsi + (nu(6,i) + nu(7,i)*tt) * sin(tmpvar)
-       deps = deps + (nu(8,i) + nu(9,i)*tt) * cos(tmpvar)
+       dpsi = dpsi + (nu(6,i) + nu(7,i)*tjc) * sin(tmpvar)
+       deps = deps + (nu(8,i) + nu(9,i)*tjc) * cos(tmpvar)
     end do
     
     conv = pi/(1.d4*3600.d0*180.d0)    ! Convert from 0.0001" to radians
     dpsi = dpsi*conv
     deps = deps*conv
     
-    u   = t/10.d0  ! Dynamical time since 2000 in units of 10,000 years
+    
+    ! Add mean obliquity of the ecliptic:
+    ! eps0 = 0.409092804222d0 - 2.26965525d-4*tjc - 2.86d-9*tjc2 + 8.78967d-9*tjc3  ! Lieske et al, 1977
+    
+    u    = t/10.d0  ! Dynamical time since 2000 in units of 10,000 years
     eps0 = 0.409092804222d0 - 0.022693789d0*u - 7.5146d-6*u*u + 0.0096926375d0*u**3 - 2.49097d-4*u**4 - 0.0012104343d0*u**5 -  &
          1.893197d-4*u**6 + 3.452d-5*u**7 + 1.3512d-4*u**8 + 2.8071d-5*u**9 + 1.1878d-5*u**10  ! Laskar, A&A 157 59 (1986), Tab.8.
     
