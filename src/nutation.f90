@@ -88,16 +88,18 @@ contains
   
   
   !*********************************************************************************************************************************
-  !> \brief  Compute nutation using the IAU 2000 model
+  !> \brief  Compute nutation using the IAU 2000 model.  Add the mean obliquity of the ecliptic by Laskar (1986).
   !! 
   !! \param jd        Julian day of computation
-  !! \param dpsi_tot  Total nutation in longitude (output)
-  !! \param deps_tot  Total nutation in obliquity (output)
+  !! \param dpsi_tot  Total nutation in longitude (rad)
+  !! \param deps_tot  Total nutation in obliquity (rad)
+  !! \param eps0      Mean obliquity of the ecliptic (rad; optional)
   !!
   !! \see http://geoweb.mit.edu/~tah/mhb2000/
   
-  subroutine nutation2000(jd, dpsi_tot, deps_tot)
+  subroutine nutation2000(jd, dpsi_tot, deps_tot, eps0)
     use SUFR_kinds, only: double
+    use SUFR_constants, only: jd2000
     implicit none
     
     !     Subroutine to compute the complete MHB_2000 nutation series
@@ -168,7 +170,9 @@ contains
     
     real(double), intent(in) :: jd
     real(double), intent(out) :: dpsi_tot, deps_tot
+    real(double), intent(out), optional :: eps0
     real(double) :: dpsi_ls, deps_ls, dpsi_plan, deps_plan, dpsi_fcn ,  deps_fcn, dpsi_prec, deps_prec, pi, mas2r
+    real(double) :: u
     
     !---------------------------------------------------------------
     
@@ -200,6 +204,16 @@ contains
     mas2r = pi/(180.d0*3.6d6)
     dpsi_tot = dpsi_tot*mas2r
     deps_tot = deps_tot*mas2r
+    
+    
+    ! Add mean obliquity of the ecliptic:
+    if(present(eps0)) then
+       ! eps0 = 0.409092804222d0 - 2.26965525d-4*tjc - 2.86d-9*tjc2 + 8.78967d-9*tjc3  ! Lieske et al, 1977
+       
+       u  =  (jd-jd2000)/3652500.d0  ! Dynamical time since 2000 in units of 10,000 years
+       eps0 = 0.409092804222d0 - 0.022693789d0*u - 7.5146d-6*u*u + 0.0096926375d0*u**3 - 2.49097d-4*u**4 - 0.0012104343d0*u**5 -  &
+            1.893197d-4*u**6 + 3.452d-5*u**7 + 1.3512d-4*u**8 + 2.8071d-5*u**9 + 1.1878d-5*u**10  ! Laskar, A&A 157 59 (1986), Tab.8.
+    end if
     
   end subroutine nutation2000
   !*********************************************************************************************************************************
