@@ -1,5 +1,5 @@
-!> \file planets.f90  Procedures to compute planet positions and more for libTheSky
-
+ !> \file planets.f90  Procedures to compute planet positions and more for libTheSky
+ 
 
 !  Copyright (c) 2002-2023  Marc van der Sluys - marc.vandersluys.nl
 !   
@@ -60,6 +60,7 @@ contains
     use SUFR_angles, only: rev, rev2
     use SUFR_dummy, only: dumdbl1,dumdbl2
     use SUFR_text, only: d2s
+    use SUFR_numerics, only: deq0
     
     use TheSky_vsop, only: vsop87d_lbr
     use TheSky_local, only: lon0,lat0,height, deltat
@@ -144,16 +145,33 @@ contains
     jde    = jd + deltat/86400.d0
     tjm    = (jde-jd2000)/365250.d0                                    ! Julian Millennia after 2000.0 in dyn. time, tau in Meeus
     tjm0   = tjm
+    if(lverb.gt.0) then
+       ! print*,'JD:   ', jd
+       print*,'JDE:  ', jde
+       print*,'t_jm: ', d2s(tjm,9)
+    end if
     
     call vsop87d_lbr(tjm,3, hcl0,hcb0,hcr0, lLBaccur,lRaccur)             ! Calculate the Earth's true heliocentric l,b,r
     
+    if(lverb.gt.3) then
+       print*
+       ! print*, 'Heliocentric longitude Earth, FK4: ', d2s(modulo(hcl0,pi2)*r2d, 9), ' deg' 
+       ! print*, 'Heliocentric latitude Earth,  FK4: ', d2s(hcb0*r2d, 9), ' deg'
+       ! print*, 'Heliocentric distance Earth:       ', d2s(hcr0, 9), ' au'
+       print*
+       print*, 'Earth:'
+       print*, 't_jm: ', d2s(tjm, 9)
+       print*, 'Heliocentric longitude Earth: ', d2s(modulo(hcl0,pi2)*r2d, 9), ' deg' 
+       print*, 'Heliocentric latitude  Earth: ', d2s(hcb0*r2d, 9), ' deg'
+       print*, 'Heliocentric distance  Earth: ', d2s(hcr0, 9), ' au'
+    end if
     
     
     ! Iterate to get the light time tau, hence apparent positions:
     tau  = 6.d-3                                                       ! Initial guess for light time in days - typical planet: ~500s ~ 0.006 days
     tau1 = 0.d0                                                        ! On first iteration, tau=0 to get true positions
     j = 0                                                              ! Takes care of escape in case of infinite loop
-    do while(abs((tau-tau1)/tau).gt.1.d-10)                            ! Moon's tau ~10^-5; 1.d-10~10^-5 sec, 1.d-7~10^-2 sec
+    do while(deq0(tau1) .or. abs((tau1-tau)/tau1).gt.1.d-10)           ! Moon's tau ~10^-5; 1.d-10~10^-5 sec, 1.d-7~10^-2 sec
        
        tau = tau1                                                      ! On first iteration, tau=0 to get true positions
        tjm = tjm0 - tau/365250.d0                                      ! Iterate to calculate light time
@@ -195,8 +213,8 @@ contains
        
        if(pl.ne.0.and.pl.lt.10 .or. pl.gt.10000) then                  ! Planet, asteroid, Earth's shadow
           ! For Neptune's birthday:
-          !print*,'TESTING!!!'
-          !call precess_ecl(jde,jd2000,hcl,hcb)                        ! from JoD to J2000.0
+          ! print*,'TESTING!!!'
+          ! call precess_ecl(jde,jd2000,hcl,hcb)                        ! from JoD to J2000.0
           
           call hc_spher_2_gc_rect(hcl,hcb,hcr, hcl0,hcb0,hcr0, gcx,gcy,gcz)  ! Convert heliocentric l,b,r to geocentric x,y,z
           call rect_2_spher(gcx,gcy,gcz, gcl,gcb,delta)                      ! Convert geocentric x,y,z to geocentric l,b,r
@@ -223,26 +241,40 @@ contains
           delta0 = delta                                               ! Geocentric l,b,r
           gcl0   = gcl
           gcb0   = gcb
-          
-          if(lverb.gt.3) then
-             print*
-             print*, 'True heliocentric longitude, not converted to FK5: ', d2s(modulo(hcl00,pi2)*r2d, 9)
-             print*, 'True heliocentric latitude,  not converted to FK5: ', d2s(hcb00*r2d, 9)
-             print*, 'True heliocentric distance:                        ', d2s(hcr00, 9)
-             print*
-             print*, 'True geocentric x: ', d2s(gcx0, 9)
-             print*, 'True geocentric y: ', d2s(gcy0, 9)
-             print*, 'True geocentric z: ', d2s(gcz0, 9)
-             print*
-             print*, 'True geocentric longitude, not converted to FK5: ', d2s(modulo(gcl0,pi2)*r2d, 9)
-             print*, 'True geocentric latitude,  not converted to FK5: ', d2s(gcb0*r2d, 9)
-             print*, 'True geocentric distance:                        ', d2s(delta0, 9)
-             print*
-          end if
-          
        end if
        
        tau1 = 5.77551830441d-3 * delta                                 ! Light time in days
+       
+       if(lverb.gt.3) then
+          print*
+          print*
+          print*, 'Iteration:  ', j
+          ! print*,'t_jm: ', d2s(tjm, 9)
+          ! print*
+          ! print*, 'Heliocentric longitude planet, FK4: ', d2s(modulo(hcl00,pi2)*r2d, 9), ' deg'
+          ! print*, 'Heliocentric latitude planet,  FK4: ', d2s(hcb00*r2d, 9), ' deg'
+          ! print*, 'Heliocentric distance planet:       ', d2s(hcr00, 9), ' au'
+          print*
+          print*, 'Planet:'
+          print*, 't_jm:                   ', d2s(tjm, 9)
+          print*, 'Heliocentric longitude: ', d2s(modulo(hcl,pi2)*r2d, 9), ' deg'
+          print*, 'Heliocentric latitude:  ', d2s(hcb*r2d, 9), ' deg'
+          print*, 'Heliocentric distance:  ', d2s(hcr, 9), ' au'
+          print*
+          print*, 'Geocentric x: ', d2s(gcx, 9), ' au'
+          print*, 'Geocentric y: ', d2s(gcy, 9), ' au'
+          print*, 'Geocentric z: ', d2s(gcz, 9), ' au'
+          print*
+          print*, 'Geocentric longitude: ', d2s(modulo(gcl,pi2)*r2d, 9), ' deg'
+          print*, 'Geocentric latitude:  ', d2s(gcb*r2d, 9), ' deg'
+          print*, 'Geocentric distance:  ', d2s(delta, 9), ' au'
+          print*
+          print*, 'JDE_i:       ', d2s(jde_lt, 9)
+          print*, 't_jm:        ', d2s(tjm, 9)
+          print*, 'Light time:  ', d2s(tau,9),  ' day'
+          print*, 'Light time1: ', d2s(tau1,9), ' day'
+          print*
+       end if
        
        if(.not.lltime) exit                                            ! Do not take into account light time
        
@@ -258,6 +290,7 @@ contains
     
     if(lverb.gt.3) then
        print*
+       print*, 'Number of iterations: ', j
        print*, 'Final light time: ', d2s(tau, 9)
        print*, 'Final t_Jm:       ', d2s(tjm, 9)
        print*
@@ -267,8 +300,8 @@ contains
        select case(llunar_theory)
        case(1)
           call elp82b_lbr(tjm, dumdbl1,dumdbl2,delta)           ! Geocentric distance of the Moon for Earth shadow; only need delta
-       case(2)
-          call elp_mpp02_lbr(jde_lt, 0, dumdbl1,dumdbl2,delta)  ! Geocentric distance of the Moon for Earth shadow; only need delta - LLR mode
+       case(2) 
+          call  elp_mpp02_lbr(jde_lt, 0, dumdbl1,dumdbl2,delta)  ! Geocentric distance of the Moon for Earth shadow; only need delta - LLR mode
        case(3)
           call elp_mpp02_lbr(jde_lt, 1, dumdbl1,dumdbl2,delta)  ! Geocentric distance of the Moon for Earth shadow; only need delta - DE405 ('historical') mode
        end select
@@ -283,9 +316,12 @@ contains
     
     
     ! Correct for nutation:
-    call nutation(tjm, dpsi,eps0,deps)                   ! IAU 1980 nutation model: dpsi: nutation in longitude, deps: in obliquity
-    if(lnutat.eq.2000) call nutation2000(jd, dpsi,deps)  ! IAU 2000 nutation model, doesn't provide eps0
-    eps = eps0 + deps                                    ! Correct for nutation in obliquity: mean -> true obliquity of the ecliptic
+    if(lnutat.eq.2000) then
+       call nutation2000(jd, dpsi,deps, eps0)  ! IAU 2000 nutation model (originally doesn't provide eps0)
+    else
+       call nutation(tjm, dpsi,eps0,deps)      ! IAU 1980 nutation model: dpsi: nutation in longitude, deps: in obliquity
+    end if
+    eps = eps0 + deps                          ! Correct for nutation in obliquity: mean -> true obliquity of the ecliptic
     
     
     ! Correct for aberration, and convert to FK5:
@@ -311,9 +347,9 @@ contains
     
     if(lverb.gt.3) then
        print*
-       print*, 'True heliocentric longitude, converted to FK5: ', d2s(modulo(hcl00,pi2)*r2d, 9)
-       print*, 'True heliocentric latitude,  converted to FK5: ', d2s(hcb00*r2d, 9)
-       print*, 'True heliocentric distance:                    ', d2s(hcr00, 9)
+       print*, 'True heliocentric longitude, FK5: ', d2s(modulo(hcl00,pi2)*r2d, 9), ' deg'
+       print*, 'True heliocentric latitude,  FK5: ', d2s(hcb00*r2d, 9), ' deg'
+       print*, 'True heliocentric distance:       ', d2s(hcr00, 9), ' au'
        print*
     end if
     
@@ -331,15 +367,15 @@ contains
     ! Apparent diameter:
     if(pl.ge.0.and.pl.lt.10) diam = atan(pland(pl)/(delta*au))
     !if(pl.lt.10.and.pl.ge.0) diam = atan(planr(pl)/(2*delta*au))*2
-    if(pl.eq.-1) then
-       call earthshadow(delta,hcr0, rES1,rES2)  ! Calc Earth shadow radii at Moon distance: (pen)umbra radius - geocentric
+    if(pl.eq.-1) then 
+       call earthshadow(delta,hcr0, rES1,rES2)  ! Calc Earth shadow radii at Moon distance:  (pen)umbra radius - geocentric
        diam = 2*rES1                            ! Umbra diameter to planpos(12)
     end if
     
     ! Convert heliocentric to topocentric coordinates:
     call geoc2topoc_ecl(gcl,gcb, delta,diam/2.d0, eps,lst, topl,topb,topdiam, lat=llat,hgt=lhgt)  ! Geocentric to topoc: l, b, diam
-    if(pl.eq.-1) topdiam = rES2                                                            ! Earth penumbra radius at Moon distance
-    topdiam = 2*topdiam                                                                    ! Was radius, now diameter
+      if(pl.eq.-1) topdiam = rES2                                                            ! Earth penumbra radius at Moon distance
+      topdiam = 2*topdiam                                                                    ! Was radius, now diameter
     if(pl.ge.0.and.pl.lt.10) topdelta = pland(pl)/tan(topdiam)/au
     
     
@@ -395,8 +431,8 @@ contains
     hp = asin(earthr/(delta*au))                                                ! Horizontal parallax
     
     
-    ! Overrule some values:
-    if(pl.eq.0) hcr    = 0.d0                                                   ! No heliocentric distance for the Moon
+    ! Overrule some values: 
+    if(pl.eq.0) hcr    = 0.d0                                                   ! No heliocentric distance  for the Moon
     if(pl.eq.3) then  ! Sun:
        elon  = 0.d0                                                             ! Elongation
        pa    = 0.d0                                                             ! Phase angle
@@ -412,8 +448,8 @@ contains
     planpos     = 0.d0              ! 1-12 are geocentric, repeated as topocentric in 21-32
     
     planpos(1)  = rev(gcl)          ! Ecliptical longitude
-    planpos(2)  = rev2(gcb)         ! Ecliptical latitude
-    planpos(3)  = hcr               ! Distance to the Sun (heliocentric!)
+    planpos(2)  = rev2(gcb)         ! Ecliptical  latitude
+    planpos(3)  = hcr               ! Distance  to the Sun (heliocentric!)
     planpos(4)  = delta             ! Apparent geocentric distance
     planpos(5)  = rev(ra)           ! R.A.
     planpos(6)  = dec               ! Declination
@@ -425,13 +461,13 @@ contains
     planpos(12) = diam              ! Apparent diameter            
     if(lverb.gt.1) then
        print*
-       print*, 'Final apparent geocentric longitude:  ', d2s(rev(gcl)*r2d, 9)
-       print*, 'Final apparent geocentric latitude:   ', d2s(rev2(gcb)*r2d, 9)
-       print*, 'Final apparent geocentric distance:   ', d2s(delta, 9)
-       print*, 'Final apparent heliocentric distance: ', d2s(hcr, 9)
+       print*, 'Final apparent geocentric longitude:  ', d2s(rev(gcl)*r2d, 9), ' deg'
+       print*, 'Final apparent geocentric latitude:   ', d2s(rev2(gcb)*r2d, 9), ' deg'
+       print*, 'Final apparent geocentric distance:   ', d2s(delta, 9), ' au'
+       print*, 'Final apparent heliocentric distance: ', d2s(hcr, 9), ' au'
        print*
-       print*, 'Final apparent geocentric right ascension:  ', d2s(rev(ra)*r2h, 9)
-       print*, 'Final apparent geocentric declination:      ', d2s(dec*r2d, 9)
+       print*, 'Final apparent geocentric right ascension:  ', d2s(rev(ra)*r2h, 9), ' hr'
+       print*, 'Final apparent geocentric declination:      ', d2s(dec*r2d, 9), ' deg'
        print*
     end if
 
