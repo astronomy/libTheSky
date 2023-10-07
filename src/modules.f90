@@ -27,7 +27,7 @@ module TheSky_constants
   
   integer, parameter :: deltat_nmax = 1000   ! Need ~430 until 2000
   real(double) :: deltat_values(deltat_nmax), deltat_years(deltat_nmax)
-  real(double) :: deltat_accel, deltat_change, deltat_0, deltat_forced
+  real(double) :: deltat_accel, deltat_change, deltat_0, deltat_forced, jd1820
   integer :: deltat_n, deltat_minyr, deltat_maxyr, TheSky_verbosity
   
   real(double) :: nutationdat(9,63)

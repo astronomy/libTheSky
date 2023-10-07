@@ -33,7 +33,7 @@ contains
   subroutine set_TheSky_constants()
     use SUFR_constants, only: set_SUFR_constants, homedir
     use SUFR_system, only: error,quit_program_error
-    use TheSky_constants, only: library_name, TheSky_verbosity, TheSkydir, deltat_forced
+    use TheSky_constants, only: library_name, TheSky_verbosity, TheSkydir, deltat_forced, jd1820
     
     implicit none
     integer, parameter :: ntrials = 11
@@ -84,6 +84,7 @@ contains
     end if
     
     deltat_forced = -huge(deltat_forced)  ! Use this to force the DeltaT to a given value (if > -9999)
+    jd1820 = 2385800.5d0                  ! JD for 1820-01-01 0h UT, used for DeltaT approximation
     
   end subroutine set_TheSky_constants
   !*********************************************************************************************************************************

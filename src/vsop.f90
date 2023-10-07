@@ -39,16 +39,16 @@ contains
   
   
   !*********************************************************************************************************************************
-  !> \brief  Calculate true heliocentric ecliptic coordinates l,b,r for planet pl and the mean ecliptic and equinox of date 
-  !!         using VSOP87D
-  !!
+  !> \brief Calculate true heliocentric ecliptic coordinates l,b,r for planet pl and the mean ecliptic and
+  !!        equinox of date using VSOP87D
+  !! 
   !! \param  tm   Dynamical time in Julian Millennia after J2000.0, (tau in Meeus)
   !! \param  pl   Planet to compute position for
-  !!
+  !! 
   !! \param lon  Heliocentric longitude (rad) (output)
   !! \param lat  Heliocentric latitude (rad) (output)
   !! \param rad  Heliocentric distance (AU) (output)
-  !!
+  !! 
   !! \param  LBaccur  Desired accuracy of L,B (rad, optional)
   !! \param  Raccur   Desired accuracy of R (AU, optional)
   !!

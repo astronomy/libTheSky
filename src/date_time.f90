@@ -323,7 +323,7 @@ contains
     jd = cal2jd(year, month, day+ut/24.d0)            ! UT
     
     deltat = calc_deltat_ymd(year,month,day)
-    !jde = jd + deltat/86400.d0
+    ! jde = jd + deltat/86400.d0
     
   end subroutine localtime2jd
   !*********************************************************************************************************************************
@@ -454,8 +454,8 @@ contains
     calc_deltat_old = calc_deltat_ymd
     y0_old = y0
     
-    !write(0,'(A)')'  WARNING:  fixed DeltaT!!!'
-    !calc_deltat_ymd = 66.4d0
+    ! write(0,'(A)')'  WARNING:  fixed DeltaT!!!'
+    ! calc_deltat_ymd = 66.4d0
     
   end function calc_deltat_ymd
   !*********************************************************************************************************************************
@@ -492,6 +492,28 @@ contains
     find_deltat_in_range = dt0 + a*(y0-yr0)
     
   end function find_deltat_in_range
+  !*********************************************************************************************************************************
+  
+  
+  !*********************************************************************************************************************************
+  !> \brief  Compute DeltaT for given JD, using a simple parabolic approximation
+  !!
+  !! \param jd       Julian day for computation
+  !!
+  !! \retval deltat  The value for DeltaT (= TDT-UT) in seconds.
+  
+  function calc_deltat_approx(jd)
+    use SUFR_kinds, only: double
+    use TheSky_constants, only: jd1820
+    
+    implicit none
+    real(double), intent(in) :: jd
+    real(double) :: calc_deltat_approx
+    
+    ! 12 + 0.5 * 1.8e-3/86400/(36525*86400) * ((jd-jd1820)*86400)**2  ! Comprehensible notation
+    calc_deltat_approx = 12.d0 + 0.5d0 * 1.8d-3 / 36525.d0 * (jd-jd1820)**2  ! Simplified notation
+    
+  end function calc_deltat_approx
   !*********************************************************************************************************************************
   
   
