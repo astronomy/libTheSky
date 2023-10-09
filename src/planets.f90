@@ -148,30 +148,29 @@ contains
     if(lverb.gt.0) then
        ! print*,'JD:   ', jd
        print*,'JDE:  ', jde
-       print*,'t_jm: ', d2s(tjm,9)
+       print*,'t_jm: ', d2s(tjm,10)
     end if
     
     call vsop87d_lbr(tjm,3, hcl0,hcb0,hcr0, lLBaccur,lRaccur)             ! Calculate the Earth's true heliocentric l,b,r
     
     if(lverb.gt.3) then
        print*
-       ! print*, 'Heliocentric longitude Earth, FK4: ', d2s(modulo(hcl0,pi2)*r2d, 9), ' deg' 
+       ! print*, 'Heliocentric longitude Earth, FK4: ', d2s(modulo(hcl0,pi2)*r2d, 9), ' deg'
        ! print*, 'Heliocentric latitude Earth,  FK4: ', d2s(hcb0*r2d, 9), ' deg'
        ! print*, 'Heliocentric distance Earth:       ', d2s(hcr0, 9), ' au'
        print*
        print*, 'Earth:'
-       print*, 't_jm: ', d2s(tjm, 9)
-       print*, 'Heliocentric longitude Earth: ', d2s(modulo(hcl0,pi2)*r2d, 9), ' deg' 
+       print*, 't_jm: ', d2s(tjm, 10)
+       print*, 'Heliocentric longitude Earth: ', d2s(modulo(hcl0,pi2)*r2d, 9), ' deg'
        print*, 'Heliocentric latitude  Earth: ', d2s(hcb0*r2d, 9), ' deg'
        print*, 'Heliocentric distance  Earth: ', d2s(hcr0, 9), ' au'
     end if
     
     
     ! Iterate to get the light time tau, hence apparent positions:
-    tau  = 6.d-3                                                       ! Initial guess for light time in days - typical planet: ~500s ~ 0.006 days
-    tau1 = 0.d0                                                        ! On first iteration, tau=0 to get true positions
-    j = 0                                                              ! Takes care of escape in case of infinite loop
-    do while(deq0(tau1) .or. abs((tau1-tau)/tau1).gt.1.d-10)           ! Moon's tau ~10^-5; 1.d-10~10^-5 sec, 1.d-7~10^-2 sec
+    tau = 0.d0;  tau1 = 0.d0                                           ! Initial values for light time in days
+    j = 0                                                              ! Count iterations; allows escape in case of infinite loop
+    do while(deq0(tau1) .or. abs((tau1-tau)/tau1).gt.1.d-10)           ! Moon's tau ~10^-5; 1.d-10~10^-5 sec  (1.d-7~10^-2 sec)
        
        tau = tau1                                                      ! On first iteration, tau=0 to get true positions
        tjm = tjm0 - tau/365250.d0                                      ! Iterate to calculate light time
@@ -249,14 +248,14 @@ contains
           print*
           print*
           print*, 'Iteration:  ', j
-          ! print*,'t_jm: ', d2s(tjm, 9)
+          ! print*,'t_jm: ', d2s(tjm, 10)
           ! print*
           ! print*, 'Heliocentric longitude planet, FK4: ', d2s(modulo(hcl00,pi2)*r2d, 9), ' deg'
           ! print*, 'Heliocentric latitude planet,  FK4: ', d2s(hcb00*r2d, 9), ' deg'
           ! print*, 'Heliocentric distance planet:       ', d2s(hcr00, 9), ' au'
           print*
           print*, 'Planet:'
-          print*, 't_jm:                   ', d2s(tjm, 9)
+          print*, 't_jm:                   ', d2s(tjm, 10)
           print*, 'Heliocentric longitude: ', d2s(modulo(hcl,pi2)*r2d, 9), ' deg'
           print*, 'Heliocentric latitude:  ', d2s(hcb*r2d, 9), ' deg'
           print*, 'Heliocentric distance:  ', d2s(hcr, 9), ' au'
@@ -270,7 +269,7 @@ contains
           print*, 'Geocentric distance:  ', d2s(delta, 9), ' au'
           print*
           print*, 'JDE_i:       ', d2s(jde_lt, 9)
-          print*, 't_jm:        ', d2s(tjm, 9)
+          print*, 't_jm:        ', d2s(tjm, 10)
           print*, 'Light time:  ', d2s(tau,9),  ' day'
           print*, 'Light time1: ', d2s(tau1,9), ' day'
           print*
@@ -292,7 +291,7 @@ contains
        print*
        print*, 'Number of iterations: ', j
        print*, 'Final light time: ', d2s(tau, 9)
-       print*, 'Final t_Jm:       ', d2s(tjm, 9)
+       print*, 'Final t_Jm:       ', d2s(tjm, 10)
        print*
     end if
     
@@ -301,21 +300,51 @@ contains
        case(1)
           call elp82b_lbr(tjm, dumdbl1,dumdbl2,delta)           ! Geocentric distance of the Moon for Earth shadow; only need delta
        case(2) 
-          call  elp_mpp02_lbr(jde_lt, 0, dumdbl1,dumdbl2,delta)  ! Geocentric distance of the Moon for Earth shadow; only need delta - LLR mode
+          call elp_mpp02_lbr(jde_lt, 0, dumdbl1,dumdbl2,delta)  ! Geocentric distance of the Moon for Earth shadow; only need delta - LLR mode
        case(3)
           call elp_mpp02_lbr(jde_lt, 1, dumdbl1,dumdbl2,delta)  ! Geocentric distance of the Moon for Earth shadow; only need delta - DE405 ('historical') mode
        end select
     end if
     
     
-    if(pl.eq.3) then                                            ! This seems true, but appears to be apparent?!?!?
+    if(pl.eq.3) then         ! Earth -> Sun.  Note that we want the TRUE position!
        gcl   = rev(hcl0+pi)
        gcb   = -hcb0
-       delta = hcr
+       delta = hcr0
     end if
     
     
-    ! Correct for nutation:
+    if(lverb.gt.2) then
+       print*
+       print*
+       ! print*,'t_jm: ', d2s(tjm, 10)
+       ! print*
+       ! print*, 'Heliocentric longitude planet, FK4: ', d2s(modulo(hcl00,pi2)*r2d, 9), ' deg'
+       ! print*, 'Heliocentric latitude planet,  FK4: ', d2s(hcb00*r2d, 9), ' deg'
+       ! print*, 'Heliocentric distance planet:       ', d2s(hcr00, 9), ' au'
+       print*
+       print*, 'Planet after light-time iterations, before correction for nutation, aberration, FK5:'
+       print*, 'Final t_jm:                   ', d2s(tjm, 10)
+       print*, 'Final heliocentric longitude: ', d2s(modulo(hcl,pi2)*r2d, 9), ' deg'
+       print*, 'Final heliocentric latitude:  ', d2s(hcb*r2d, 9), ' deg'
+       print*, 'Final heliocentric distance:  ', d2s(hcr, 9), ' au'
+       print*
+       print*, 'Final geocentric x: ', d2s(gcx, 9), ' au'
+       print*, 'Final geocentric y: ', d2s(gcy, 9), ' au'
+       print*, 'Final geocentric z: ', d2s(gcz, 9), ' au'
+       print*
+       print*, 'Final geocentric longitude: ', d2s(modulo(gcl,pi2)*r2d, 9), ' deg'
+       print*, 'Final geocentric latitude:  ', d2s(gcb*r2d, 9), ' deg'
+       print*, 'Final geocentric distance:  ', d2s(delta, 9), ' au'
+       print*
+       print*, 'Final jde_i:       ', d2s(jde_lt, 9)
+       print*, 'Final t_jm:        ', d2s(tjm, 10)
+       print*, 'Final light time:  ', d2s(tau,9),  ' day'
+       print*, 'Final light time1: ', d2s(tau1,9), ' day'
+       print*
+    end if
+    
+    ! Compute and correct for nutation:
     if(lnutat.eq.2000) then
        call nutation2000(jd, dpsi,deps, eps0)  ! IAU 2000 nutation model (originally doesn't provide eps0)
     else
@@ -324,7 +353,7 @@ contains
     eps = eps0 + deps                          ! Correct for nutation in obliquity: mean -> true obliquity of the ecliptic
     
     
-    ! Correct for aberration, and convert to FK5:
+    ! Correct for aberration and nutation, and convert to FK5:
     if(pl.lt.10) then  ! I suppose this should also happen for comets, but this compares better...
        if(pl.ne.0) call aberration_ecl(tjm,hcl0, gcl,gcb)  ! Aberration - not for the Moon
        call fk5(tjm, gcl,gcb)
@@ -404,7 +433,7 @@ contains
     
     ! Compute magnitude:
     if(pl.gt.0.and.pl.lt.10) magn = planet_magnitude(pl,hcr,delta,pa)
-    !if(pl.gt.0.and.pl.lt.10) magn = planet_magnitude_new(pl,hcr,delta,pa)
+    ! if(pl.gt.0.and.pl.lt.10) magn = planet_magnitude_new(pl,hcr,delta,pa)
     if(pl.eq.0) magn = moonmagn(pa,delta)                             ! Moon
     if(pl.eq.6) magn = satmagn(tjm*10., gcl,gcb, delta, hcl,hcb,hcr)  ! Calculate Saturn's magnitude
     if(pl.gt.10000) magn = asteroid_magn(pl-10000,delta,hcr,pa)       ! Asteroid magnitude (valid for |pa|<120°)
@@ -448,8 +477,8 @@ contains
     planpos     = 0.d0              ! 1-12 are geocentric, repeated as topocentric in 21-32
     
     planpos(1)  = rev(gcl)          ! Ecliptical longitude
-    planpos(2)  = rev2(gcb)         ! Ecliptical  latitude
-    planpos(3)  = hcr               ! Distance  to the Sun (heliocentric!)
+    planpos(2)  = rev2(gcb)         ! Ecliptical latitude
+    planpos(3)  = hcr               ! Distance to the Sun (heliocentric!)
     planpos(4)  = delta             ! Apparent geocentric distance
     planpos(5)  = rev(ra)           ! R.A.
     planpos(6)  = dec               ! Declination
