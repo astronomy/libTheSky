@@ -276,6 +276,7 @@ contains
        end if
        
        if(.not.lltime) exit                                            ! Do not take into account light time
+       if(pl.eq.3) exit                                                ! Want true position for Sun(!)
        
        j = j+1
        if(j.ge.30) then
@@ -306,8 +307,12 @@ contains
        end select
     end if
     
+    ! Earth -> Sun.  Note that we want the TRUE position!
     
-    if(pl.eq.3) then         ! Earth -> Sun.  Note that we want the TRUE position!
+    ! (As for other planets, we'd use the true position for the Earth (when the light arrives) and the
+    ! APPARENT position of the Sun (when the light left).  However, since the positions are heliocentric, the
+    ! latter is always (0,0,0).
+    if(pl.eq.3) then
        gcl   = rev(hcl0+pi)
        gcb   = -hcb0
        delta = hcr0
