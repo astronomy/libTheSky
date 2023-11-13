@@ -283,11 +283,9 @@ contains
     
     implicit none
     real(double), intent(in) :: dist
-    real(double) :: sunmagn,ill
+    real(double) :: sunmagn
     
-    ill = 10.d0**(-0.4d0 * (-26.73d0)) / (dist*dist)  ! Dist in AU, assume average dist = 1
-    sunmagn = -2.5d0*log10(ill) 
-    
+    sunmagn = -26.74d0 + 5*log10(dist)
   end function sunmagn
   !*********************************************************************************************************************************
   
