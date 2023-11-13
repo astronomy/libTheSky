@@ -43,7 +43,7 @@ contains
   !! \param ltime    Set to .false. to disable light-time correction, and save ~50% in CPU time at the cost of some accuracy
   !! 
   !! \param lunar_theory    Choose Lunar theory:  1: ELP82b,  2: ELP-MPP02/LLR,  3: ELP-MPP02/DE405 ('historical' - default)
-  !! \param nutat           IAU nutation model to use: 1980 or 2000 (default).
+  !! \param nutat           IAU nutation model to use: 0 (no nutation!), 1980 or 2000 (default).
   !! \param verbosity       Verbosity for debug output (0-3).  Defaults to 0: silent.
   !! 
   !!
@@ -127,14 +127,16 @@ contains
     if(llunar_theory.lt.1 .or. llunar_theory.gt.3) &
          call quit_program_error('planet_position(): lunar_theory must be 1, 2 or 3', 1)
     
+    ! Nutation model:
     lnutat = 2000  ! 2000 IAU nutation model
-    if(present(nutat)) lnutat = nutat
-    if(lnutat.ne.1980 .and. lnutat.ne.2000) &
-         call quit_program_error('planet_position(): nutat must be 1980 or 2000', 1)
+    if(present(nutat)) then
+       lnutat = nutat
+       if(lnutat.ne.1980 .and. lnutat.ne.2000 .and. lnutat.ne.0) &
+            call quit_program_error('planet_position(): nutat must be 2000, 1980 or 0', 1)
+    end if
     
     lverb = 0  ! Silent
     if(present(verbosity)) lverb = verbosity
-    
     
     
     ! Calc JDE and tjm:
@@ -350,10 +352,14 @@ contains
     end if
     
     ! Compute and correct for nutation:
-    if(lnutat.eq.2000) then
-       call nutation2000(jd, dpsi,deps, eps0)  ! IAU 2000 nutation model (originally doesn't provide eps0)
-    else
+    if(lnutat.eq.1980) then
        call nutation(tjm, dpsi,eps0,deps)      ! IAU 1980 nutation model: dpsi: nutation in longitude, deps: in obliquity
+    else !  if(lnutat.eq.2000) then
+       call nutation2000(jd, dpsi,deps, eps0)  ! IAU 2000 nutation model (originally doesn't provide eps0)
+       if(lnutat.eq.0) then                    ! No nutation(!)
+          dpsi = 0.d0
+          deps = 0.d0
+       end if
     end if
     eps = eps0 + deps                          ! Correct for nutation in obliquity: mean -> true obliquity of the ecliptic
     
