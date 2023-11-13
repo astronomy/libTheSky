@@ -102,6 +102,7 @@ contains
     
     
     ! Handle optional variables:
+    ! Geographic location:
     llat = lat0
     llon = lon0
     lhgt = height
@@ -109,6 +110,7 @@ contains
     if(present(lon)) llon = lon
     if(present(hgt)) lhgt = hgt
     
+    ! Coordinate accuracy:
     lLBaccur = 0.d0
     lRaccur = 0.d0
     if(pl.ge.1 .and. pl.le.8) then
@@ -118,9 +120,11 @@ contains
     if(present(LBaccur)) lLBaccur = LBaccur
     if(present(Raccur))  lRaccur  = Raccur
     
+    ! Light time:
     lltime = .true.                    ! Take into account light time by default
     if(present(ltime)) lltime = ltime
     
+    ! Lunar theory:
     ! llunar_theory = 1  ! Use (corrected) ELP82b as default
     llunar_theory = 3  ! Use ELP-MPP02/DE405 ('historical') as default.  This should be the "default default" :-)
     if(present(lunar_theory)) llunar_theory = lunar_theory
@@ -135,6 +139,7 @@ contains
             call quit_program_error('planet_position(): nutat must be 2000, 1980 or 0', 1)
     end if
     
+    ! Verbosity:
     lverb = 0  ! Silent
     if(present(verbosity)) lverb = verbosity
     
@@ -220,7 +225,7 @@ contains
           call hc_spher_2_gc_rect(hcl,hcb,hcr, hcl0,hcb0,hcr0, gcx,gcy,gcz)  ! Convert heliocentric l,b,r to geocentric x,y,z
           call rect_2_spher(gcx,gcy,gcz, gcl,gcb,delta)                      ! Convert geocentric x,y,z to geocentric l,b,r
           if(pl.eq.3) delta = hcr
-          if(pl.eq.9) call precess_ecl(jd2000,jde,gcl,gcb)             ! Pluto:  from J2000.0 to JoD
+          if(pl.eq.9) call precess_ecl(jd2000,jde, gcl,gcb)            ! Pluto:  from J2000.0 to JoD
        end if
        
        if(pl.gt.10.and.pl.lt.10000) &
@@ -744,7 +749,7 @@ contains
     else  ! Method 2 - Meeus p.286:
        !        Mer     Ven     Ear   Mars    Jup    Sat     Ur      Nep     Pl
        a0 = (/ 0.42d0, 4.40d0, 0.d0, 1.52d0, 9.40d0, 8.88d0, 7.19d0, 6.87d0, 1.00d0/) * (-1)  ! Meeus
-       !a0 = (/ 0.36d0, 4.29d0, 0.d0, 1.52d0, 9.25d0, 8.88d0, 7.19d0, 6.87d0, 1.00d0/) * (-1)  ! Expl.Supl.tt.Astr.Almanac, 2nd Ed.
+       ! a0 = (/ 0.36d0, 4.29d0, 0.d0, 1.52d0, 9.25d0, 8.88d0, 7.19d0, 6.87d0, 1.00d0/) * (-1)  ! Expl.Supl.tt.Astr.Almanac, 2nd Ed.
        a1 = (/ 3.80d0, 0.09d0, 0.d0, 1.6d0,  0.5d0,  0.d0,   0.d0,   0.d0,   0.d0/)   * 1.d-2
        a2 = (/-2.73d0, 2.39d0, 0.d0, 0.d0,   0.d0,   0.d0,   0.d0,   0.d0,   0.d0/)   * 1.d-4
        a3 = (/ 2.d0,  -0.65d0, 0.d0, 0.d0,   0.d0,   0.d0,   0.d0,   0.d0,   0.d0/)   * 1.d-6
