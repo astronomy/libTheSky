@@ -273,7 +273,8 @@ contains
           print*
           print*, 'Geocentric longitude: ', d2s(modulo(gcl,pi2)*r2d, 9), ' deg'
           print*, 'Geocentric latitude:  ', d2s(gcb*r2d, 9), ' deg'
-          print*, 'Geocentric distance:  ', d2s(delta, 9), ' au'
+          print*, 'True geocentric distance:      ', d2s(delta0, 9), ' au'
+          print*, 'Apparent geocentric distance:  ', d2s(delta, 9), ' au'
           print*
           print*, 'JDE_i:       ', d2s(jde_lt, 9)
           print*, 't_jm:        ', d2s(tjm, 10)
@@ -294,6 +295,7 @@ contains
     
     tau = tau1
     tjm = tjm0                                                  ! Still Julian Millennia since 2000.0 in dynamical time
+    delta = delta0                                              ! Want the TRUE distance, not APPARENT!
     
     if(lverb.gt.3) then
        print*
@@ -345,9 +347,9 @@ contains
        print*, 'Final geocentric y: ', d2s(gcy, 9), ' au'
        print*, 'Final geocentric z: ', d2s(gcz, 9), ' au'
        print*
-       print*, 'Final geocentric longitude: ', d2s(modulo(gcl,pi2)*r2d, 9), ' deg'
-       print*, 'Final geocentric latitude:  ', d2s(gcb*r2d, 9), ' deg'
-       print*, 'Final geocentric distance:  ', d2s(delta, 9), ' au'
+       print*, 'Final geocentric longitude:        ', d2s(modulo(gcl,pi2)*r2d, 9), ' deg'
+       print*, 'Final geocentric latitude:         ', d2s(gcb*r2d, 9), ' deg'
+       print*, 'Final (true) geocentric distance:  ', d2s(delta, 9), ' au'
        print*
        print*, 'Final jde_i:       ', d2s(jde_lt, 9)
        print*, 'Final t_jm:        ', d2s(tjm, 10)
@@ -361,6 +363,7 @@ contains
        call nutation(tjm, dpsi,eps0,deps)      ! IAU 1980 nutation model: dpsi: nutation in longitude, deps: in obliquity
     else !  if(lnutat.eq.2000) then
        call nutation2000(jd, dpsi,deps, eps0)  ! IAU 2000 nutation model (originally doesn't provide eps0)
+       
        if(lnutat.eq.0) then                    ! No nutation(!)
           dpsi = 0.d0
           deps = 0.d0
@@ -430,7 +433,7 @@ contains
     
     ! Elongation:
     elon = acos(cos(gcb)*cos(hcb0)*cos(gcl-rev(hcl0+pi)))
-    if(pl.gt.10) elon = acos((hcr0**2 + delta**2 - hcr**2)/(2.d0*hcr0*delta))        ! For comets (only?)
+    if(pl.gt.10) elon = acos((hcr0**2 + delta**2 - hcr**2)/(2*hcr0*delta))        ! For comets (only?) - CHECK: looks like phase angle...
     
     ! Convert topocentric coordinates: ecliptical -> equatorial -> horizontal:
     !call geoc2topoc_eq(ra,dec,delta,hh,topra,topdec)                            ! Geocentric to topocentric
@@ -495,7 +498,7 @@ contains
     planpos(1)  = rev(gcl)          ! Ecliptical longitude
     planpos(2)  = rev2(gcb)         ! Ecliptical latitude
     planpos(3)  = hcr               ! Distance to the Sun (heliocentric!)
-    planpos(4)  = delta             ! Apparent geocentric distance
+    planpos(4)  = delta             ! True(!) geocentric distance
     planpos(5)  = rev(ra)           ! R.A.
     planpos(6)  = dec               ! Declination
     planpos(7)  = tau               ! Light time in days
@@ -527,7 +530,7 @@ contains
     ! Topocentric:
     planpos(21) = rev(topl)   
     planpos(22) = rev2(topb)
-    planpos(23) = delta0            ! True geocentric distance
+    planpos(23) = delta0            ! True geocentric distance (== delta?)
     planpos(24) = topdelta
     planpos(25) = rev(topra)
     planpos(26) = topdec
@@ -576,7 +579,7 @@ contains
     planpos(66) = gcz0
     planpos(67) = gcl0              ! True geocentric l,b,r
     planpos(68) = gcb0
-    planpos(69) = delta0
+    planpos(69) = delta0            ! (==delta?)
     
   end subroutine planet_position
   !*********************************************************************************************************************************
