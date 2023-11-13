@@ -60,7 +60,7 @@ contains
     
     use TheSky_planetdata, only: planpos
     use TheSky_coordinates, only: eq2horiz, refract
-    use TheSky_datetime, only: calc_deltat, calc_gmst
+    use TheSky_datetime, only: calc_deltat, calc_gmst, calc_deltat_approx
     use TheSky_local, only: lon0,lat0
     
     implicit none
@@ -77,10 +77,12 @@ contains
     if(present(lat)) llat = lat
     if(present(lon)) llon = lon
     
-    deltat = calc_deltat(jd)
+    ! deltat = calc_deltat(jd)
+    deltat = max(calc_deltat_approx(jd)-310.d0, -120.d0)
     jde    = jd + deltat/86400.d0
-    !tjc    = (jde-jd2000)/36525.d0    ! Julian Centuries after 2000.0 in dynamical time
-    tjc    = (jd-jd2000)/36525.d0     ! Julian Centuries after 2000.0;  JD compares better to VSOP87 than JDE (~7% for 1900-2100)
+    tjc    = (jde-jd2000)/36525.d0    ! Julian Centuries after 2000.0 in dynamical time
+    ! tjc    = (jd-jd2000)/36525.d0     ! Julian Centuries after 2000.0;  JD compares better to VSOP87 than JDE (~7% for 1900-2100, but NOT for long term!)
+    
     tjc2   = tjc*tjc                  ! T^2                             In fact JD - DeltaT compares even better(!) (~4%)
     tjc3   = tjc2*tjc                 ! T^3
     tjc4   = tjc2*tjc2                ! T^4
@@ -100,7 +102,7 @@ contains
     ! Sun's equation of the centre := true - mean anomaly - https://en.wikipedia.org/wiki/Equation_of_the_center:
     c = (2*e - 0.25d0*e**3)*sin(m) + 1.25d0*e**2*sin(2*m) + 13.d0/12.d0*e**3*sin(3*m)  ! Brown, 1896, Chap. III, Eq.7, up to e^3,
     !                                                                       and Expl. Supl. t.t. Astronimical Almanac 3rd Ed, Eq.9.1
-    !c = (2*e - 0.25d0*e**3)*sin(m) + (1.25d0*e**2 - 11.d0/24.d0*e**4)*sin(2*m) + 13.d0/12.d0*e**3*sin(3*m) &
+    ! c = (2*e - 0.25d0*e**3)*sin(m) + (1.25d0*e**2 - 11.d0/24.d0*e**4)*sin(2*m) + 13.d0/12.d0*e**3*sin(3*m) &
     !     + 103.d0/96.d0*e**4*sin(4*m) ! Brown, 1896, Chap. III, Eq.7, up to e^4
     
     odot = l0 + c  ! True longitude
@@ -114,7 +116,7 @@ contains
     
     ! Mean longitude of the Moon, L in CTC88:
     lm   = 3.810344430588d0  +  8399.709113522267d0*tjc  -  2.315615585d-5*tjc2  +  3.23904d-8*tjc3  -  2.67714d-10*tjc4
-    !lm  = 3.8103408236d0    +  8399.7091116339958d0*tjc -  2.755176757d-5*tjc2  +  3.239043d-8*tjc3 -  2.6771d-10*tjc4 - Meeus, CHECK 3rd term!
+    ! lm  = 3.8103408236d0    +  8399.7091116339958d0*tjc -  2.755176757d-5*tjc2  +  3.239043d-8*tjc3 -  2.6771d-10*tjc4 - Meeus, CHECK 3rd term!
      
     ! Nutation in longitude, 1980 IAU Theory of Nutation, Seidelmann (1982), Table I, lines 1,9,31,2,10 -> rad:
     dpsi = (-8.338601d-5-7.1365d-8*tjc)*sin(omg) - 6.39324d-6*sin(2*l0) - 1.1025d-6*sin(2*lm) + 9.9969d-7*sin(2*omg) &
