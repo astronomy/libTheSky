@@ -735,44 +735,44 @@ contains
   !> \brief  Calculate planet magnitude
   !!
   !! \param pl          Planet ID
-  !! \param r           Distance from the Sun (AU)
-  !! \param d           Distance from the Earth (AU)
-  !! \param par         Phase angle (rad)
-  !! \param meth        Method to use from Meeus (1: p.285,  2: p.286;  optional, default: 1)
+  !! \param hc_dist     Distance from the Sun (AU)
+  !! \param gc_dist     Distance from the Earth (AU)
+  !! \param phang       Phase angle (rad)
+  !! \param model       Model to use: 1: Müller (1893), 2: p.286;  (optional, defaults to 2)
   !!
   !! \retval planet_magnitude  Apparent visual planet magnitiude
   !!
   !! \see  Meeus, Astronomical Algorithms, 1998, Ch.41
   
-  function planet_magnitude(pl, r,d, par, meth)
+  function planet_magnitude(pl, hc_dist,gc_dist, phang, model)
     use SUFR_kinds, only: double
     use SUFR_constants, only: r2d
     
     implicit none
     integer, intent(in) :: pl
-    integer, intent(in), optional :: meth
-    integer :: lmeth
-    real(double), intent(in) :: r,d,par
+    integer, intent(in), optional :: model
+    integer :: lmodel
+    real(double), intent(in) :: hc_dist,gc_dist,phang
     real(double) :: planet_magnitude,pa,pa2,pa3,a0(9),a1(9),a2(9),a3(9)
     
     ! Optional argument:
-    lmeth = 1
-    if(present(meth)) lmeth = meth
+    lmodel = 2
+    if(present(model)) lmodel = model
     
     ! PA must be in degrees:
-    pa  = par*r2d
-    if(lmeth.eq.1 .and. pl.eq.1) pa = pa - 50.d0  ! For Mercury (deg) -- ONLY FOR METHOD 1 !!!
+    pa  = phang*r2d
+    if(lmodel.eq.1 .and. pl.eq.1) pa = pa - 50.d0  ! For Mercury (deg) -- ONLY FOR MODEL 1 !!!
     pa2 = pa*pa
     pa3 = pa*pa2
     
-    if(lmeth.eq.1) then  ! Method 1 - Meeus p.285:
-       !       Mer      Ven       Ear   Mars     Jup     Sat    Ur      Nep     Pl
-       a0 = (/-1.16d0,  4.d0,     0.d0, 1.3d0,   8.93d0, 8.7d0, 6.85d0, 7.05d0, 1.d0/) * (-1)
-       a1 = (/ 2.838d0, 1.322d0,  0.d0, 1.486d0, 0.d0,   0.d0,  0.d0,   0.d0,   0.d0/) * 1.d-2
-       a2 = (/ 1.023d0, 0.d0,     0.d0, 0.d0,    0.d0,   0.d0,  0.d0,   0.d0,   0.d0/) * 1.d-4
-       a3 = (/ 0.d0,    0.4247d0, 0.d0, 0.d0,    0.d0,   0.d0,  0.d0,   0.d0,   0.d0/) * 1.d-6
+    if(lmodel.eq.1) then  ! Model 1: Müller (1893):
+       !       Mer      Ven       Ear   Mars     Jup     Sat     Ur      Nep     Pl
+       a0 = (/-1.16d0,  4.d0,     0.d0, 1.3d0,   8.93d0, 8.68d0, 6.85d0, 7.05d0, 1.d0/) * (-1)
+       a1 = (/ 2.838d0, 1.322d0,  0.d0, 1.486d0, 0.d0,   0.d0,   0.d0,   0.d0,   0.d0/) * 1.d-2
+       a2 = (/ 1.023d0, 0.d0,     0.d0, 0.d0,    0.d0,   0.d0,   0.d0,   0.d0,   0.d0/) * 1.d-4
+       a3 = (/ 0.d0,    0.4247d0, 0.d0, 0.d0,    0.d0,   0.d0,   0.d0,   0.d0,   0.d0/) * 1.d-6
        
-    else  ! Method 2 - Meeus p.286:
+    else  ! Model 2 - Meeus p.286:
        !        Mer     Ven     Ear   Mars    Jup    Sat     Ur      Nep     Pl
        a0 = (/ 0.42d0, 4.40d0, 0.d0, 1.52d0, 9.40d0, 8.88d0, 7.19d0, 6.87d0, 1.00d0/) * (-1)  ! Meeus
        ! a0 = (/ 0.36d0, 4.29d0, 0.d0, 1.52d0, 9.25d0, 8.88d0, 7.19d0, 6.87d0, 1.00d0/) * (-1)  ! Expl.Supl.tt.Astr.Almanac, 2nd Ed.
@@ -782,8 +782,8 @@ contains
        
     end if
     
-    planet_magnitude = 5*log10(r*d) + a0(pl) + a1(pl)*pa + a2(pl)*pa2 + a3(pl)*pa3
-       
+    planet_magnitude = 5*log10(hc_dist*gc_dist) + a0(pl) + a1(pl)*pa + a2(pl)*pa2 + a3(pl)*pa3
+    
   end function planet_magnitude
   !*********************************************************************************************************************************
   
@@ -846,7 +846,7 @@ contains
   !! \param b   Heliocentric latitude (rad)
   !! \param r   Heliocentric distance (AU)
   !! 
-  !! \param magmdl  Method to use from Meeus (1: p.285,  2: p.286;  optional, default: 2)
+  !! \param magmdl  Model to use:  1: Müller (1893),  2: Meeus p.286;  optional, default: 2.
   !!
   !! \see Meeus, Astronomical Algorithms, 1998, Ch.41
   
@@ -877,7 +877,7 @@ contains
     du = abs(rev2(u1-u2))  ! rev2() is needed because u1 and u2 jump from pi to -pi at different moments
     
     if(lmagmdl.eq.1) then
-       ! Model 1 - Meeus p.285:
+       ! Model 1 - Müller (1983):
        satmagn = -8.68d0 + 5.d0*log10(d*r) + 0.044d0*abs(du)*r2d - 2.60d0*sin(abs(bbb)) + 1.25d0*(sin(bbb))**2
     else
        ! Method 2 - Meeus p.286:  - constant difference of 0.2m...(?)
@@ -890,13 +890,13 @@ contains
   
   !*********************************************************************************************************************************
   !> \brief  Calculate a correction to Saturn's magnitude due to its rings.
-  !!
+  !! 
   !! \param tjc    Dynamical time in Julian centuries after J2000.0.
-  !!
+  !! 
   !! \param glon   Geocentric longitude (rad).
   !! \param glat   Geocentric latitude (rad).
-  !!
-  !! \see Meeus, Astronomical Algorithms, 1998, Ch.41.
+  !! 
+  !! \see Müller, POPot 8, 193 (1893) - https://ui.adsabs.harvard.edu/abs/1893POPot...8..193M/ - p.341/149
   
   function dsatmagn(tjc, glon,glat)
     use SUFR_kinds, only: double
