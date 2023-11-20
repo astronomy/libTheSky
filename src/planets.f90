@@ -46,6 +46,7 @@ contains
   !! 
   !! \param lunar_theory    Choose Lunar theory:  1: ELP82b,  2: ELP-MPP02/LLR,  3: ELP-MPP02/DE405 ('historical' - default)
   !! \param nutat           IAU nutation model to use: 0 (no nutation!), 1980 or 2000 (default).
+  !! \param magmdl          Choose planet-magnitude model: 1: Meeus 1, 2: Meeus 2, 3: AA 2012 (optional; defaults to 3).
   !! \param verbosity       Verbosity for debug output (0-3).  Defaults to 0: silent.
   !! 
   !!
@@ -55,7 +56,7 @@ contains
   !! - results are returned in the array planpos() in the module TheSky_planetdata
   !!
   
-  subroutine planet_position(jd,pl, lat,lon,hgt, LBaccur,Raccur, ltime,aber,to_fk5, lunar_theory,nutat, verbosity)
+  subroutine planet_position(jd,pl, lat,lon,hgt, LBaccur,Raccur, ltime,aber,to_fk5, lunar_theory,nutat,magmdl, verbosity)
     use SUFR_kinds, only: double
     use SUFR_constants, only: pi,pi2, r2d,r2h, au,earthr,pland, enpname, jd2000
     use SUFR_system, only: warn, quit_program_error
@@ -82,9 +83,9 @@ contains
     integer, intent(in) :: pl
     real(double), intent(in), optional :: lat,lon,hgt, LBaccur,Raccur
     logical, intent(in), optional :: ltime,aber,to_fk5
-    integer, intent(in), optional :: lunar_theory, nutat, verbosity
+    integer, intent(in), optional :: lunar_theory, nutat,magmdl, verbosity
     
-    integer :: j, llunar_theory, lnutat, lverb
+    integer :: j, llunar_theory, lnutat,lmagmdl, lverb
     real(double) :: tjm,jde,jde_lt,tjm0,  llat,llon,lhgt, lLBaccur,lRaccur,  dpsi,eps0,deps,eps,tau,tau1
     real(double) :: hcl0,hcb0,hcr0, hcl,hcb,hcr, hcl00,hcb00,hcr00, sun_gcl,sun_gcb, gcx,gcy,gcz, gcx0,gcy0,gcz0, dhcr
     real(double) :: gcl,gcb,delta,gcl0,gcb0,delta0
@@ -141,6 +142,14 @@ contains
        lnutat = nutat
        if(lnutat.ne.1980 .and. lnutat.ne.2000 .and. lnutat.ne.0) &
             call quit_program_error('planet_position(): nutat must be 2000, 1980 or 0', 1)
+    end if
+    
+    ! Planet-magnitude model:
+    lmagmdl = 3  ! AA 2012
+    if(present(magmdl)) then
+       lmagmdl = magmdl
+       if(lmagmdl.lt.1 .or. lmagmdl.gt.3) &
+            call quit_program_error('planet_position(): magmdl must be 1-3', 1)
     end if
     
     ! Verbosity:
@@ -458,10 +467,17 @@ contains
     
     
     ! Compute magnitude:
-    if(pl.gt.0.and.pl.lt.10) magn = planet_magnitude(pl,hcr,delta,pa)
-    ! if(pl.gt.0.and.pl.lt.10) magn = planet_magnitude_new(pl,hcr,delta,pa)
+    if(pl.gt.0.and.pl.lt.10) then
+       if(lmagmdl.eq.3) then
+          magn = planet_magnitude_new(pl,hcr,delta,pa)
+       else
+          magn = planet_magnitude(pl,hcr,delta,pa, lmagmdl)
+       end if
+       ! if(pl.eq.6) magn = satmagn(tjm*10., gcl,gcb, delta, hcl,hcb,hcr, lmagmdl)  ! Correct Saturn's magnitude for rings
+       if(pl.eq.6) magn = magn + dsatmagn(tjm*10., gcl,gcb)  ! Correct Saturn's magnitude for rings
+    end if
+    
     if(pl.eq.0) magn = moonmagn(pa,delta)                             ! Moon
-    if(pl.eq.6) magn = satmagn(tjm*10., gcl,gcb, delta, hcl,hcb,hcr)  ! Calculate Saturn's magnitude
     if(pl.gt.10000) magn = asteroid_magn(pl-10000,delta,hcr,pa)       ! Asteroid magnitude (valid for |pa|<120°)
     
     ! Comet magnitude:
@@ -777,27 +793,27 @@ contains
   !*********************************************************************************************************************************
   !> \brief  Calculate planet magnitude
   !!
-  !! \param pl          Planet ID
-  !! \param r           Distance from the Sun (AU)
-  !! \param d           Distance from the Earth (AU)
-  !! \param par         Phase angle (rad)
-  !!
+  !! \param pl     Planet ID
+  !! \param r      Distance from the Sun (AU)
+  !! \param d      Distance from the Earth (AU)
+  !! \param phang  Phase angle (rad)
+  !! 
   !! \retval planet_magnitude  Apparent visual planet magnitiude
   !!
   !! \see  Expl.Suppl.tt.Astr.Almanac, 3rd Ed, Eq. 10.4, Table 10.6 and Sect. 10.7.5
   
-  function planet_magnitude_new(pl, r,d, par)
+  function planet_magnitude_new(pl, r,d, phang)
     use SUFR_kinds, only: double
     use SUFR_constants, only: r2d
     
     implicit none
     integer, intent(in) :: pl
-    real(double), intent(in) :: r,d,par
+    real(double), intent(in) :: r,d,phang
     integer :: pll
     real(double) :: planet_magnitude_new, pa,pa2,pa3,a0(9),a1(9),a2(9),a3(9)
     
     ! PA must be in degrees:
-    pa  = par*r2d
+    pa  = phang*r2d
     pa2 = pa*pa
     pa3 = pa*pa2
     
@@ -818,7 +834,7 @@ contains
   
   
   !*********************************************************************************************************************************
-  !> \brief  Calculate Saturn magnitude
+  !> \brief  Calculate Saturn's magnitude
   !!
   !! \param t   Dynamical time in Julian centuries after J2000.0
   !!
@@ -827,19 +843,26 @@ contains
   !! \param d   Geocentric distance (AU)
   !!
   !! \param l   Heliocentric longitude (rad)
-  !! \param b   Heliocentric latitude (rad) 
+  !! \param b   Heliocentric latitude (rad)
   !! \param r   Heliocentric distance (AU)
+  !! 
+  !! \param magmdl  Method to use from Meeus (1: p.285,  2: p.286;  optional, default: 2)
   !!
   !! \see Meeus, Astronomical Algorithms, 1998, Ch.41
   
-  function satmagn(t, gl,gb,d, l,b,r)
+  function satmagn(t, gl,gb,d, l,b,r, magmdl)
     use SUFR_kinds, only: double
     use SUFR_constants, only: d2r,r2d
     use SUFR_angles, only: rev2
     
     implicit none
     real(double), intent(in) :: t, gl,gb,d, l,b,r
+    integer, intent(in), optional :: magmdl
     real(double) :: satmagn, in,om,bbb,n,ll,bb,u1,u2,du
+    integer :: lmagmdl
+    
+    lmagmdl = 2
+    if(present(magmdl)) lmagmdl = magmdl
     
     in = 0.490005d0  - 2.2686d-4*t + 7.d-8*t**2      ! Radians
     om = 2.9584809d0 + 0.0243418d0*t + 7.19d-6*t**2  ! Radians
@@ -853,13 +876,44 @@ contains
     u2 = atan2( sin(in)*sin(gb) + cos(in)*cos(gb)*sin(gl-om) , cos(gb)*cos(gl-om) )
     du = abs(rev2(u1-u2))  ! rev2() is needed because u1 and u2 jump from pi to -pi at different moments
     
-    ! Method 1 - Meeus p.285:
-    satmagn = -8.68d0 + 5.d0*log10(d*r) + 0.044d0*abs(du)*r2d - 2.60d0*sin(abs(bbb)) + 1.25d0*(sin(bbb))**2
-    
-    ! Method 2 - Meeus p.286:  - constant difference of 0.2m...(?)
-    !satmagn = -8.88d0 + 5.d0*log10(d*r) + 0.044d0*abs(du)*r2d - 2.60d0*sin(abs(bbb)) + 1.25d0*(sin(bbb))**2
+    if(lmagmdl.eq.1) then
+       ! Model 1 - Meeus p.285:
+       satmagn = -8.68d0 + 5.d0*log10(d*r) + 0.044d0*abs(du)*r2d - 2.60d0*sin(abs(bbb)) + 1.25d0*(sin(bbb))**2
+    else
+       ! Method 2 - Meeus p.286:  - constant difference of 0.2m...(?)
+       satmagn = -8.88d0 + 5.d0*log10(d*r) + 0.044d0*abs(du)*r2d - 2.60d0*sin(abs(bbb)) + 1.25d0*(sin(bbb))**2
+    end if
     
   end function satmagn
+  !*********************************************************************************************************************************
+  
+  
+  !*********************************************************************************************************************************
+  !> \brief  Calculate a correction to Saturn's magnitude due to its rings.
+  !!
+  !! \param tjc    Dynamical time in Julian centuries after J2000.0.
+  !!
+  !! \param glon   Geocentric longitude (rad).
+  !! \param glat   Geocentric latitude (rad).
+  !!
+  !! \see Meeus, Astronomical Algorithms, 1998, Ch.41.
+  
+  function dsatmagn(tjc, glon,glat)
+    use SUFR_kinds, only: double
+    use SUFR_angles, only: rev2
+    
+    implicit none
+    real(double), intent(in) :: tjc, glon,glat
+    real(double) :: dsatmagn, inc,omg, bbb  ! , n,ll,bb, u1,u2,du, bbb
+    
+    inc = 0.490005d0  - 2.2686d-4*tjc   + 7.d-8*tjc**2    ! Radians
+    omg = 2.9584809d0 + 0.0243418d0*tjc + 7.19d-6*tjc**2  ! Radians
+    
+    bbb = asin( sin(inc)*cos(glat)*sin(glon-omg) - cos(inc)*sin(glat) )
+    
+    dsatmagn = -2.60d0*sin(abs(bbb)) + 1.25d0*(sin(bbb))**2
+    
+  end function dsatmagn
   !*********************************************************************************************************************************
   
   
