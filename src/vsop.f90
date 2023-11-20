@@ -57,7 +57,7 @@ contains
   subroutine vsop87d_lbr(tm,pl, lon,lat,rad, LBaccur,Raccur)
     use SUFR_kinds, only: double
     use SUFR_angles, only: rev
-    use TheSky_planetdata, only: VSOPnls, VSOPdat, vsopNblk, VSOPtruncs
+    use TheSky_planetdata, only: VSOPnls, VSOPdat, vsopNblk
     
     implicit none
     real(double), intent(in) :: tm
@@ -68,11 +68,10 @@ contains
     integer :: li, pow, Nli,Nle, var, nTerm, skip
     real(double) :: fac, lbr(3), accur, desired_accuracy(3)
     
-    desired_accuracy = VSOPtruncs(1:3, pl)  ! Set accuracy equal to VSOP87 truncation
+    ! desired_accuracy = 1.d-9  ! 5e-9 rad = 1 mas = VSOP87 accuracy for Mercury in 1900-2100
+    desired_accuracy = 0.d0  ! Use all available terms - setting LBR accuracy equal to VSOP87 truncation still skips some terms!
     if(present(LBaccur)) desired_accuracy(1:2) = [LBaccur,LBaccur]
     if(present(Raccur))  desired_accuracy(3)   = Raccur
-    ! desired_accuracy = 1.d-9  ! 5e-9 rad = 1 mas = VSOP87 accuracy for Mercury in 1900-2100
-    ! desired_accuracy = 0.d0  ! Use all available terms
     
     lbr = 0.d0
     !$omp parallel do private(Nli,Nle,skip,li,pow,fac,nTerm)  ! Loop body seems to small for any benefit
@@ -91,7 +90,7 @@ contains
              lbr(var) = lbr(var) + fac * cos( VSOPdat(3,li,pl) + VSOPdat(4,li,pl)*tm )
              
              ! Determine current accuracy (A*T^n):
-             if(mod(li,3).eq.0) then  ! Reduce overhead, experimentally optimised to 3
+             if((desired_accuracy(var).gt.1.d-15) .and. (mod(li,3).eq.0)) then  ! Reduce overhead, experimentally optimised to 3
                 nTerm = li - vsopNblk(pow,1,pl)+1
                 accur = 2*sqrt(dble(nTerm)) * abs(fac)
                 if(accur.lt.desired_accuracy(var)) skip = pow  ! Skip the remaining terms for this power

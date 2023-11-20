@@ -37,8 +37,8 @@ contains
   !! \param lon      Longitude of the observer (rad, optional)
   !! \param hgt      Altitude/elevation of the observer above sea level (metres, optional)
   !!
-  !! \param LBaccur  Desired accuracy of the heliocentric L,B in VSOP87 (rad, optional)
-  !! \param Raccur   Desired accuracy of the heliocentric R in VSOP87 (AU, optional)
+  !! \param LBaccur  Desired accuracy of the heliocentric L,B in VSOP87 (rad, optional; defaults to full accuracy)
+  !! \param Raccur   Desired accuracy of the heliocentric R in VSOP87 (AU, optional; defaults to full accuracy)
   !!
   !! \param ltime    Set to .false. to disable light-time correction, and save ~50% in CPU time at the cost of some accuracy
   !! 
@@ -70,7 +70,7 @@ contains
     use TheSky_sun, only: sunmagn
     use TheSky_moon, only: elp82b_lbr, elp_mpp02_lbr, moonmagn
     use TheSky_comets, only: cometgc
-    use TheSky_planetdata, only: planpos, pl0, VSOPtruncs
+    use TheSky_planetdata, only: planpos, pl0
     use TheSky_cometdata, only: cometElems, cometDiedAtP
     use TheSky_asteroids, only: asteroid_magn, asteroid_lbr
     use TheSky_datetime, only: calc_deltat, calc_gmst
@@ -111,12 +111,8 @@ contains
     if(present(hgt)) lhgt = hgt
     
     ! Coordinate accuracy:
-    lLBaccur = 0.d0
+    lLBaccur = 0.d0  ! Seting L,B,R accuracy equal to VSOP87 truncation still skips some terms!
     lRaccur = 0.d0
-    if(pl.ge.1 .and. pl.le.8) then
-       lLBaccur = VSOPtruncs(1, pl)  ! Set L,B accuracy equal to VSOP87 truncation
-       lRaccur  = VSOPtruncs(3, pl)  ! Set R accuracy equal to VSOP87 truncation
-    end if
     if(present(LBaccur)) lLBaccur = LBaccur
     if(present(Raccur))  lRaccur  = Raccur
     
