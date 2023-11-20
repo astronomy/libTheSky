@@ -40,7 +40,9 @@ contains
   !! \param LBaccur  Desired accuracy of the heliocentric L,B in VSOP87 (rad, optional; defaults to full accuracy)
   !! \param Raccur   Desired accuracy of the heliocentric R in VSOP87 (AU, optional; defaults to full accuracy)
   !!
-  !! \param ltime    Set to .false. to disable light-time correction, and save ~50% in CPU time at the cost of some accuracy
+  !! \param ltime    Correct for light time (optional; defaults to true). .false. saves ~50% in CPU time at the cost of some accuracy.
+  !! \param aber     Correct for aberration (optional; defaults to true).
+  !! \param to_fk5   Convert coordinates to the FK5 system (optional; defaults to true).
   !! 
   !! \param lunar_theory    Choose Lunar theory:  1: ELP82b,  2: ELP-MPP02/LLR,  3: ELP-MPP02/DE405 ('historical' - default)
   !! \param nutat           IAU nutation model to use: 0 (no nutation!), 1980 or 2000 (default).
@@ -53,7 +55,7 @@ contains
   !! - results are returned in the array planpos() in the module TheSky_planetdata
   !!
   
-  subroutine planet_position(jd,pl, lat,lon,hgt, LBaccur,Raccur, ltime, lunar_theory, nutat, verbosity)
+  subroutine planet_position(jd,pl, lat,lon,hgt, LBaccur,Raccur, ltime,aber,to_fk5, lunar_theory,nutat, verbosity)
     use SUFR_kinds, only: double
     use SUFR_constants, only: pi,pi2, r2d,r2h, au,earthr,pland, enpname, jd2000
     use SUFR_system, only: warn, quit_program_error
@@ -79,7 +81,7 @@ contains
     real(double), intent(in) :: jd
     integer, intent(in) :: pl
     real(double), intent(in), optional :: lat,lon,hgt, LBaccur,Raccur
-    logical, intent(in), optional :: ltime
+    logical, intent(in), optional :: ltime,aber,to_fk5
     integer, intent(in), optional :: lunar_theory, nutat, verbosity
     
     integer :: j, llunar_theory, lnutat, lverb
@@ -88,7 +90,7 @@ contains
     real(double) :: gcl,gcb,delta,gcl0,gcb0,delta0
     real(double) :: ra,dec,gmst,agst,lst,hh,az,alt,elon,  topra,topdec,topl,topb,topdiam,topdelta,tophh,topaz,topalt
     real(double) :: diam,illfr,pa,magn,  parang,parang_ecl,hp, rES1,rES2
-    logical :: lltime
+    logical :: lltime,laber,lto_fk5
     
     ! Make sure these are always defined:
     gcl0 = 0.d0;  gcb0 = 0.d0;  hcr00 = 0.d0
@@ -116,11 +118,17 @@ contains
     if(present(LBaccur)) lLBaccur = LBaccur
     if(present(Raccur))  lRaccur  = Raccur
     
-    ! Light time:
-    lltime = .true.                    ! Take into account light time by default
+    ! Light time, aberration and FK5 switches:
+    lltime = .true.                       ! Correct for light time by default
     if(present(ltime)) lltime = ltime
     
-    ! Lunar theory:
+    laber = .true.                        ! Correct for aberration by default
+    if(present(aber)) laber = aber
+    
+    lto_fk5 = .true.                      ! Convert to FK5 by default
+    if(present(to_fk5)) lto_fk5 = to_fk5
+    
+    ! Select lunar theory:
     ! llunar_theory = 1  ! Use (corrected) ELP82b as default
     llunar_theory = 3  ! Use ELP-MPP02/DE405 ('historical') as default.  This should be the "default default" :-)
     if(present(lunar_theory)) llunar_theory = lunar_theory
@@ -201,7 +209,7 @@ contains
        end if
        
        
-       ! Compute geocentric ecliptical position:
+       ! Compute geocentric ecliptical position for the Moon:
        if(pl.eq.0) then  ! Moon
           select case(llunar_theory)
           case(1)
@@ -318,9 +326,9 @@ contains
     ! APPARENT position of the Sun (when the light left).  However, since the positions are heliocentric, the
     ! latter is always (0,0,0).
     if(pl.eq.3) then
-       gcl   = rev(hcl0+pi)
+       gcl   =  rev(hcl0+pi)
        gcb   = -hcb0
-       delta = hcr0
+       delta =  hcr0
     end if
     
     
@@ -370,8 +378,8 @@ contains
     
     ! Correct for aberration and nutation, and convert to FK5:
     if(pl.lt.10) then  ! I suppose this should also happen for comets, but this compares better...
-       if(pl.ne.0) call aberration_ecl(tjm,hcl0, gcl,gcb)  ! Aberration - not for the Moon
-       call fk5(tjm, gcl,gcb)
+       if(laber .and. (pl.ne.0)) call aberration_ecl(tjm,hcl0, gcl,gcb)  ! Aberration - not for the Moon
+       if(lto_fk5) call fk5(tjm, gcl,gcb)
        gcl = gcl + dpsi  ! Nutation in longitude
     end if
     
@@ -380,17 +388,20 @@ contains
     sun_gcb = -hcb0
     
     ! Aberration, FK5 and nutation for sun_gcl,sun_gcb:
-    call aberration_ecl(tjm,hcl0, sun_gcl,sun_gcb)
-    call fk5(tjm, sun_gcl,sun_gcb)
+    if(laber) call aberration_ecl(tjm,hcl0, sun_gcl,sun_gcb)
+    if(lto_fk5)  call fk5(tjm, sun_gcl,sun_gcb)
     sun_gcl = sun_gcl + dpsi  ! Nutation in longitude
     
     ! FK5 conversion for l,b, hcl0,hcb0, hcl00,hcb00:
-    call fk5(tjm, hcl,hcb)
-    call fk5(tjm, hcl0,hcb0)
-    call fk5(tjm, hcl00,hcb00)
+    if(lto_fk5) then
+       call fk5(tjm, hcl,hcb)
+       call fk5(tjm, hcl0,hcb0)
+       call fk5(tjm, hcl00,hcb00)
+    end if
     
     if(lverb.gt.3) then
        print*
+       print*, 'Convert to the FK5 system:        ', lto_fk5
        print*, 'True heliocentric longitude, FK5: ', d2s(modulo(hcl00,pi2)*r2d, 9), ' deg'
        print*, 'True heliocentric latitude,  FK5: ', d2s(hcb00*r2d, 9), ' deg'
        print*, 'True heliocentric distance:       ', d2s(hcr00, 9), ' au'
@@ -432,8 +443,8 @@ contains
     if(pl.gt.10) elon = acos((hcr0**2 + delta**2 - hcr**2)/(2*hcr0*delta))        ! For comets (only?) - CHECK: looks like phase angle...
     
     ! Convert topocentric coordinates: ecliptical -> equatorial -> horizontal:
-    !call geoc2topoc_eq(ra,dec,delta,hh,topra,topdec)                            ! Geocentric to topocentric
-    call ecl_2_eq(topl,topb,eps, topra,topdec)                                   ! Topocentric l,b -> RA,dec - probably cheaper
+    ! call geoc2topoc_eq(ra,dec,delta,hh,topra,topdec)                            ! Geocentric to topocentric 
+    call ecl_2_eq(topl,topb,eps, topra,topdec)                                   ! Topocentric l,b -> RA,dec - identical result (AA 1999-01-02/22); probably cheaper
     call eq2horiz(topra,topdec,agst, tophh,topaz,topalt, lat=llat,lon=llon)
     
     ! Phase angle:
