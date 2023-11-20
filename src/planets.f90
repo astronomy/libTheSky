@@ -468,12 +468,7 @@ contains
     
     ! Compute magnitude:
     if(pl.gt.0.and.pl.lt.10) then
-       if(lmagmdl.eq.3) then
-          magn = planet_magnitude_new(pl,hcr,delta,pa)
-       else
-          magn = planet_magnitude(pl,hcr,delta,pa, lmagmdl)
-       end if
-       ! if(pl.eq.6) magn = satmagn(tjm*10., gcl,gcb, delta, hcl,hcb,hcr, lmagmdl)  ! Correct Saturn's magnitude for rings
+       magn = planet_magnitude(pl,hcr,delta,pa, lmagmdl)
        if(pl.eq.6) magn = magn + dsatmagn(tjm*10., gcl,gcb)  ! Correct Saturn's magnitude for rings
     end if
     
@@ -747,11 +742,12 @@ contains
   function planet_magnitude(pl, hc_dist,gc_dist, phang, model)
     use SUFR_kinds, only: double
     use SUFR_constants, only: r2d
+    use SUFR_system, only: quit_program_error
     
     implicit none
     integer, intent(in) :: pl
     integer, intent(in), optional :: model
-    integer :: lmodel
+    integer :: lpl, lmodel
     real(double), intent(in) :: hc_dist,gc_dist,phang
     real(double) :: planet_magnitude,pa,pa2,pa3,a0(9),a1(9),a2(9),a3(9)
     
@@ -765,6 +761,8 @@ contains
     pa2 = pa*pa
     pa3 = pa*pa2
     
+    lpl = pl  ! Local pl
+    
     if(lmodel.eq.1) then  ! Model 1: Müller (1893):
        !       Mer      Ven       Ear   Mars     Jup     Sat     Ur      Nep     Pl
        a0 = (/-1.16d0,  4.d0,     0.d0, 1.3d0,   8.93d0, 8.68d0, 6.85d0, 7.05d0, 1.d0/) * (-1)
@@ -772,7 +770,7 @@ contains
        a2 = (/ 1.023d0, 0.d0,     0.d0, 0.d0,    0.d0,   0.d0,   0.d0,   0.d0,   0.d0/) * 1.d-4
        a3 = (/ 0.d0,    0.4247d0, 0.d0, 0.d0,    0.d0,   0.d0,   0.d0,   0.d0,   0.d0/) * 1.d-6
        
-    else  ! Model 2 - Meeus p.286:
+    else if(lmodel.eq.2) then   ! Model 2 - Meeus p.286:
        !        Mer     Ven     Ear   Mars    Jup    Sat     Ur      Nep     Pl
        a0 = (/ 0.42d0, 4.40d0, 0.d0, 1.52d0, 9.40d0, 8.88d0, 7.19d0, 6.87d0, 1.00d0/) * (-1)  ! Meeus
        ! a0 = (/ 0.36d0, 4.29d0, 0.d0, 1.52d0, 9.25d0, 8.88d0, 7.19d0, 6.87d0, 1.00d0/) * (-1)  ! Expl.Supl.tt.Astr.Almanac, 2nd Ed.
@@ -780,54 +778,21 @@ contains
        a2 = (/-2.73d0, 2.39d0, 0.d0, 0.d0,   0.d0,   0.d0,   0.d0,   0.d0,   0.d0/)   * 1.d-4
        a3 = (/ 2.d0,  -0.65d0, 0.d0, 0.d0,   0.d0,   0.d0,   0.d0,   0.d0,   0.d0/)   * 1.d-6
        
+    else if(lmodel.eq.3) then
+       !       Mer      Ven       Ven2    Mars     Jup     Sat     Ur      Nep     Pl
+       a0 = [ 0.60d0,  4.47d0,  -0.98d0, 1.52d0,  9.40d0, 8.88d0, 7.19d0, 6.87d0, 1.01d0] * (-1)
+       a1 = [ 4.98d0,  1.03d0,  -1.02d0, 1.6d0,   0.5d0,  4.4d0,  0.2d0,  0.d0,   0.d0] * 1.d-2
+       a2 = [-4.88d0,  0.57d0,   0.d0,   0.d0,    0.d0,   0.d0,   0.d0,   0.d0,   0.d0] * 1.d-4
+       a3 = [ 3.02d0,  0.13d0,   0.d0,   0.d0,    0.d0,   0.d0,   0.d0,   0.d0,   0.d0] * 1.d-6
+       
+       if(pl.eq.2 .and. pa.gt.163.6d0) lpl = 3  ! Venus 2
+    else
+       call quit_program_error('planet_magnitude():  model must be 1-3', 0)
     end if
     
-    planet_magnitude = 5*log10(hc_dist*gc_dist) + a0(pl) + a1(pl)*pa + a2(pl)*pa2 + a3(pl)*pa3
+    planet_magnitude = 5*log10(hc_dist*gc_dist) + a0(lpl) + a1(lpl)*pa + a2(lpl)*pa2 + a3(lpl)*pa3
     
   end function planet_magnitude
-  !*********************************************************************************************************************************
-  
-  
-  
-  
-  !*********************************************************************************************************************************
-  !> \brief  Calculate planet magnitude
-  !!
-  !! \param pl     Planet ID
-  !! \param r      Distance from the Sun (AU)
-  !! \param d      Distance from the Earth (AU)
-  !! \param phang  Phase angle (rad)
-  !! 
-  !! \retval planet_magnitude  Apparent visual planet magnitiude
-  !!
-  !! \see  Expl.Suppl.tt.Astr.Almanac, 3rd Ed, Eq. 10.4, Table 10.6 and Sect. 10.7.5
-  
-  function planet_magnitude_new(pl, r,d, phang)
-    use SUFR_kinds, only: double
-    use SUFR_constants, only: r2d
-    
-    implicit none
-    integer, intent(in) :: pl
-    real(double), intent(in) :: r,d,phang
-    integer :: pll
-    real(double) :: planet_magnitude_new, pa,pa2,pa3,a0(9),a1(9),a2(9),a3(9)
-    
-    ! PA must be in degrees:
-    pa  = phang*r2d
-    pa2 = pa*pa
-    pa3 = pa*pa2
-    
-    !       Mer      Ven       Ven2    Mars     Jup     Sat     Ur      Nep     Pl
-    a0 = [ 0.60d0,  4.47d0,  -0.98d0, 1.52d0,  9.40d0, 8.88d0, 7.19d0, 6.87d0, 1.01d0] * (-1)
-    a1 = [ 4.98d0,  1.03d0,  -1.02d0, 1.6d0,   0.5d0,  4.4d0,  0.2d0,  0.d0,   0.d0] * 1.d-2
-    a2 = [-4.88d0,  0.57d0,   0.d0,   0.d0,    0.d0,   0.d0,   0.d0,   0.d0,   0.d0] * 1.d-4
-    a3 = [ 3.02d0,  0.13d0,   0.d0,   0.d0,    0.d0,   0.d0,   0.d0,   0.d0,   0.d0] * 1.d-6
-    
-    pll = pl  ! Local pl
-    if(pl.eq.2 .and. pa.gt.163.6d0) pll = 3  ! Venus 2
-    planet_magnitude_new = 5*log10(r*d) + a0(pll) + a1(pll)*pa + a2(pll)*pa2 + a3(pll)*pa3
-    
-  end function planet_magnitude_new
   !*********************************************************************************************************************************
   
   
