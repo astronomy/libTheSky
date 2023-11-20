@@ -46,7 +46,7 @@ contains
   !! 
   !! \param lunar_theory    Choose Lunar theory:  1: ELP82b,  2: ELP-MPP02/LLR,  3: ELP-MPP02/DE405 ('historical' - default)
   !! \param nutat           IAU nutation model to use: 0 (no nutation!), 1980 or 2000 (default).
-  !! \param magmdl          Choose planet-magnitude model: 1: Meeus 1, 2: Meeus 2, 3: AA 2012 (optional; defaults to 3).
+  !! \param magmdl          Planet-magnitude model: 1: Müller (1893), 2: Meeus p.286, 3: AA 1992, 4: AA 2012 (optional, defaults to 4).
   !! \param verbosity       Verbosity for debug output (0-3).  Defaults to 0: silent.
   !! 
   !!
@@ -145,11 +145,11 @@ contains
     end if
     
     ! Planet-magnitude model:
-    lmagmdl = 3  ! AA 2012
+    lmagmdl = 4  ! AA 2012
     if(present(magmdl)) then
        lmagmdl = magmdl
-       if(lmagmdl.lt.1 .or. lmagmdl.gt.3) &
-            call quit_program_error('planet_position(): magmdl must be 1-3', 1)
+       if(lmagmdl.lt.1 .or. lmagmdl.gt.4) &
+            call quit_program_error('planet_position(): magmdl must be 1-4', 1)
     end if
     
     ! Verbosity:
@@ -728,16 +728,20 @@ contains
   
   !*********************************************************************************************************************************
   !> \brief  Calculate planet magnitude
-  !!
+  !! 
   !! \param pl          Planet ID
   !! \param hc_dist     Distance from the Sun (AU)
   !! \param gc_dist     Distance from the Earth (AU)
   !! \param phang       Phase angle (rad)
-  !! \param model       Model to use: 1: Müller (1893), 2: p.286;  (optional, defaults to 2)
-  !!
+  !! \param model       Model to use: 1: Müller (1893), 2: Meeus p.286, 3: AA 1992, 4: AA 2012 (optional, defaults to 4).
+  !! 
   !! \retval planet_magnitude  Apparent visual planet magnitiude
-  !!
-  !! \see  Meeus, Astronomical Algorithms, 1998, Ch.41
+  !! 
+  !! \see
+  !! - Müller, POPot 8, 193 (1893) - https://ui.adsabs.harvard.edu/abs/1893POPot...8..193M/ - p.341/149 - Model 1.
+  !! - Meeus, Astronomical Algorithms, 1998, Ch.41 - Model 2 (origin unsure).
+  !! - Expl.Supl.tt.Astr.Almanac, 2nd Ed. (1992) - Model 3.
+  !! - Expl.Supl.tt.Astr.Almanac, 3rd Ed. (2012) - Model 4 (default).
   
   function planet_magnitude(pl, hc_dist,gc_dist, phang, model)
     use SUFR_kinds, only: double
@@ -752,7 +756,7 @@ contains
     real(double) :: planet_magnitude,pa,pa2,pa3,a0(9),a1(9),a2(9),a3(9)
     
     ! Optional argument:
-    lmodel = 2
+    lmodel = 4  ! Model 4: Expl.Supl.tt.Astr.Almanac, 3rd Ed. (2012)
     if(present(model)) lmodel = model
     
     ! PA must be in degrees:
@@ -763,22 +767,28 @@ contains
     
     lpl = pl  ! Local pl
     
-    if(lmodel.eq.1) then  ! Model 1: Müller (1893):
+    if(lmodel.eq.1) then       ! Model 1: Müller (1893)
        !       Mer      Ven       Ear   Mars     Jup     Sat     Ur      Nep     Pl
        a0 = [-1.16d0,  4.d0,     0.d0, 1.3d0,   8.93d0, 8.68d0, 6.85d0, 7.05d0, 1.d0] * (-1)
        a1 = [ 2.838d0, 1.322d0,  0.d0, 1.486d0, 0.d0,   0.d0,   0.d0,   0.d0,   0.d0] * 1.d-2
        a2 = [ 1.023d0, 0.d0,     0.d0, 0.d0,    0.d0,   0.d0,   0.d0,   0.d0,   0.d0] * 1.d-4
        a3 = [ 0.d0,    0.4247d0, 0.d0, 0.d0,    0.d0,   0.d0,   0.d0,   0.d0,   0.d0] * 1.d-6
        
-    else if(lmodel.eq.2) then   ! Model 2 - Meeus p.286:
+    else if(lmodel.eq.2) then  ! Model 2: Meeus p.286
        !        Mer     Ven     Ear   Mars    Jup    Sat     Ur      Nep     Pl
-       a0 = [ 0.42d0, 4.40d0, 0.d0, 1.52d0, 9.40d0, 8.88d0, 7.19d0, 6.87d0, 1.00d0] * (-1)  ! Meeus
-       ! a0 = [ 0.36d0, 4.29d0, 0.d0, 1.52d0, 9.25d0, 8.88d0, 7.19d0, 6.87d0, 1.00d0] * (-1)  ! Expl.Supl.tt.Astr.Almanac, 2nd Ed.
+       a0 = [ 0.42d0, 4.40d0, 0.d0, 1.52d0, 9.40d0, 8.88d0, 7.19d0, 6.87d0, 1.00d0] * (-1)
        a1 = [ 3.80d0, 0.09d0, 0.d0, 1.6d0,  0.5d0,  0.d0,   0.d0,   0.d0,   0.d0]   * 1.d-2
        a2 = [-2.73d0, 2.39d0, 0.d0, 0.d0,   0.d0,   0.d0,   0.d0,   0.d0,   0.d0]   * 1.d-4
        a3 = [ 2.d0,  -0.65d0, 0.d0, 0.d0,   0.d0,   0.d0,   0.d0,   0.d0,   0.d0]   * 1.d-6
        
-    else if(lmodel.eq.3) then
+    else if(lmodel.eq.3) then  ! Model 3: Expl.Supl.tt.Astr.Almanac, 2nd Ed. (1992)
+       !        Mer     Ven     Ear   Mars    Jup    Sat     Ur      Nep     Pl
+       a0 = [ 0.36d0, 4.29d0, 0.d0, 1.52d0, 9.25d0, 8.88d0, 7.19d0, 6.87d0, 1.00d0] * (-1)
+       a1 = [ 3.80d0, 0.09d0, 0.d0, 1.6d0,  0.5d0,  0.d0,   0.d0,   0.d0,   0.d0]   * 1.d-2
+       a2 = [-2.73d0, 2.39d0, 0.d0, 0.d0,   0.d0,   0.d0,   0.d0,   0.d0,   0.d0]   * 1.d-4
+       a3 = [ 2.d0,  -0.65d0, 0.d0, 0.d0,   0.d0,   0.d0,   0.d0,   0.d0,   0.d0]   * 1.d-6
+       
+    else if(lmodel.eq.4) then  ! Model 4: Expl.Supl.tt.Astr.Almanac, 3rd Ed. (2012)
        !       Mer      Ven       Ven2    Mars     Jup     Sat     Ur      Nep     Pl
        a0 = [ 0.60d0,  4.47d0,  -0.98d0, 1.52d0,  9.40d0, 8.88d0, 7.19d0, 6.87d0, 1.01d0] * (-1)
        a1 = [ 4.98d0,  1.03d0,  -1.02d0, 1.6d0,   0.5d0,  4.4d0,  0.2d0,  0.d0,   0.d0] * 1.d-2
@@ -787,7 +797,7 @@ contains
        
        if(pl.eq.2 .and. pa.gt.163.6d0) lpl = 3  ! Venus 2
     else
-       call quit_program_error('planet_magnitude():  model must be 1-3', 0)
+       call quit_program_error('planet_magnitude():  model must be 1-4', 0)
     end if
     
     planet_magnitude = 5*log10(hc_dist*gc_dist) + a0(lpl) + a1(lpl)*pa + a2(lpl)*pa2 + a3(lpl)*pa3
@@ -813,7 +823,9 @@ contains
   !! 
   !! \param magmdl  Model to use:  1: Müller (1893),  2: Meeus p.286;  optional, default: 2.
   !!
-  !! \see Meeus, Astronomical Algorithms, 1998, Ch.41
+  !! \see
+  !! - Müller, POPot 8, 193 (1893) - https://ui.adsabs.harvard.edu/abs/1893POPot...8..193M/ - p.341/149
+  !! - Meeus, Astronomical Algorithms, 1998, Ch.41
   
   function satmagn(t, gl,gb,d, l,b,r, magmdl)
     use SUFR_kinds, only: double
