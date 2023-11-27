@@ -166,9 +166,10 @@ contains
     tjm    = (jde-jd2000)/365250.d0                                    ! Julian Millennia after 2000.0 in dyn. time, tau in Meeus
     tjm0   = tjm
     if(lverb.gt.0) then
-       ! print*,'JD:   ', jd
-       print*,'JDE:  ', jde
-       print*,'t_jm: ', d2s(tjm,10)
+       print*,'JD:     ', d2s(jd,8)      ! ms accuracy
+       print*,'DeltaT: ', d2s(deltat,3)  ! ms accuracy
+       print*,'JDE:    ', d2s(jde,8)     ! ms accuracy
+       print*,'t_jm:   ', d2s(tjm,10)    ! ~s accuracy
     end if
     
     call vsop87d_lbr(tjm,3, hcl0,hcb0,hcr0, lLBaccur,lRaccur)             ! Calculate the Earth's true heliocentric l,b,r
@@ -516,15 +517,20 @@ contains
     planpos(1)  = rev(gcl)          ! Ecliptical longitude
     planpos(2)  = rev2(gcb)         ! Ecliptical latitude
     planpos(3)  = hcr               ! Distance to the Sun (heliocentric!)
+    
     planpos(4)  = delta             ! True(!) geocentric distance
     planpos(5)  = rev(ra)           ! R.A.
     planpos(6)  = dec               ! Declination
+    
     planpos(7)  = tau               ! Light time in days
+    
     planpos(8)  = rev(hh)           ! Hour angle
     planpos(9)  = rev(az)           ! Azimuth
     planpos(10) = alt               ! Altitude
+    
     planpos(11) = rev(elon)         ! Elongation
-    planpos(12) = diam              ! Apparent diameter            
+    planpos(12) = diam              ! Apparent diameter
+    
     if(lverb.gt.1) then
        print*
        print*, 'Final apparent geocentric longitude:  ', d2s(rev(gcl)*r2d, 9), ' deg'
@@ -541,6 +547,7 @@ contains
     planpos(13) = magn              ! Apparent visual magnitude
     planpos(14) = illfr             ! Illuminated fraction
     planpos(15) = rev(pa)           ! Phase angle
+    
     planpos(16) = parang            ! Topocentric parallactic angle (between celestial pole and zenith)
     planpos(17) = hp                ! Horizontal parallax
     planpos(18) = parang_ecl        ! Topocentric ecliptical "parallactic angle" (between celestial and ecliptical pole)
@@ -549,6 +556,7 @@ contains
     planpos(21) = rev(topl)   
     planpos(22) = rev2(topb)
     planpos(23) = delta0            ! True geocentric distance (== delta?)
+    
     planpos(24) = topdelta
     planpos(25) = rev(topra)
     planpos(26) = topdec
@@ -563,7 +571,8 @@ contains
     ! Heliocentric:
     planpos(33) = rev(hcl)          ! Heliocentric apparent l,b,r
     planpos(34) = rev2(hcb) 
-    planpos(35) = hcr               
+    planpos(35) = hcr
+    
     planpos(36) = rev(hcl00)        ! Heliocentric true l,b,r, converted to FK5
     planpos(37) = rev2(hcb00)
     planpos(38) = hcr00
@@ -571,12 +580,15 @@ contains
     ! Other variables:
     planpos(39) = dble(pl)          ! Remember for which planet data were computed
     planpos(40) = jde               ! JDE for these data
+    
     planpos(41) = rev(hcl0+pi+dpsi) ! Geocentric, true L,B,R for the Sun, in FK5, corrected for nutation
     planpos(42) = rev2(-hcb0)
     planpos(43) = hcr0
+    
     planpos(44) = lst               ! Local APPARENT sidereal time
     planpos(45) = rev(agst)         ! Greenwich APPARENT sidereal time (in radians)
     planpos(46) = tjm0 * 10         ! Apparent dynamical time in Julian Centuries since 2000.0
+    
     planpos(47) = dpsi              ! Nutation in longitude
     planpos(48) = eps               ! True obliquity of the ecliptic; corrected for nutation
     planpos(49) = rev(gmst)         ! Greenwich MEAN sidereal time (in radians)
@@ -592,9 +604,11 @@ contains
     planpos(61) = gcx               ! Apparent geocentric x,y,z
     planpos(62) = gcy
     planpos(63) = gcz
+    
     planpos(64) = gcx0              ! True geocentric x,y,z
     planpos(65) = gcy0
     planpos(66) = gcz0
+    
     planpos(67) = gcl0              ! True geocentric l,b,r
     planpos(68) = gcb0
     planpos(69) = delta0            ! (==delta?)
