@@ -1,4 +1,4 @@
- !> \file planets.f90  Procedures to compute planet positions and more for libTheSky
+!> \file planets.f90  Procedures to compute planet positions and more for libTheSky
  
 
 !  Copyright (c) 2002-2023  Marc van der Sluys - marc.vandersluys.nl
@@ -30,24 +30,25 @@ contains
   !*********************************************************************************************************************************
   !> \brief  Compute the position, distance, etc of a planet
   !!
-  !! \param jd       Julian date of computation
-  !! \param pl       Planet number: Moon=0, Merc=1,Nep=8,Plu=9 3=Sun, 0=Moon, >10 for other objects
+  !! \param jd          Julian date of computation
+  !! \param pl          Planet number: Moon=0, Merc=1,Nep=8,Plu=9 3=Sun, 0=Moon, >10 for other objects
   !!
-  !! \param lat      Latitude of the observer (rad, optional)
-  !! \param lon      Longitude of the observer (rad, optional)
-  !! \param hgt      Altitude/elevation of the observer above sea level (metres, optional)
-  !!
-  !! \param LBaccur  Desired accuracy of the heliocentric L,B in VSOP87 (rad, optional; defaults to full accuracy)
-  !! \param Raccur   Desired accuracy of the heliocentric R in VSOP87 (AU, optional; defaults to full accuracy)
-  !!
-  !! \param ltime    Correct for light time (optional; defaults to true). .false. saves ~50% in CPU time at the cost of some accuracy.
-  !! \param aber     Correct for aberration (optional; defaults to true).
-  !! \param to_fk5   Convert coordinates to the FK5 system (optional; defaults to true).
+  !! \param lat         Latitude of the observer (rad, optional)
+  !! \param lon         Longitude of the observer (rad, optional)
+  !! \param hgt         Altitude/elevation of the observer above sea level (metres, optional)
   !! 
-  !! \param lunar_theory    Choose Lunar theory:  1: ELP82b,  2: ELP-MPP02/LLR,  3: ELP-MPP02/DE405 ('historical' - default)
-  !! \param nutat           IAU nutation model to use: 0 (no nutation!), 1980 or 2000 (default).
-  !! \param magmdl          Planet-magnitude model: 1: Müller (1893), 2: Meeus p.286, 3: AA 1992, 4: AA 2012 (optional, defaults to 4).
-  !! \param verbosity       Verbosity for debug output (0-3).  Defaults to 0: silent.
+  !! \param LBaccur     Desired accuracy of the heliocentric L,B in VSOP87 (rad, optional; defaults to full accuracy)
+  !! \param Raccur      Desired accuracy of the heliocentric R in VSOP87 (AU, optional; defaults to full accuracy)
+  !!
+  !! \param ltime       Correct for light time (optional; defaults to true). .false. saves ~50% in CPU time at the cost of some accuracy.
+  !! \param aber        Correct for aberration (optional; defaults to true).
+  !! \param to_fk5      Convert coordinates to the FK5 system (optional; defaults to true).
+  !! \param assume_jde  Assume JD provided is actually JDE (optional; defaults to false).
+  !! 
+  !! \param lunar_theory  Choose Lunar theory:  1: ELP82b,  2: ELP-MPP02/LLR,  3: ELP-MPP02/DE405 ('historical' - default)
+  !! \param nutat         IAU nutation model to use: 0 (no nutation!), 1980 or 2000 (default).
+  !! \param magmdl        Planet-magnitude model: 1: Müller (1893), 2: Meeus p.286, 3: AA 1992, 4: AA 2012 (optional, defaults to 4).
+  !! \param verbosity     Verbosity for debug output (0-3).  Defaults to 0: silent.
   !! 
   !!
   !! \note
@@ -56,7 +57,9 @@ contains
   !! - results are returned in the array planpos() in the module TheSky_planetdata
   !!
   
-  subroutine planet_position(jd,pl, lat,lon,hgt, LBaccur,Raccur, ltime,aber,to_fk5, lunar_theory,nutat,magmdl, verbosity)
+  subroutine planet_position(jd,pl, lat,lon,hgt, LBaccur,Raccur, ltime,aber,to_fk5,assume_jde, &
+    lunar_theory,nutat,magmdl, verbosity)
+    
     use SUFR_kinds, only: double
     use SUFR_constants, only: pi,pi2, r2d,r2h, au,earthr,pland, enpname, jd2000
     use SUFR_system, only: warn, quit_program_error
@@ -82,11 +85,11 @@ contains
     real(double), intent(in) :: jd
     integer, intent(in) :: pl
     real(double), intent(in), optional :: lat,lon,hgt, LBaccur,Raccur
-    logical, intent(in), optional :: ltime,aber,to_fk5
+    logical, intent(in), optional :: ltime,aber,to_fk5, assume_jde
     integer, intent(in), optional :: lunar_theory, nutat,magmdl, verbosity
     
     integer :: j, llunar_theory, lnutat,lmagmdl, lverb
-    real(double) :: tjm,jde,jde_lt,tjm0,  llat,llon,lhgt, lLBaccur,lRaccur,  dpsi,eps0,deps,eps,tau,tau1
+    real(double) :: jdl,jde,jde_lt, tjm,tjm0,  llat,llon,lhgt, lLBaccur,lRaccur,  dpsi,eps0,deps,eps,tau,tau1
     real(double) :: hcl0,hcb0,hcr0, hcl,hcb,hcr, hcl00,hcb00,hcr00, sun_gcl,sun_gcb, gcx,gcy,gcz, gcx0,gcy0,gcz0, dhcr
     real(double) :: gcl,gcb,delta,gcl0,gcb0,delta0
     real(double) :: ra,dec,gmst,agst,lst,hh,az,alt,elon,  topra,topdec,topl,topb,topdiam,topdelta,tophh,topaz,topalt
@@ -158,15 +161,22 @@ contains
     
     
     ! Calc JDE and tjm:
-    deltat = calc_deltat(jd)
+    jdl = jd  ! Local version of JD
+    deltat = calc_deltat(jdl)
     ! deltat = 0.d0
     ! write(*,'(/,A,/)') '*** WARNING: libTheSky/planets.f90: setting DeltaT to 0 ***'
     
-    jde    = jd + deltat/86400.d0
+    if(present(assume_jde) .and. assume_jde) then
+       jde = jdl  ! JD provided is actually JDE
+       jdl = jde - deltat/86400.d0
+    else
+       jde = jdl + deltat/86400.d0
+    end if
+    
     tjm    = (jde-jd2000)/365250.d0                                    ! Julian Millennia after 2000.0 in dyn. time, tau in Meeus
     tjm0   = tjm
     if(lverb.gt.0) then
-       print*,'JD:     ', d2s(jd,8)      ! ms accuracy
+       print*,'JD:     ', d2s(jdl,8)      ! ms accuracy
        print*,'DeltaT: ', d2s(deltat,3)  ! ms accuracy
        print*,'JDE:    ', d2s(jde,8)     ! ms accuracy
        print*,'t_jm:   ', d2s(tjm,10)    ! ~s accuracy
@@ -374,16 +384,16 @@ contains
     
     ! Compute and correct for nutation:
     if(lnutat.eq.1980) then
-       call nutation(tjm, dpsi,eps0,deps)      ! IAU 1980 nutation model: dpsi: nutation in longitude, deps: in obliquity
+       call nutation(tjm, dpsi,eps0,deps)       ! IAU 1980 nutation model: dpsi: nutation in longitude, deps: in obliquity
     else !  if(lnutat.eq.2000) then
-       call nutation2000(jd, dpsi,deps, eps0)  ! IAU 2000 nutation model (originally doesn't provide eps0)
+       call nutation2000(jdl, dpsi,deps, eps0)  ! IAU 2000 nutation model (originally doesn't provide eps0)
        
-       if(lnutat.eq.0) then                    ! No nutation(!)
+       if(lnutat.eq.0) then                     ! No nutation(!)
           dpsi = 0.d0
           deps = 0.d0
        end if
     end if
-    eps = eps0 + deps                          ! Correct for nutation in obliquity: mean -> true obliquity of the ecliptic
+    eps = eps0 + deps                           ! Correct for nutation in obliquity: mean -> true obliquity of the ecliptic
     
     
     ! Correct for aberration and nutation, and convert to FK5:
@@ -424,7 +434,7 @@ contains
     
     
     ! Sidereal time:
-    gmst = calc_gmst(jd)                  ! Greenwich mean sidereal time
+    gmst = calc_gmst(jdl)                 ! Greenwich mean sidereal time
     agst = rev(gmst + dpsi*cos(eps))      ! Correction for equation of the equinoxes -> Greenwich apparent sidereal time
     lst  = rev(agst + llon)               ! Local apparent sidereal time, llon > 0 for E
     
@@ -479,7 +489,7 @@ contains
     ! Comet magnitude:
     if(pl.gt.10 .and. pl.lt.10000) then
        diam = 0.d0
-       if(cometDiedAtP(pl).ne.0 .and. jd.gt.cometElems(pl,7)) then
+       if(cometDiedAtP(pl).ne.0 .and. jdl.gt.cometElems(pl,7)) then
           magn = 99.9d0                                                                 ! Comet died at perihelion
        else
           magn = cometElems(pl,8) + 5*log10(delta) + 2.5d0*cometElems(pl,9)*log10(hcr)  ! m = H + 5log(d) + 2.5*G*log(r)
@@ -598,7 +608,7 @@ contains
     planpos(51) = rev(sun_gcl)      ! Apparent geocentric longitude of the Sun (variable was treated as if pl.eq.3)
     planpos(52) = rev2(sun_gcb)     ! Apparent geocentric latitude of the Sun (variable was treated as if pl.eq.3)
 
-    planpos(58) = jd                ! JD used for calculation
+    planpos(58) = jdl               ! JD used for calculation
     planpos(59) = deltat            ! DeltaT used for calculation
     
     planpos(61) = gcx               ! Apparent geocentric x,y,z
