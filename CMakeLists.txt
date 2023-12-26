@@ -5,7 +5,7 @@
 ##  Copyright 2010-2013 Marc van der Sluys - marc.vandersluys.nl
 ##   
 ##  This file is part of the libTheSky package, 
-##  see: http://libthesky.sf.net/
+##  see: https://libthesky.sf.net/
 ##   
 ##  This is free software: you can redistribute it and/or modify it under the terms of the GNU General Public License as published
 ##  by the Free Software Foundation, either version 3 of the License, or (at your option) any later version.

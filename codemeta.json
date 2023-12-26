@@ -20,6 +20,6 @@
         "https://sourceforge.net/projects/libthesky/",
         "https://github.com/MarcvdSluys/libTheSky"
     ],
-    "version": "0.4.2",
-    "license": "https://spdx.org/licenses/GPL-3.0-or-later.html"
+    "version": "0.4.3",
+    "license": "https://spdx.org/licenses/EUPL-1.2.html"
 }
