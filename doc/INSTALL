@@ -12,11 +12,11 @@ distributions and available from https://gcc.gnu.org/fortran/.
 
 The default installer uses CMake to configure and compile the code.  CMake is also 
 open-source software, also included in most GNU/Linux distributions, and can be 
-downloaded from http://www.cmake.org/.  Alternatively, you can create your own 
+downloaded from https://www.cmake.org/.  Alternatively, you can create your own 
 Makefile or compile and link the code manually.
 
 libTheSky needs the Fortran library libSUFR in order to compile and run.  libSUFR is
-free and open software, and available under the GPL v3 from http://libsufr.sf.net/.
+free and open software, and available under the EUPL v1.2 from https://libsufr.sf.net/.
 
 
 
