@@ -6,7 +6,7 @@
 !  Copyright (c) 2002-2023  Marc van der Sluys - marc.vandersluys.nl
 !   
 !  This file is part of the libTheSky package, 
-!  see: http://libthesky.sf.net/
+!  see: https://libthesky.sf.net/
 !  
 !  This is free software: you can redistribute it and/or modify it under the terms of the
 !  European Union Public Licence 1.2 (EUPL 1.2).

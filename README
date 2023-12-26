@@ -1,16 +1,16 @@
 
 Package:      libTheSky
 Description:  Fortran library to compute properties of objects in The Sky
-Homepage:     http://libthesky.sourceforge.net
+Homepage:     https://libthesky.sourceforge.net
 Copyright:    Copyright (c) 2002-2023  Marc van der Sluys - marc.vandersluys.nl
 
 
 The package libTheSky provides a Fortran library to compute the positions and other 
 properties of celestial bodies (Moon, planets, comets, asteroids, stars), events (e.g. 
 lunar phases) and coordinate transformations. It forms the core of the software that 
-is used to create the Dutch popular-astronomy website http://hemel.waarnemen.com.
+is used to create the Dutch popular-astronomy website https://hemel.waarnemen.com.
 To download the libTheSky package, read the code documentation, or to contact the 
-developer, see: http://libthesky.sourceforge.net/
+developer, see: https://libthesky.sourceforge.net/
 
 
 
@@ -33,7 +33,7 @@ This software is distributed in the hope that it will be useful, but WITHOUT ANY
 MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE.  See the GNU General Public License for more details.
 
 You should have received a copy of the GNU General Public License along with this code (LICENCE).  If not, see 
-<http://www.gnu.org/licenses/>.
+<https://www.gnu.org/licenses/>.
 
 
 
