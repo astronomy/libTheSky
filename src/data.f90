@@ -754,9 +754,10 @@ contains
   !!
   !! \param mode  Index of the corrections to the constants: 0: LLR observations for 1970-2000, 1: DE405 ephemeris for 1950-2060
   !!
-  !! \retval elp_mpp02_constants  Set of the constants of ELPMPP02 solution (module)
-  !!
   !! \note
+  !!
+  !! - Returns:
+  !!    Set of the constants of ELPMPP02 solution in module TheSky_elp_mpp02_constants.
   !!
   !! - Remarks:
   !!    The nominal values of some constants have to be corrected.  There are two sets of corrections, one of which can be chosen
@@ -980,7 +981,7 @@ contains
   !***************************************************************************************************
   !> \brief  Read the six data files containing the ELP/MPP02 series
   !!
-  !! \retval ierr      File error index: ierr=0: no error, ierr=1: file error
+  !! \param ierr      File error index: ierr=0: no error, ierr=1: file error
   !!
   !! \note
   !! - module elp_mpp02_constants:  Set of the constants of ELP/MPP02 solution (input)
