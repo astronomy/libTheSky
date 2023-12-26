@@ -1280,7 +1280,7 @@ contains
   end function pl_xsmag_la_pl
   !*********************************************************************************************************************************
   
-
+  
   !*********************************************************************************************************************************
   !> \brief  Aperture diameter in centimetres needed to observe an object with given excess magnitude (0: no instrument needed)
   !!
@@ -1333,7 +1333,7 @@ contains
   !! \see   http://adsabs.harvard.edu/abs/1990PASP..102..212S
   !! \note  Sky surface brightness is sometimes referred to as sqm (which is in fact a device to measure it)
   
-  function skybrightness_mas2_from_mlim(Mlim)
+  elemental function skybrightness_mas2_from_mlim(Mlim)
     use SUFR_kinds, only: double
     
     implicit none
@@ -1359,7 +1359,7 @@ contains
   !! \see   http://adsabs.harvard.edu/abs/1990PASP..102..212S
   !! \note  Sky surface brightness is sometimes referred to as sqm (which is in fact a device to measure it)
   
-  function skybrightness_mlim_from_mas2(skyBright)
+  elemental function skybrightness_mlim_from_mas2(skyBright)
     use SUFR_kinds, only: double
     
     implicit none
@@ -1396,6 +1396,7 @@ contains
     
     skybrightness_mlim_from_cdm2 = Mlim
   end function skybrightness_mlim_from_cdm2
+  !*********************************************************************************************************************************
   
   
   !*********************************************************************************************************************************
@@ -1420,6 +1421,7 @@ contains
     
     skybrightness_cdm2_from_mlim = cdm2
   end function skybrightness_cdm2_from_mlim
+  !*********************************************************************************************************************************
   
     
   
@@ -1439,6 +1441,7 @@ contains
     
     skybrightness_cdm2_from_nL = nL * 1d-5/pi
   end function skybrightness_cdm2_from_nL
+  !*********************************************************************************************************************************
   
   
   !*********************************************************************************************************************************
@@ -1457,6 +1460,7 @@ contains
     
     skybrightness_nL_from_cdm2 = cdm2 * 1d5 * pi
   end function skybrightness_nL_from_cdm2
+  !*********************************************************************************************************************************
   
   
 end module TheSky_visibility
