@@ -33,7 +33,7 @@ module TheSky_constants
   
   real(double) :: nutationdat(9,63)
   
-  character :: TheSkydir*(99),library_name*(99)
+  character :: TheSkyDatadir*(99),library_name*(99)
   
 end module TheSky_constants
 !***********************************************************************************************************************************

@@ -34,7 +34,7 @@ contains
   subroutine set_TheSky_constants()
     use SUFR_constants, only: set_SUFR_constants, homedir
     use SUFR_system, only: error,quit_program_error
-    use TheSky_constants, only: library_name, TheSky_verbosity, TheSkydir, deltat_forced, jd1820
+    use TheSky_constants, only: library_name, TheSky_verbosity, TheSkyDatadir, deltat_forced, jd1820
     
     implicit none
     integer, parameter :: ntrials = 11
@@ -48,9 +48,9 @@ contains
     
     TheSky_verbosity = 99  ! 99: print all messages - 0: be quiet
     
-    ! Find the libTheSky path:
-    trypaths(1)  = trim(TheSkydir)  ! Predefined?
-    if(len_trim(TheSkydir).eq.0 .or. len_trim(TheSkydir).eq.len(TheSkydir)) trypaths(1) = './'  ! Current working dir
+    ! Find the libTheSky path to the data files:
+    trypaths(1)  = trim(TheSkyDatadir)  ! Predefined?
+    if(len_trim(TheSkyDatadir).eq.0 .or. len_trim(TheSkyDatadir).eq.len(TheSkyDatadir)) trypaths(1) = './'  ! Current working dir
     
     ! Try the user's home directory first:
     trypaths(2)  = trim(homedir)//'/share/libTheSky/'
@@ -68,8 +68,8 @@ contains
     
     
     do try = 1,ntrials
-       TheSkydir = tryPaths(try)
-       inquire(file=trim(TheSkydir)//'planets.dat', exist=ex)
+       TheSkyDatadir = tryPaths(try)
+       inquire(file=trim(TheSkyDatadir)//'planets.dat', exist=ex)
        if(ex) exit
     end do
     
@@ -128,7 +128,7 @@ contains
   subroutine read_deltat()
     use SUFR_system, only: find_free_io_unit, file_open_error_quit, file_read_error_quit
     use SUFR_dummy, only: dumstr
-    use TheSky_constants, only: TheSkydir, deltat_0, deltat_accel, deltat_change, deltat_minyr, deltat_maxyr, deltat_n, deltat_nmax
+    use TheSky_constants, only: TheSkyDatadir, deltat_0, deltat_accel, deltat_change, deltat_minyr, deltat_maxyr, deltat_n, deltat_nmax
     use TheSky_constants, only: deltat_years, deltat_values
     
     implicit none
@@ -136,7 +136,7 @@ contains
     character :: infile*(199)
     
     call find_free_io_unit(ip)
-    infile = trim(TheSkydir)//'deltat.dat'
+    infile = trim(TheSkyDatadir)//'deltat.dat'
     open(ip, form='formatted', status='old', action='read', file=trim(infile), iostat=status)
     if(status.ne.0) call file_open_error_quit(trim(infile), 1, 1)  ! 1-input file, 1-exit status
     
@@ -188,7 +188,7 @@ contains
     use SUFR_system, only: find_free_io_unit, file_open_error_quit, file_read_end_error
     use SUFR_dummy, only: dumstr9
     
-    use TheSky_constants, only: TheSkydir
+    use TheSky_constants, only: TheSkyDatadir
     use TheSky_stardata, only: conabr, conidral, conid, nconid, conidrau, conidabr, coniddecl
     use TheSky_stardata, only: nconstel, latconnames, genconnames, nlconnames, enconnames
     
@@ -198,7 +198,7 @@ contains
     
     ! Read constellation names (abbr., Lat, Lat.Gen., Nl, En):
     call find_free_io_unit(ip)
-    infile = trim(TheSkydir)//'const_names.dat'
+    infile = trim(TheSkyDatadir)//'const_names.dat'
     open(ip, status='old', action='read', file=trim(infile), iostat=status)
     if(status.ne.0) call file_open_error_quit(trim(infile), 1, 1)  ! 1-input file, 1-exit status
     
@@ -216,7 +216,7 @@ contains
     
     
     ! Read constellation ID data:
-    infile = trim(TheSkydir)//'const_id.dat'
+    infile = trim(TheSkyDatadir)//'const_id.dat'
     open(ip, status='old', action='read', file=trim(infile), iostat=status)
     if(status.ne.0) call file_open_error_quit(trim(infile), 1, 1)  ! 1-input file, 1-exit status
     
@@ -242,7 +242,7 @@ contains
   subroutine readnutation()
     use SUFR_system, only: find_free_io_unit, file_open_error_quit, file_read_end_error
     use SUFR_kinds, only: double
-    use TheSky_constants, only: TheSkydir, nutationdat
+    use TheSky_constants, only: TheSkyDatadir, nutationdat
     
     implicit none
     integer :: i,nu1(6),nu3, ip,status
@@ -250,7 +250,7 @@ contains
     character :: infile*(199)
     
     call find_free_io_unit(ip)
-    infile = trim(TheSkydir)//'nutation.dat'
+    infile = trim(TheSkyDatadir)//'nutation.dat'
     open(ip, form='formatted', status='old', action='read', file=trim(infile), iostat=status)
     if(status.ne.0) call file_open_error_quit(trim(infile), 1, 1)  ! 1-input file, 1-exit status
     
@@ -276,7 +276,7 @@ contains
   subroutine readplanetdata()
     use SUFR_system, only: find_free_io_unit, file_open_error_quit, file_read_end_error
     use SUFR_constants, only: plana,au
-    use TheSky_constants, only: TheSkydir
+    use TheSky_constants, only: TheSkyDatadir
     use TheSky_planetdata, only: VSOPnls, VSOPdat, vsopNblk, VSOPtruncs
     
     implicit none
@@ -295,7 +295,7 @@ contains
     
     ! Read planets.dat file:
     call find_free_io_unit(ip)
-    infile = trim(TheSkydir)//'planets.dat'
+    infile = trim(TheSkyDatadir)//'planets.dat'
     open(ip, form='formatted', status='old', action='read', file=trim(infile), iostat=status)
     if(status.ne.0) call file_open_error_quit(trim(infile), 1, 1)  ! 1-input file, 1-exit status
     
@@ -330,14 +330,14 @@ contains
   subroutine readpluto()
     use SUFR_system, only: find_free_io_unit, file_open_error_quit, file_read_end_error
     use TheSky_planetdata, only: pluc,plul,plub,plur
-    use TheSky_constants, only: TheSkydir
+    use TheSky_constants, only: TheSkyDatadir
     
     implicit none
     integer :: i, ip, status
     character :: infile*(199)
     
     call find_free_io_unit(ip)
-    infile = trim(TheSkydir)//'pluto.dat'
+    infile = trim(TheSkyDatadir)//'pluto.dat'
     open(ip, form='formatted', status='old', action='read', file=trim(infile), iostat=status)
     if(status.ne.0) call file_open_error_quit(trim(infile), 1, 1)  ! 1-input file, 1-exit status
     
@@ -365,7 +365,7 @@ contains
   
   subroutine readplanetelements()
     use SUFR_system, only: find_free_io_unit, file_open_error_quit, file_read_end_error
-    use TheSky_constants, only: TheSkydir
+    use TheSky_constants, only: TheSkyDatadir
     use TheSky_planetdata, only: plelemdata
     
     implicit none
@@ -373,7 +373,7 @@ contains
     character :: infile*(199)
     
     call find_free_io_unit(ip)
-    infile = trim(TheSkydir)//'planetelements.dat'
+    infile = trim(TheSkyDatadir)//'planetelements.dat'
     open(ip, form='formatted', status='old', action='read', file=trim(infile), iostat=status)
     if(status.ne.0) call file_open_error_quit(trim(infile), 1, 1)  ! 1-input file, 1-exit status
     
@@ -418,7 +418,7 @@ contains
     use SUFR_system, only: find_free_io_unit,file_open_error_quit, file_read_end_error
     use SUFR_numerics, only: dne
     
-    use TheSky_constants, only: TheSkydir
+    use TheSky_constants, only: TheSkyDatadir
     use TheSky_moondata, only: nterm,nrang, pc1,pc2,pc3, per1,per2,per3, w, ath
     use TheSky_moondata, only: eart,peri,p,del,zeta,pre, coef,zone,ilu,ipla,ideb,c1,c2
     use TheSky_moondata, only: p1,p2,p3,p4,p5,q1,q2,q3,q4,q5, prec0
@@ -453,7 +453,7 @@ contains
        ! W1: mean longitude of the Moon:
        w(1,0)  = (218.d0+18.d0*c1 + 59.95571d0*c2) * d2r
        w(1,1)  =  1732559343.73604d0 * as2r
-       !w(1,2)  = -5.8883d0           * as2r  ! Original, but erroneous!
+       ! w(1,2)  = -5.8883d0           * as2r  ! Original, but erroneous!
        w(1,2)  = -6.8084d0           * as2r  ! CHECK - was -5.8883
        ! Also -5.8883 in elp82b.pdf (originally PS?), Table C.
        ! Should this be -6.8883, -6.8083 or -6.8084?  All constants W(1,*) are identical to MPP02, except this one!
@@ -559,7 +559,7 @@ contains
     
     ! Read moondata file:
     call find_free_io_unit(ip)
-    infile = trim(TheSkydir)//'moondata.dat'
+    infile = trim(TheSkyDatadir)//'moondata.dat'
     open(ip, form='formatted', status='old', action='read', file=trim(infile), iostat=status)
     if(status.ne.0) call file_open_error_quit(trim(infile), 1, 1)  ! 1-input file, 1-exit status
     
@@ -693,7 +693,7 @@ contains
   subroutine readmoondata_la()
     use SUFR_system, only: find_free_io_unit, file_open_error_quit, file_read_end_error
     use SUFR_dummy, only: dumstr
-    use TheSky_constants, only: TheSkydir
+    use TheSky_constants, only: TheSkyDatadir
     use TheSky_planetdata, only: moonla_arg,moonla_lrb
     
     implicit none
@@ -701,7 +701,7 @@ contains
     character :: infile*(199)
     
     call find_free_io_unit(ip)
-    infile = trim(TheSkydir)//'moon_la.dat'
+    infile = trim(TheSkyDatadir)//'moon_la.dat'
     open(ip, form='formatted', status='old', action='read', file=trim(infile), iostat=status)
     if(status.ne.0) call file_open_error_quit(trim(infile), 1, 1)  ! 1-input file, 1-exit status
     
@@ -995,7 +995,7 @@ contains
     use SUFR_kinds, only: double
     use SUFR_constants, only: pi2,pio2
     use SUFR_system, only: find_free_io_unit, file_open_error_quit
-    use TheSky_constants, only: TheSkydir
+    use TheSky_constants, only: TheSkyDatadir
     
     use TheSky_elp_mpp02_series, only: cmpb,fmpb,nmpb,   cper,fper,nper
     use TheSky_elp_mpp02_constants, only: zeta,del,   p,delnu,dele,delg,delnp,delep,dtasm,am
@@ -1014,7 +1014,7 @@ contains
     ierr=1
     
     ! Name of the (here single) ELPMPP02 file:
-    filename = trim(TheSkydir)//'elp_mpp02.dat'
+    filename = trim(TheSkyDatadir)//'elp_mpp02.dat'
     inquire(file=trim(filename), exist=fexist)
     if(.not.fexist) call file_open_error_quit(trim(filename), 1, 1)  ! 1: input file
     
@@ -1144,7 +1144,7 @@ contains
     use SUFR_constants, only: d2r
     use SUFR_system, only: find_free_io_unit, file_read_end_error
     use SUFR_dummy, only: dumstr9
-    use TheSky_constants, only: TheSkydir
+    use TheSky_constants, only: TheSkyDatadir
     use TheSky_planetdata, only: asternames, nasteroids, asterelems
     
     implicit none
@@ -1152,7 +1152,7 @@ contains
     character :: infile*(199)
     
     call find_free_io_unit(ip)
-    infile = trim(TheSkydir)//'asteroids.dat'  ! (Reduced) copy of http://ssd.jpl.nasa.gov/dat/ELEMENTS.NUMBR.gz
+    infile = trim(TheSkyDatadir)//'asteroids.dat'  ! (Reduced) copy of http://ssd.jpl.nasa.gov/dat/ELEMENTS.NUMBR.gz
     open(ip, form='formatted', status='old', action='read', file=trim(infile), iostat=status)
     if(status.ne.0) then
        write(0,'(/,A)') '  I could not open the file '//trim(infile)//' - you will not be able to compute asteroid data.'
@@ -1202,7 +1202,7 @@ contains
     use SUFR_date_and_time, only: cal2jd
     use SUFR_dummy, only: dumstr9
     
-    use TheSky_constants, only: TheSkydir
+    use TheSky_constants, only: TheSkyDatadir
     use TheSky_cometdata, only: cometNames, cometElems, nCometsMax,nComets, cometDatFile, cometDiedAtP
     
     implicit none
@@ -1219,7 +1219,7 @@ contains
     call find_free_io_unit(ip)
     select case(cometDatFile)
     case(1)  ! comets.dat
-       infile = trim(TheSkydir)//'comets.dat'  ! Copy of http://ssd.jpl.nasa.gov/dat/ELEMENTS.COMET
+       infile = trim(TheSkyDatadir)//'comets.dat'  ! Copy of http://ssd.jpl.nasa.gov/dat/ELEMENTS.COMET
        open(ip, form='formatted', status='old', action='read', file=trim(infile), iostat=status)
        if(status.ne.0) call file_open_error_quit(trim(infile), 1, 1)  ! 1-input file, 1-exit status
        
@@ -1243,7 +1243,7 @@ contains
        close(ip)
        
     case(2)  ! comets_mpc.dat
-       infile = trim(TheSkydir)//'comets_mpc.dat'  ! Copy of http://www.minorplanetcenter.net/iau/Ephemerides/Comets/Soft00Cmt.txt
+       infile = trim(TheSkyDatadir)//'comets_mpc.dat'  ! Copy of http://www.minorplanetcenter.net/iau/Ephemerides/Comets/Soft00Cmt.txt
        open(ip, form='formatted', status='old', action='read', file=trim(infile), iostat=status)
        if(status.ne.0) call file_open_error_quit(trim(infile), 1, 1)  ! 1-input file, 1-exit status
        
@@ -1287,7 +1287,7 @@ contains
   subroutine read_bsc
     use SUFR_system, only: find_free_io_unit, file_open_error_quit, file_read_error_quit, file_read_end_error
     use SUFR_sorting, only: sorted_index_list
-    use TheSky_constants, only: TheSkydir
+    use TheSky_constants, only: TheSkyDatadir
     use TheSky_BSCdata, only: n_bsc, bsc_abbr,bsc_ra,bsc_dec,bsc_pma,bsc_pmd,bsc_rv,bsc_vm,bsc_par,bsc_mult,bsc_var
     use TheSky_BSCdata, only: bsc_sptype,bsc_sao, bsc_bv,bsc_ub,bsc_ri, bsc_vm_indx,bsc_name
     
@@ -1297,7 +1297,7 @@ contains
     character :: snam*(10), infile*(199)
     
     call find_free_io_unit(ip)
-    infile = trim(TheSkydir)//'bsc_data.dat'
+    infile = trim(TheSkyDatadir)//'bsc_data.dat'
     open(ip, action='read', form='formatted', status='old', file=trim(infile), iostat=status)
     if(status.ne.0) call file_open_error_quit(trim(infile), 1, 1)  ! 1-input file, 1-exit status
     
@@ -1320,7 +1320,7 @@ contains
     ! Star names:
     bsc_name = '          '
     nsn = 79  ! Number of names in bsc_names.dat: actually 80, but Polaris is listed twice
-    infile = trim(TheSkydir)//'bsc_names.dat'
+    infile = trim(TheSkyDatadir)//'bsc_names.dat'
     open(ip, action='read', form='formatted', status='old', file=trim(infile), iostat=status)
     if(status.ne.0) call file_open_error_quit(trim(infile), 1, 1)  ! 1-input file, 1-exit status
     
