@@ -120,8 +120,7 @@ contains
              if(abs(de).lt.del) exit
           end do
        end if
-       
-       if(i.ge.max_try_i) write(0,'(A,I0,A,F8.5)') '  cometxyz():  WARNING:  Kepler solution did not converge for comet '// &
+       if(i.ge.max_try_i) write(0,'(A,I0,A,F8.5,A, I0,A, 2(ES10.3,A))') '  cometxyz():  WARNING:  Kepler solution did not converge for comet '// &
             trim(cometNames(comID))//' (',comID,'), with e =', e, '  (',i,' iterations; ', abs(de), ' >', del,').'
        
        nu = 2.d0 * atan( sqrt( (1.d0+e)/(1.d0-e) ) * tan(ee/2.d0) )  ! True anomaly, elliptic orbits, Eq. 30.1
