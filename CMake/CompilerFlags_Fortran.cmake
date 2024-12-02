@@ -3,7 +3,7 @@
 ##  Currently, specific flags for gfortran, g95 and ifort are provided
 ##  Make sure to choose the correct ~last line (printing of the compiler options)
 ##  
-##  Copyright 2010-2017 Marc van der Sluys - marc.vandersluys.nl
+##  Copyright 2010-2024 Marc van der Sluys - marc.vandersluys.nl
 ##  
 ##  This file is part of the CMakeFiles package, 
 ##  see: http://cmakefiles.sf.net/
@@ -53,6 +53,13 @@ if( Fortran_COMPILER_NAME MATCHES "gfortran" )
   set( CMAKE_Fortran_FLAGS_PROFILE "-g -gp" )
   
   
+  if(WANT_32BIT )
+    set( BIT_FLAGS "-m32" )
+  endif(WANT_32BIT )
+  if(WANT_64BIT )
+    set( BIT_FLAGS "-m64" )
+  endif(WANT_64BIT )
+  
   if(WANT_SSE42 )
     set( SSE_FLAGS "-msse4.2" )
   endif(WANT_SSE42 )
@@ -67,7 +74,7 @@ if( Fortran_COMPILER_NAME MATCHES "gfortran" )
   endif( WANT_STATIC )
   
   if( WANT_CHECKS )
-    set( CHECK_FLAGS "-ffpe-trap=zero,invalid -fsignaling-nans -fbacktrace" )
+    set( CHECK_FLAGS "-ffpe-trap=invalid,zero,overflow,underflow,denormal -fsignaling-nans -fbacktrace" )
     if( COMPILER_VERSION VERSION_GREATER "4.4.99" )
       set( CHECK_FLAGS "-fcheck=all ${CHECK_FLAGS}" )    # >= v.4.5
     else( COMPILER_VERSION VERSION_GREATER "4.4.99" )
@@ -121,6 +128,8 @@ elseif( Fortran_COMPILER_NAME MATCHES "g95" )
   endif( WANT_CHECKS )
   
   if( WANT_WARNINGS )
+    # 102: module procedure not referenced,  136: module variable not used,  165: implicit interface
+    # set( WARN_FLAGS "-Wall -Wextra -Wno=102,136,165" )
     set( WARN_FLAGS "-Wall -Wextra" )
     set( WARN_FLAGS "-std=f2003 -ffree-line-length-huge ${WARN_FLAGS}" )
   endif( WANT_WARNINGS )
@@ -187,7 +196,7 @@ elseif( Fortran_COMPILER_NAME MATCHES "ifort" )
   endif( WANT_CHECKS )
   
   if( WANT_WARNINGS )
-    set( WARN_FLAGS "-warn all -std08 -diag-disable 6894,8290,8291,5268" )   # 8290,8291: format for F,ES: too many decimal places (for negative numbers), 5268: don't complain about lines longer than 132 chars
+    set( WARN_FLAGS "-warn all -std08 -diag-disable 6894,8290,8291,5268" )   # 8290,8291: format for F,ES: too many decimal places (for negative numbers), 5268: line longer than 132 characters
   endif( WANT_WARNINGS )
   
   if( STOP_ON_WARNING )
@@ -231,7 +240,7 @@ endif( Fortran_COMPILER_NAME MATCHES "gfortran" )
 #  Put everything together:
 ######################################################################################################################################################
 
-set( USER_FLAGS "${OPT_FLAGS} ${LIB_FLAGS} ${CHECK_FLAGS} ${WARN_FLAGS} ${SSE_FLAGS} ${IPO_FLAGS} ${OPENMP_FLAGS} ${STATIC_FLAGS} ${INCLUDE_FLAGS} ${PACKAGE_FLAGS}" )
+set( USER_FLAGS "${OPT_FLAGS} ${LIB_FLAGS} ${CHECK_FLAGS} ${WARN_FLAGS} ${BIT_FLAGS} ${SSE_FLAGS} ${IPO_FLAGS} ${OPENMP_FLAGS} ${STATIC_FLAGS} ${INCLUDE_FLAGS} ${PACKAGE_FLAGS}" )
 
 set( CMAKE_Fortran_FLAGS "${CMAKE_Fortran_FLAGS_ALL} ${CMAKE_Fortran_FLAGS} ${USER_FLAGS}" )
 set( CMAKE_Fortran_FLAGS_RELEASE "${CMAKE_Fortran_FLAGS_ALL} ${CMAKE_Fortran_FLAGS_RELEASE} ${USER_FLAGS}" )
