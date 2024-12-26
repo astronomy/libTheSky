@@ -117,18 +117,28 @@ contains
   
   !*********************************************************************************************************************************
   !> \brief Set global date/time variables (year, month, ..., minute, second in TheSky_local) to system clock
+  !!
+  !! \param ut  Return UT instead of local system time (optional).
   
-  subroutine set_date_and_time_to_system_clock()  
-    use SUFR_dummy, only: dumstr99
-    use TheSky_local, only: tz
+  subroutine set_date_and_time_to_system_clock(ut)  
+    use SUFR_date_and_time, only: system_clock_2_ymdhms, correct_time
+    use TheSky_local, only: year,month,day, hour,minute,second, tz
     
     implicit none
-    integer :: dt(8)
+    logical, optional, intent(in) :: ut
+    integer :: dy
     
-    call date_and_time(dumstr99,dumstr99,dumstr99, dt)
+    call system_clock_2_ymdhms(year,month,dy, hour,minute,second, tz)
     
-    call set_date_and_time(dt(1),dt(2),dt(3), dt(5),dt(6), dble(dt(7)) + dble(dt(8))*1.d-3)
-    tz = dble(dt(4))/60.d0
+    if(present(ut)) then
+       if(ut) then
+          hour = hour - tz
+          tz = 0.d0
+          call correct_time(year,month,dy, hour,minute,second)
+       end if
+    end if
+    
+    day = dble(dy)
     
   end subroutine set_date_and_time_to_system_clock
   !*********************************************************************************************************************************
