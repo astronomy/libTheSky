@@ -116,45 +116,6 @@ contains
   
   
   !*********************************************************************************************************************************
-  !> \brief Return system-clock date and time in (year, month, ..., minute, second and tz)
-  !! 
-  !! \param year    Year (output)
-  !! \param month   Month of year (output)
-  !! \param day     Day of month (output)
-  !! 
-  !! \param hour    Hour of day (output)
-  !! \param minute  Minute (output)
-  !! \param second  Second (output)
-  !! 
-  !! \param tz      Time zone w.r.t. Greenwich - >0 = east (output)
-  
-  subroutine system_clock_2_ymdhms(year,month,day, hour,minute,second, tz)
-    use SUFR_kinds, only: double
-    use SUFR_dummy, only: dumstr99
-    
-    implicit none
-    integer, intent(out), optional :: year,month,day, hour,minute
-    real(double), intent(out), optional :: second, tz
-    integer :: dt(8)
-    
-    call date_and_time(dumstr99,dumstr99,dumstr99, dt)
-    
-    if(present(year))   year   = dt(1)
-    if(present(month))  month  = dt(2)
-    if(present(day))    day    = dt(3)
-    
-    if(present(hour))   hour   = dt(5)
-    if(present(minute)) minute = dt(6)
-    if(present(second)) second = dble(dt(7)) + dble(dt(8))*1.d-3
-    
-    if(present(tz))     tz     = dble(dt(4))/60.d0
-    
-  end subroutine system_clock_2_ymdhms
-  !*********************************************************************************************************************************
-  
-  
-  
-  !*********************************************************************************************************************************
   !> \brief Set global date/time variables (year, month, ..., minute, second in TheSky_local) to system clock
   
   subroutine set_date_and_time_to_system_clock()  
