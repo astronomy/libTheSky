@@ -81,9 +81,10 @@ contains
     use SUFR_date_and_time, only: cal2jd,jd2cal
     use SUFR_numerics, only: deq0
     
+    use TheSky_local, only: tz, lat0,lon0,deltat
     use TheSky_planets, only: planet_position, planet_position_la
     use TheSky_planetdata, only: planpos
-    use TheSky_local, only: tz, lat0,lon0,deltat
+    use TheSky_coordinates, only: refract
     
     implicit none
     integer, intent(in) :: pl
@@ -235,15 +236,15 @@ contains
     
     
     ! Store results:
-    tmRad = tmRad * r2h  ! Times radians -> hours
+    tmRad = tmRad * r2h                ! Times radians -> hours
     
-    tt = tmRad(1)       ! Transit time
-    rt = tmRad(2)       ! Rise time
-    st = tmRad(3)       ! Set time
+    tt = tmRad(1)                      ! Transit time
+    rt = tmRad(2)                      ! Rise time
+    st = tmRad(3)                      ! Set time
     
-    ta = azAlt(1)  ! Transit altitude
-    rh = azAlt(2)  ! Rise azimuth
-    sh = azAlt(3)  ! Set azimuth
+    ta = azAlt(1) + refract(azAlt(1))  ! Transit altitude + refraction
+    rh = azAlt(2)                      ! Rise azimuth
+    sh = azAlt(3)                      ! Set azimuth
     
     if(present(converge)) converge = lconverge  ! Number of iterations needed to converge
     
@@ -455,13 +456,13 @@ contains
     
     
     ! Store results:
-    rt = tmdy(2)*24  ! Rise time - days -> hours
-    tt = tmdy(1)*24  ! Transit time - days -> hours
-    st = tmdy(3)*24  ! Set time - days -> hours
+    rt = tmdy(2)*24                    ! Rise time - days -> hours
+    tt = tmdy(1)*24                    ! Transit time - days -> hours
+    st = tmdy(3)*24                    ! Set time - days -> hours
     
-    rh = azAlt(2)  ! Rise azimuth
-    ta = azAlt(1)  ! Transit altitude
-    sh = azAlt(3)  ! Set azimuth
+    rh = azAlt(2)                      ! Rise azimuth
+    ta = azAlt(1) + refract(azAlt(1))  ! Transit altitude + refraction
+    sh = azAlt(3)                      ! Set azimuth
     
   end subroutine riset_ipol
   !*********************************************************************************************************************************
