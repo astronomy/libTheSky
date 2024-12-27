@@ -121,7 +121,7 @@ contains
   !! \param ut  Return UT instead of local system time (optional).
   
   subroutine set_date_and_time_to_system_clock(ut)  
-    use SUFR_date_and_time, only: system_clock_2_ymdhms, correct_time
+    use SUFR_date_and_time, only: system_clock_2_ymdhms, consistent_date_time
     use TheSky_local, only: year,month,day, hour,minute,second, tz
     
     implicit none
@@ -134,7 +134,7 @@ contains
        if(ut) then
           hour = hour - nint(tz)  ! CHECK: integer tz only!
           tz = 0.d0
-          call correct_time(year,month,dy, hour,minute,second)
+          call consistent_date_time(year,month,dy, hour,minute,second)
        end if
     end if
     
@@ -161,7 +161,7 @@ contains
   
   subroutine ut2lt_ymdhms(year,month,dy, hour,minute,second, tz, tz0,dsttp)
     use SUFR_kinds, only: double
-    use SUFR_date_and_time, only: ymdhms2jd, correct_time
+    use SUFR_date_and_time, only: ymdhms2jd, consistent_date_time
     
     implicit none
     integer, intent(inout) :: year,month,dy, hour,minute
@@ -176,7 +176,7 @@ contains
     tz = gettz(jd, tz0,dsttp)
     hour = hour + nint(tz)
     
-    call correct_time(year,month,dy, hour,minute,second)  ! Ensure date/time is consistent (e.g. not hour=25).
+    call consistent_date_time(year,month,dy, hour,minute,second)  ! Ensure date/time is consistent (e.g. not hour=25).
     
   end subroutine ut2lt_ymdhms
   !*********************************************************************************************************************************
