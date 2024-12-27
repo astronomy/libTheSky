@@ -132,7 +132,7 @@ contains
     
     if(present(ut)) then
        if(ut) then
-          hour = hour - tz
+          hour = hour - nint(tz)  ! CHECK: integer tz only!
           tz = 0.d0
           call correct_time(year,month,dy, hour,minute,second)
        end if
@@ -143,7 +143,44 @@ contains
   end subroutine set_date_and_time_to_system_clock
   !*********************************************************************************************************************************
   
+  !*********************************************************************************************************************************
+  !> \brief Convert date/time in ymdhms from UT to local time.
+  !!
+  !! \param year     Year of Gregorian date: input: UT, output: LT (I/O)
+  !! \param month    Month of year: input: UT, output: LT (I/O)
+  !! \param dy       Day of month: input: UT, output: LT (I/O)
+  !!
+  !! \param hour     Hour of day: input: UT, output: LT (I/O)
+  !! \param minute   Minute of time: input: UT, output: LT (I/O)
+  !! \param second   Second of time: input: UT, output: LT (I/O)
+  !!
+  !! \param tz       Timezone of date (output)
+  !!
+  !! \param tz0      Default timezone for date/time
+  !! \param dsttp    Timezone type for date/time
   
+  subroutine ut2lt_ymdhms(year,month,dy, hour,minute,second, tz, tz0,dsttp)
+    use SUFR_kinds, only: double
+    use SUFR_date_and_time, only: ymdhms2jd, correct_time
+    
+    implicit none
+    integer, intent(inout) :: year,month,dy, hour,minute
+    real(double), intent(inout) :: second
+    real(double), intent(out) :: tz
+    integer, intent(in) :: dsttp
+    real(double), intent(in) :: tz0
+    
+    real(double) :: jd
+    
+    jd = ymdhms2jd(year,month,dy, hour,minute,second)
+    tz = gettz(jd, tz0,dsttp)
+    hour = hour + nint(tz)
+    
+    call correct_time(year,month,dy, hour,minute,second)  ! Ensure date/time is consistent (e.g. not hour=25).
+    
+  end subroutine ut2lt_ymdhms
+  !*********************************************************************************************************************************
+
   
   !*********************************************************************************************************************************
   !> \brief  Set global date/time variables (year, month, ..., minute, second in TheSky_local) to JD2000.0
