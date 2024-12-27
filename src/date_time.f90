@@ -768,8 +768,8 @@ contains
   !! 
   !! \note
   !!  - currently implemented for no DST (dsttp=0), EU (dsttp=1) and USA/Canada >2007 (dsttp=2) only
-  !!  - tz0 and dsttp can be provided through the module TheSky_local, or using the optional arguments.  Note that using the
-  !!    latter will update the former!
+  !!  - tz0 and dsttp can be provided through the module TheSky_local, or using the optional arguments.  Note
+  !!    that using the latter will update the former!
   
   function gettz(jd, ltz0,ldsttp)
     use SUFR_kinds, only: double
@@ -793,7 +793,10 @@ contains
     gettz = 0.d0
     call jd2cal(jd,y,m,dd)
     
-    if(dsttp.lt.0.or.dsttp.gt.2) dsttp = 1
+    if(dsttp.lt.0.or.dsttp.gt.2) then
+       dsttp = 1
+       call warn('gettz(): (l)dsttp must be 0-2; resetting to 1 (Europe)')
+    end if
     
     
     if(dsttp.eq.1) then  ! Europe (Netherlands)
@@ -809,7 +812,7 @@ contains
           if(m.eq.m1.or.m.eq.m2) then
              jd0 = cal2jd(y,m,31.d0) + (m2 - 10)  
              d0  = 31.d0 - dble(dow(jd0)) + (m2 - 10)  
-             jd0 = cal2jd(y,m,d0+1.d0/24.d0)  ! 1UT=2MET=3MEZT
+             jd0 = cal2jd(y,m,d0+1.d0/24.d0)  ! 0 UT = 1 MET = 2 MEZT
              if(m.eq.m1.and.jd.gt.jd0) gettz = 1.d0
              if(m.eq.m2.and.jd.gt.jd0) gettz = 0.d0
           end if  ! if(m.eq.m1.or.m.eq.m2)
@@ -836,25 +839,25 @@ contains
           if(m.gt.m1.and.m.lt.m2) gettz = 1.d0
           
           if(m.eq.m1) then
-             jd0 = cal2jd(y,m,1.999999d0)          !1st of the month, end of the day UT
-             d0 = dble(14 - dow(jd0-1))            !jd0-1: switch from 7 to 1 iso 6 to 0; last possible day of month: 14
-             jd0 = cal2jd(y,m,d0+(2.d0-tz)/24.d0)  !2h LT
+             jd0 = cal2jd(y,m,1.999999d0)          ! 1st of the month, end of the day UT
+             d0 = dble(14 - dow(jd0-1))            ! jd0-1: switch from 7 to 1 iso 6 to 0; last possible day of month: 14
+             jd0 = cal2jd(y,m,d0+(2.d0-tz)/24.d0)  ! 2h LT
              if(jd.gt.jd0) gettz = 1.d0
           end if
           
           if(m.eq.m2) then
-             jd0 = cal2jd(y,m,1.999999d0)          !1st of the month, end of the day UT
-             d0 = dble(7 - dow(jd0-1))       !jd0-1: switch from 7 to 1 iso 6 to 0; last possible day of month: 7
-             jd0 = cal2jd(y,m,d0+(2.d0-tz)/24.d0)  !2h LT
+             jd0 = cal2jd(y,m,1.999999d0)          ! 1st of the month, end of the day UT
+             d0 = dble(7 - dow(jd0-1))             ! jd0-1: switch from 7 to 1 iso 6 to 0; last possible day of month: 7
+             jd0 = cal2jd(y,m,d0+(2.d0-tz)/24.d0)  ! 2h LT
              if(jd.lt.jd0) gettz = 1.d0
           end if
           
-          !call printdate(jd0)
+          ! call printdate(jd0)
        end if
     end if
     
     gettz = tz0 + gettz
-    !gettz = tz0 + 1.d0 !Force DST
+    ! gettz = tz0 + 1.d0  ! Force DST
     
   end function gettz
   !*********************************************************************************************************************************
