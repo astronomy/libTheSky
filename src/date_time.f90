@@ -760,46 +760,47 @@ contains
   
   
   !*********************************************************************************************************************************
-  !> \brief  Returns time zone: tz0 or tz0+1
+  !> \brief  Returns time zone: tz0 (standard time) or tz0+1 (daylight-savings time)
   !!
-  !! \param jd      Julian day (UT?)
-  !! \param ltz0    Default time zone for the current location ('winter time')
-  !! \param ldsttp  Daylight-savings time rules to use:  0: no DST (e.g. UT),  1: EU,  2: USA/Canada
+  !! \param jd     Julian day (UT?)
+  !! \param tz0    Default time zone for the current location ('winter time')
+  !! \param dsttp  Daylight-savings time rules to use:  0: no DST (e.g. UT),  1: EU,  2: USA/Canada
   !! 
   !! \note
-  !!  - currently implemented for no DST (dsttp=0), EU (dsttp=1) and USA/Canada >2007 (dsttp=2) only
+  !!  - currently only implemented for no DST (dsttp=0), EU (dsttp=1) and USA/Canada >2007 (dsttp=2)
   !!  - tz0 and dsttp can be provided through the module TheSky_local, or using the optional arguments.  Note
   !!    that using the latter will update the former!
   
-  function gettz(jd, ltz0,ldsttp)
+  function gettz(jd, tz0,dsttp)
     use SUFR_kinds, only: double
     use SUFR_system, only: warn
     use SUFR_date_and_time, only: jd2cal, cal2jd
-    use TheSky_local, only: dsttp, tz,tz0
+    
+    use TheSky_local, only: ldsttp=>dsttp, ltz0=>tz0, tz
     
     implicit none
     real(double), intent(in) :: jd
-    real(double), intent(in), optional :: ltz0
-    integer, intent(in), optional :: ldsttp
+    real(double), intent(in), optional :: tz0
+    integer, intent(in), optional :: dsttp
     
     real(double) :: gettz,dd,jd0,d0
     integer :: m,m1,m2,y
     
     
     ! Handle optional variables:
-    if(present(ltz0))   tz0 = ltz0
-    if(present(ldsttp)) dsttp = ldsttp
+    if(present(tz0))   ltz0 = tz0
+    if(present(dsttp)) ldsttp = dsttp
     
     gettz = 0.d0
     call jd2cal(jd,y,m,dd)
     
-    if(dsttp.lt.0.or.dsttp.gt.2) then
-       dsttp = 1
-       call warn('gettz(): (l)dsttp must be 0-2; resetting to 1 (Europe)')
+    if(ldsttp.lt.0.or.ldsttp.gt.2) then
+       ldsttp = 1
+       call warn('gettz(): (l)ldsttp must be 0-2; resetting to 1 (Europe)')
     end if
     
     
-    if(dsttp.eq.1) then  ! Europe (Netherlands)
+    if(ldsttp.eq.1) then  ! Europe (Netherlands)
        if(y.lt.1977) then
           gettz = 0.d0
        else
@@ -817,10 +818,10 @@ contains
              if(m.eq.m2.and.jd.gt.jd0) gettz = 0.d0
           end if  ! if(m.eq.m1.or.m.eq.m2)
        end if ! if(y.lt.1977)
-    end if  ! if(dsttp.eq.1)
+    end if  ! if(ldsttp.eq.1)
     
     
-    if(dsttp.eq.2) then  ! USA/Canada
+    if(ldsttp.eq.2) then  ! USA/Canada
        
        !if(y.lt.2007) then
        !   m1 = 4        ! April
@@ -856,8 +857,8 @@ contains
        end if
     end if
     
-    gettz = tz0 + gettz
-    ! gettz = tz0 + 1.d0  ! Force DST
+    gettz = ltz0 + gettz
+    ! gettz = ltz0 + 1.d0  ! Force DST
     
   end function gettz
   !*********************************************************************************************************************************
