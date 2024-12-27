@@ -1291,7 +1291,7 @@ contains
   
   
   !*********************************************************************************************************************************
-  !> \brief  The refraction integrand
+  !> \brief  The refraction integrand for atmospheric_refraction_apparent()
   !!
   !! \param r      The current distance from the centre of the Earth in metres
   !! \param n      The refractive index at R
@@ -1311,7 +1311,7 @@ contains
   
   
   !*********************************************************************************************************************************
-  !> \brief  Atmospheric model for the troposphere
+  !> \brief  Troposphere model for atmospheric_refraction_apparent()
   !!
   !! \param r0     The height of the observer from the centre of the Earth
   !! \param t0     The temperature at the observer in Kelvin
@@ -1342,7 +1342,7 @@ contains
   
   
   !*********************************************************************************************************************************
-  !> \brief Atmospheric model for the stratosphere
+  !> \brief  Stratosphere model for atmospheric_refraction_apparent()
   !!
   !! \param  rt    The height of the tropopause from the centre of the Earth in metres
   !! \param  tt    The temperature at the tropopause in Kelvin

@@ -106,7 +106,7 @@ contains
     if(present(cWarn)) lcWarn = cWarn
     
     ! Use the old interpolation routine for all but Moon and Sun:
-    if(pl.ne.0.and.pl.ne.3) then
+    if(pl.ne.0.and.pl.ne.3) then  ! A planet
        call riset_ipol(jd,pl, rt,tt,st, rh,ta,sh, rsAlt, lltime, lcWarn)
        return
     end if
@@ -120,7 +120,7 @@ contains
        rsa = rsAlt*d2r  ! Use a user-specified altitude
     else
        rsa = -0.5667d0*d2r                      ! Standard rise/set altitude for planets
-       if(pl.eq.3) rsa = rsa - 16.d0*am2r       ! Compensate for radius of Sun, -16 arcminutes  ! rsa = -0.8333d0*d2r - default for Sun
+       if(pl.eq.3) rsa = rsa - 16.d0*am2r       ! Correct for radius of Sun, -16 arcminutes  ! rsa = -0.8333d0*d2r - default for Sun
        if(pl.eq.0) rsa = 0.125d0*d2r            ! Approximate standard rise/set altitude for Moon, including parallax
     end if
     
@@ -159,12 +159,12 @@ contains
     
     tmRad(1) = rev(ra - lon0 - agst0)  ! Transit time in radians; tmRad(1)=m0, tmRad(2)=m1, tmRad(3)=m2 in Meeus, but lon0 > 0 for E
     if(evMax.eq.3) then
-       tmRad(2) = rev(tmRad(1) - h0)    ! Rise time in radians
-       tmRad(3) = rev(tmRad(1) + h0)    ! Set time in radians
+       tmRad(2) = rev(tmRad(1) - h0)   ! Rise time in radians
+       tmRad(3) = rev(tmRad(1) + h0)   ! Set time in radians
     end if
     
     
-    do evi=1,evMax          ! Transit, rise, set
+    do evi=1,evMax         ! Transit, rise, set
        iter = 0
        accur = 1.d-3       ! Accuracy.  Initially 1d-3, later 1d-5 ~ 0.1s. Don't make this smaller than 1d-16
        use_vsop = .false.  ! Initially
@@ -176,7 +176,7 @@ contains
           
           if(abs(dTmRad).le.accur) then
              use_vsop = .true.
-             accur = 1.d-5  ! 1d-5~0.1s.  Changing this to 1.d-4 (~1s) speeds the code yearly_moon_table code up by ~30%
+             accur = 1.d-5  ! 1d-5~0.1s.  Changing this to 1.d-4 (~1s) speeds the code yearly_moon_table code up by ~30%.  Don't make this smaller than 1d-16.
           end if
           
           if(use_vsop) then
@@ -196,7 +196,7 @@ contains
           ! Correction to transit/rise/set times:
           if(evi.eq.1) then  ! Transit
              dTmRad = -ha
-          else              ! Rise/set
+          else               ! Rise/set
              dTmRad = (alt-rsa)/(cos(dec)*cos(lat0)*sin(ha))
           end if
           tmRad(evi) = tmRad(evi) + dTmRad
@@ -212,7 +212,7 @@ contains
           
           tmRad(evi) = 0.d0
           azAlt(evi) = 0.d0
-       else               ! Result converged, store it
+       else                    ! Result converged, store it
           if(evi.eq.1) then
              azAlt(evi) = alt  ! Transit altitude
           else
@@ -290,9 +290,10 @@ contains
     use SUFR_date_and_time, only: cal2jd,jd2cal
     use SUFR_numerics, only: deq0
     
+    use TheSky_local, only: tz, lat0,lon0,deltat
     use TheSky_planets, only: planet_position
     use TheSky_planetdata, only: planpos
-    use TheSky_local, only: tz, lat0,lon0,deltat
+    use TheSky_coordinates, only: refract
     
     implicit none
     integer, intent(in) :: pl
