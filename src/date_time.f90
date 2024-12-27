@@ -128,7 +128,7 @@ contains
     logical, optional, intent(in) :: ut
     integer :: dy
     
-    call system_clock_2_ymdhms(year,month,dy, hour,minute,second, tz)
+    call system_clock_2_ymdhms(year,month,dy, hour,minute,second, tz=tz)
     
     if(present(ut)) then
        if(ut) then
