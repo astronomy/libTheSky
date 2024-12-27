@@ -112,7 +112,7 @@ contains
     
     
     alt=0.d0; ha=0.d0; h0=0.d0; azAlt=0.d0; tmRad=0.d0
-    tc = 0        ! 0: geocentric, 1: topocentric, seems to give wrong results (for the Moon), see also different rsa
+    tc = 1        ! 0: geocentric, 1: topocentric;  see also different rsa for the Moon below
     event = ['Transit time ','Rise time    ','Set time     ']
     
     if(abs(rsAlt).gt.1.d-9) then
@@ -137,10 +137,10 @@ contains
     dec   = planpos(6+tc*20)
     agst0 = planpos(45)       ! AGST for midnight
     
-    if(pl.eq.0) then
-       if(tc.eq.0) then
+    if(pl.eq.0) then  ! Moon
+       if(tc.eq.0) then  ! Geocentric
           rsa = asin(earthr/(planpos(4)*AU))*0.7275d0-0.5667d0*d2r  ! Exact altitude for Moon, ~0.1-0.2deg, for geocentric coord.
-       else  !tc.eq.1:
+       else  ! tc.eq.1 - topocentric:
           rsa = -0.8333d0*d2r  ! For Moon, in combination with topocentric coordinates
        end if
     end if
@@ -189,7 +189,7 @@ contains
           dec = planpos(6+tc*20)  ! Declination
           
           ha  = rev2(th0 + lon0 - ra)                                  ! Hour angle
-          !ha  = planpos(8+tc*20)                                       ! Hour angle -/- DeltaT
+          ! ha  = planpos(8+tc*20)                                       ! Hour angle -/- DeltaT
           alt = asin(sin(lat0)*sin(dec) + cos(lat0)*cos(dec)*cos(ha))  ! Altitude;  Meeus, Eq.13.6
           
           ! Correction to transit/rise/set times:
@@ -317,7 +317,7 @@ contains
     
     rt=0.d0; tt=0.d0; st=0.d0;  rh=0.d0; ta=0.d0; sh=0.d0
     alt = 0.d0;  ha = 0.d0;  dTmdy = 0.d0;  h0 = 0.d0;  dec = 0.d0
-    tc = 0        ! 0: geocentric, 1: topocentric, seems to give wrong results (for the Moon), see also different rsa
+    tc = 1        ! 0: geocentric, 1: topocentricl;  see also different rsa for the Moon below
     event = ['Transit time ','Rise time    ','Set time     ']
     accur = 1.d-6          ! Accuracy.  1d-6 ~ 0.1s. Don't make this smaller than 1d-16
     
@@ -345,9 +345,9 @@ contains
     agst0 = planpos(45)       ! AGST for midnight
     
     if(pl.eq.0) then
-       if(tc.eq.0) then
+       if(tc.eq.0) then  ! Geocentric
           rsa = asin(earthr/(planpos(4)*AU))*0.7275d0-0.5667d0*d2r  ! Exact altitude for Moon, ~0.1-0.2deg, for geocentric coord.
-       else  !tc.eq.1:
+       else  ! tc.eq.1 - topocentric:
           rsa = -0.8333d0*d2r  ! For Moon, in combination with topocentric coordinates
        end if
     end if
@@ -361,7 +361,7 @@ contains
        if(ra0.ge.4.5.and.ra1.le.2.and.ra2.le.2.)   ra0 = ra0-2*pi
        if(ra0.le.2.and.ra1.ge.4.5.and.ra2.ge.4.5)  ra0 = ra0+2*pi
        if(ra0.le.4.5.and.ra1.le.2.and.ra2.ge.4.5)  ra2 = ra2-2*pi
-       !write(6,'(A)') 'RA flipped'
+       ! write(6,'(A)') 'RA flipped'
     end if
     
     cosH0 = (sin(rsa)-sin(lat0)*sin(dec2)) / (cos(lat0)*cos(dec2))  ! Cosine of the hour angle of rise/set; Meeus, Eq.15.1
