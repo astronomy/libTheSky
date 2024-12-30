@@ -26,14 +26,25 @@ module TheSky_constants
   save
   private :: double
   
-  integer, parameter :: deltat_nmax = 1000   ! Need ~430 until 2000
-  real(double) :: deltat_values(deltat_nmax), deltat_years(deltat_nmax)
-  real(double) :: deltat_accel, deltat_change, deltat_0, deltat_forced, jd1820
-  integer :: deltat_n, deltat_minyr, deltat_maxyr, TheSky_verbosity
+  integer, parameter :: deltat_nmax = 1000    !< Maximum number of Delta-T measurements.  Need ~430 until 2000
+  real(double) :: deltat_values(deltat_nmax)  !< Values of DeltaT
+  real(double) :: deltat_years(deltat_nmax)   !< Years for DeltaT values
+  real(double) :: deltat_accel                !< Acceleration for DeltaT parabola
+  real(double) :: deltat_change               !< Change for DeltaT parabola
+  real(double) :: deltat_0                    !< Zero point for DeltaT parabola
+  real(double) :: deltat_forced               !< Forced value for DeltaT, overriding computation
+  real(double) :: jd1820                      !< JD of 1820.0, for DeltaT
   
-  real(double) :: nutationdat(9,63)
+  integer :: deltat_n                         !< Actual number of DeltaT measurements
+  integer :: deltat_minyr                     !< Start year of DeltaT measurements
+  integer :: deltat_maxyr                     !< End year of DeltaT measurements
   
-  character :: TheSkyDatadir*(99),library_name*(99)
+  integer :: TheSky_verbosity                 !< Verbosity of libTheSky output
+  
+  real(double) :: nutationdat(9,63)           !< Data for simple nutation function
+  
+  character :: TheSkyDatadir*(99)             !< Directory containing data files for libTheSky
+  character :: library_name*(99)              !< Name of this library
   
 end module TheSky_constants
 !***********************************************************************************************************************************
@@ -48,9 +59,21 @@ module TheSky_local
   save
   private :: double
   
-  integer, parameter :: maxlocs = 100
-  real(double) :: lat0,lon0,height,deltat,tz,tz0,second,day
-  integer :: year,month,hour,minute,dsttp
+  integer, parameter :: maxlocs = 100  !< Maximum number of observation locations
+  real(double) :: lat0    !< Latitude of the observer (rad)
+  real(double) :: lon0    !< Longitude of the observer (rad)
+  real(double) :: height  !< Altitude of the observer above sea level (m)
+  real(double) :: deltat  !< Current value of DeltaT (s)
+  real(double) :: tz      !< Current value of time zone, taking into account DST (hours; >0 is east of Greenwich)
+  real(double) :: tz0     !< Standard value of time zone, without DST ("winter time"; hours; >0 is east of Greenwich)
+  real(double) :: second  !< Seconds of time of current instant
+  real(double) :: day     !< Day of month of current instant, with decimals if desired
+  
+  integer :: year    !< Year CE of current instant
+  integer :: month   !< Month of year of current instant
+  integer :: hour    !< Hour of time of current instant
+  integer :: minute  !< Minute of time of current instant
+  integer :: dsttp   !< DST type for current location (0: none, 1: EU, 2: USA+Canada (after 2007)
   
 end module TheSky_local
 !***********************************************************************************************************************************
@@ -65,17 +88,32 @@ module TheSky_planetdata
   save
   private :: double, long
   
-  integer, parameter :: nplanpos=100
-  integer, parameter :: nasteroids=1000    ! Nasteroids is actually much larger; look at the first Nasteroids asteroids only
+  integer, parameter :: nasteroids=1000    !< Number of entries in the asteroids array.  Nasteroids is actually much larger; look at the first Nasteroids asteroids only
   
-  integer(long) :: moonla_lrb(3,60)
-  integer :: pluc(43,3),plul(43,2),plub(43,2),plur(43,2), pl0
-  integer :: moonla_arg(8,60), VSOPnls(3,8), vsopNblk(0:5,3,8)
+  integer :: moonla_arg(8,60)              !< Arguments for the low-accuracy (la) Moon position
+  integer(long) :: moonla_lrb(3,60)        !< L,B,R data for the low-accuracy (la) Moon position
   
-  real(double) :: VSOPdat(4,6827,10), VSOPtruncs(3,8)
-  real(double) :: plelems(8,6),plelems2000(8,6),plelemdata(2,8,6,0:3)
-  real(double) :: asterelems(nasteroids,9)
+  integer :: pluc(43,3)  !< Constants for the periodic terms for the position of Pluto
+  integer :: plul(43,2)  !< Constants for the longitude of Pluto
+  integer :: plub(43,2)  !< Constants for the latitude of Pluto
+  integer :: plur(43,2)  !< Constants for the distance of Pluto
   
+  integer :: pl0         !< Remember a special planet
+  
+  integer :: VSOPnls(3,8)       !< Numbers of lines in the VSOP input files (l,b,r x 8 pl)
+  integer :: vsopNblk(0:5,3,8)  !< Line number in the VSOP data where the next block of (Planet, Variable (LBR), Power) starts
+  
+  real(double) :: VSOPdat(4,6827,10)  !< Periodic terms for VSOP87
+  real(double) :: VSOPtruncs(3,8)     !< Truncuate VSOP87 terms at these accuracies
+  
+  real(double) :: plelems(8,6)           !< Planet orbital elements for Equation of Data
+  real(double) :: plelems2000(8,6)       !< Planet orbital elements for J2000
+  real(double) :: plelemdata(2,8,6,0:3)  !< Data to compute planet orbital elements
+  
+  real(double) :: asterelems(nasteroids,9)  !< Asteroid orbital elements
+  character :: asternames(nasteroids)*(18)  !< Names of the asteroids
+  
+  integer, parameter :: nplanpos=100       !< Number of entries in the planpos array
   !> \brief  Planpos[] is an array with many different types of coordinates and related variables:
   !!
   !! Geocentric (mostly) coordinates:
@@ -152,15 +190,14 @@ module TheSky_planetdata
   !! - 69 = delta0            =  True geocentric distance
   
   real(double) :: planpos(nplanpos)
-  
-  character :: plcon(0:19)*(3),asternames(nasteroids)*(18)
+  ! character :: plcon(0:19)*(3)  !< Constellation abbreviation for the planets (0-9) and bright stars
   
 end module TheSky_planetdata
 !***********************************************************************************************************************************
 
 
 !***********************************************************************************************************************************
-!> \brief  ELP-82B Moon data, needed to compute Moon positions
+!> \brief  ELP 2000-82B Moon data, needed to compute Moon positions
 
 module TheSky_moondata
   use SUFR_kinds, only: double
@@ -168,19 +205,51 @@ module TheSky_moondata
   save
   private :: double
   
-  real(double), parameter :: c1=1.d0/60.d0, c2=1.d0/3600.d0
-  real(double), parameter :: ath=384747.9806743165d0, a0=384747.9806448954d0
+  real(double), parameter :: c1=1.d0/60.d0            !< Constant for ELP 2000-82B theory (arcminutes to degrees)
+  real(double), parameter :: c2=1.d0/3600.d0          !< Constant for ELP 2000-82B theory (arcseconds to degrees)
+  real(double), parameter :: ath=384747.9806743165d0  !< Constant for ELP 2000-82B theory (orbital separation?)
+  real(double), parameter :: a0=384747.9806448954d0   !< Constant for ELP 2000-82B theory (orbital separation?)
   
-  real(double) :: p1,p2,p3,p4,p5, q1,q2,q3,q4,q5
-  real(double) :: w(3,0:4),eart(0:4),peri(0:4),p(8,0:1), del(4,0:4),zeta(0:1),t(0:4)
-  real(double) :: pre(3),coef(7),zone(6), pc1(6,1023),pc2(6,918),pc3(6,704), per1(3,19537),per2(3,6766),per3(3,8924)
+  real(double) :: p1  !< Precession sine coefficient for ELP 2000-82B theory
+  real(double) :: p2  !< Precession sine coefficient for ELP 2000-82B theory
+  real(double) :: p3  !< Precession sine coefficient for ELP 2000-82B theory
+  real(double) :: p4  !< Precession sine coefficient for ELP 2000-82B theory
+  real(double) :: p5  !< Precession sine coefficient for ELP 2000-82B theory
   
-  integer :: ilu(4),ipla(11),nterm(3,12),nrang(3,0:12)
+  real(double) :: q1  !< Precession cosine coefficient for ELP 2000-82B theory
+  real(double) :: q2  !< Precession cosine coefficient for ELP 2000-82B theory
+  real(double) :: q3  !< Precession cosine coefficient for ELP 2000-82B theory
+  real(double) :: q4  !< Precession cosine coefficient for ELP 2000-82B theory
+  real(double) :: q5  !< Precession cosine coefficient for ELP 2000-82B theory
   
-  real(double) :: prec0
-  integer :: ideb
+  real(double) :: w(3,0:4)   !< Constants for mean longitude
+  real(double) :: eart(0:4)  !< Earth-Moon barycentre (EMB) elements
+  real(double) :: peri(0:4)  !< Mean longitude of the perihelion of the Earth-Moon barycentre (EMB)
+  real(double) :: p(8,0:1)   !< Planetary arguments: mean longitudes and mean motions
   
-  data ideb/0/,prec0/-1.d0/,t/1.d0,4*0.d0/
+  real(double) :: del(4,0:4)  !< Delaunay's variables (https://en.wikipedia.org/wiki/Orbital_elements#Delaunay_variables)
+  real(double) :: zeta(0:1)   !< Mean longitude (w) + rate precession (?)
+  real(double) :: t(0:4)      !< Array for time^0, ..., time^4
+  
+  real(double) :: pre(3)         !< CHECK: does this actually do anything?
+  real(double) :: coef(7)        !< CHECK: Coefficients in ELP 2000-82B data file (float)
+  real(double) :: zone(6)        !< CHECK: Something in ELP 2000-82B theory
+  real(double) :: pc1(6,1023)    !< CHECK: Something in ELP 2000-82B theory
+  real(double) :: pc2(6,918)     !< CHECK: Something in ELP 2000-82B theory
+  real(double) :: pc3(6,704)     !< CHECK: Something in ELP 2000-82B theory
+  real(double) :: per1(3,19537)  !< CHECK: Something in ELP 2000-82B theory
+  real(double) :: per2(3,6766)   !< CHECK: Something in ELP 2000-82B theory
+  real(double) :: per3(3,8924)   !< CHECK: Something in ELP 2000-82B theory
+  
+  integer :: ilu(4)              !< CHECK: Coefficients in ELP 2000-82B data file (integer)
+  integer :: ipla(11)            !< CHECK: Coefficients in ELP 2000-82B data file (integer)
+  integer :: nterm(3,12)         !< CHECK: Number of terms? in ELP 2000-82B data file
+  integer :: nrang(3,0:12)       !< CHECK: Number of terms? in ELP 2000-82B data file
+  
+  real(double) :: prec0          !< CHECK: Something in ELP 2000-82B theory
+  integer :: ideb                !< Memorise whether this routine has been run before
+  
+  data ideb/0/, prec0/-1.d0/, t/1.d0,4*0.d0/
   
 end module TheSky_moondata
 !***********************************************************************************************************************************
@@ -193,8 +262,35 @@ module TheSky_elp_mpp02_constants
   use SUFR_kinds, only: double
   
   implicit none
-  real(double) :: w(3,0:4),eart(0:4),peri(0:4),  zeta(0:4),del(4,0:4)
-  real(double) :: p(8,0:4),delnu,dele,delg,delnp,delep,dtasm,am,   p1,p2,p3,p4,p5,q1,q2,q3,q4,q5
+  real(double) :: w(3,0:4)    !< Constants for mean longitude
+  real(double) :: eart(0:4)   !< Earth-Moon barycentre (EMB) elements
+  real(double) :: peri(0:4)   !< Mean longitude of the perihelion of the Earth-Moon barycentre (EMB)
+  real(double) :: zeta(0:4)   !< Mean longitude (w) + rate precession (?)
+  real(double) :: del(4,0:4)  !< Delaunay's variables (https://en.wikipedia.org/wiki/Orbital_elements#Delaunay_variables)
+  
+  real(double) :: p(8,0:4)   !< Planetary arguments: mean longitudes, mean motions, ...?
+  
+  real(double) :: delnu  !< Corrections of the constants (fit to DE200/LE200) (?)
+  real(double) :: dele   !< Corrections of the constants (fit to DE200/LE200) (?)
+  real(double) :: delg   !< Corrections of the constants (fit to DE200/LE200) (?)
+  real(double) :: delnp  !< Corrections of the constants (fit to DE200/LE200) (?)
+  real(double) :: delep  !< Corrections of the constants (fit to DE200/LE200) (?)
+  
+  real(double) :: am      !< Ratio of the mean motions (EMB / Moon)
+  real(double) :: dtasm   !< 2/3 of product of (ratio of the semi-major axes) x (ratio of the mean motions) (Moon / EMB) ???
+  
+  real(double) :: p1  !< Precession sine coefficient for ELP MPP02 theory
+  real(double) :: p2  !< Precession sine coefficient for ELP MPP02 theory
+  real(double) :: p3  !< Precession sine coefficient for ELP MPP02 theory
+  real(double) :: p4  !< Precession sine coefficient for ELP MPP02 theory
+  real(double) :: p5  !< Precession sine coefficient for ELP MPP02 theory
+  
+  real(double) :: q1  !< Precession cosine coefficient for ELP MPP02 theory
+  real(double) :: q2  !< Precession cosine coefficient for ELP MPP02 theory
+  real(double) :: q3  !< Precession cosine coefficient for ELP MPP02 theory
+  real(double) :: q4  !< Precession cosine coefficient for ELP MPP02 theory
+  real(double) :: q5  !< Precession cosine coefficient for ELP MPP02 theory
+  
   
 end module TheSky_elp_mpp02_constants
 !***************************************************************************************************
@@ -208,8 +304,13 @@ module TheSky_elp_mpp02_series
   
   implicit none
   integer, parameter, private :: max1=2645, max2=33256
-  integer :: nmpb(3,3), nper(3,0:3,3)
-  real(double) :: cmpb(max1),fmpb(0:4,max1),   cper(max2),fper(0:4,max2)
+  integer :: nmpb(3,3)      !< Number of lines in the file for the main problem
+  integer :: nper(3,0:3,3)  !< Number of lines in the file for the perturbation
+  
+  real(double) :: cmpb(max1)      !< Coefficients? for the main problem
+  real(double) :: fmpb(0:4,max1)  !< Factors? for the main problem
+  real(double) :: cper(max2)      !< Coefficients? for the perturbation series
+  real(double) :: fper(0:4,max2)  !< Factors? for the perturbation series
   
 end module TheSky_elp_mpp02_series
 !***************************************************************************************************

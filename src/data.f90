@@ -445,8 +445,8 @@ contains
     if(ideb.eq.0) then  ! then it's the first time you run this routine
        
        ideb = 1
-       am = 0.074801329518d0
-       alpha = 0.002571881335d0
+       am = 0.074801329518d0          ! Ratio of the mean motions (EMB / Moon)
+       alpha = 0.002571881335d0       ! Ratio of the semi-major axis (Moon / EMB)
        dtasm = 2.d0*alpha/(3.d0*am)
        
        ! Lunar arguments:
@@ -526,7 +526,7 @@ contains
        delnp = -0.06424d0/w(1,1)                * as2r
        delep = -0.12879d0                       * as2r
        
-       ! Delaunay's arguments:
+       ! Delaunay's arguments (https://en.wikipedia.org/wiki/Orbital_elements#Delaunay_variables):
        do i=0,4
           del(1,i) = w(1,i)  - eart(i)
           del(4,i) = w(1,i)  - w(3,i)
@@ -657,7 +657,7 @@ contains
                       zone(k+2) = y
                    end do
                 end if
-                j = nrang(iv,itab-1)+ir
+                j = nrang(iv,itab-1) + ir
                 do i=1,3
                    if(iv.eq.1) per1(i,j) = zone(i)
                    if(iv.eq.2) per2(i,j) = zone(i)
@@ -671,7 +671,7 @@ contains
           if(itab.eq.1) then
              nrang(iv,itab) = 0
           else
-             nrang(iv,itab) = nrang(iv,itab-1)+nterm(iv,itab)
+             nrang(iv,itab) = nrang(iv,itab-1) + nterm(iv,itab)
           end if
           
        end do   ! do ific=1,36 - original ELP files

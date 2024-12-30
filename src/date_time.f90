@@ -145,8 +145,8 @@ contains
   
   !*********************************************************************************************************************************
   !> \brief Convert date/time in ymdhms from UT to local time.
-  !!
-  !! \param year     Year of Gregorian date: input: UT, output: LT (I/O)
+  !! 
+  !! \param year     Year CE: input: UT, output: LT (I/O)
   !! \param month    Month of year: input: UT, output: LT (I/O)
   !! \param dy       Day of month: input: UT, output: LT (I/O)
   !!

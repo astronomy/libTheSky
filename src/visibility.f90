@@ -67,7 +67,6 @@ contains
   !*********************************************************************************************************************************
   !> \brief  Find the moment (JD) of optimal excess magnitude for a planet, i.e. the lowest mag - lim.mag
   !!
-  !! \param  jdin     Julian day to compute best moment for
   !! \param  plID     Planet to compute visibility for (0-Moon, 1-Mercury, etc.)
   !!
   !! \param jdout    Moment of best excess magnitude (output)
