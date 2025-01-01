@@ -392,8 +392,8 @@ contains
        do while(abs(dtm).ge.accur)
           th0 = agst0 + 6.300388092591991d0*tmdy(evi)  ! Meeus, p.103
           n   = tmdy(evi) + deltat/86400.d0
-          ra  = rsIpol(ra0,ra1,ra2,n)     ! Interpolate right ascension
-          dec = rsIpol(dec0,dec1,dec2,n)  ! Interpolate declination
+          ra  = rsIpol( ra0, ra1, ra2, n)  ! Interpolate right ascension
+          dec = rsIpol(dec0,dec1,dec2, n)  ! Interpolate declination
           
           ha = rev2(th0 + lon0 - ra)                                   ! Hour angle;  Meeus p.103
           alt = asin(sin(lat0)*sin(dec) + cos(lat0)*cos(dec)*cos(ha))  ! Meeus, Eq.13.6
@@ -686,7 +686,14 @@ contains
   
   
   !*********************************************************************************************************************************
-  !> \brief  Interpolate rise/set times for riset_ipol()
+  !> \brief  Quadratic interpolation of rise/set times for riset_ipol().
+  !!
+  !! \param  y1  Coordinate for day 1
+  !! \param  y2  Coordinate for day 2
+  !! \param  y3  Coordinate for day 3
+  !! \param   n  Fraction of day
+  !! 
+  !! \retval rsIpol  Interpolated coordinate
   
   function rsIpol(y1,y2,y3, n)
     use SUFR_kinds, only: double
@@ -698,7 +705,8 @@ contains
     a = y2-y1
     b = y3-y2
     c = b-a
-    rsIpol = y2 + n/2.d0 * (a + b + c*n)
+    
+    rsIpol = y2 + n/2.d0 * (a + b + c*n)   ! 1 + (1+y1/2)*n + (y1/2 + y2 + y3/2)*n^2
     
   end function rsIpol
   !*********************************************************************************************************************************

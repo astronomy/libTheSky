@@ -229,12 +229,14 @@ contains
   
   
   !*********************************************************************************************************************************
-  !> \brief  Calculate asteroid magnitude for asteroid as
+  !> \brief  Calculate asteroid magnitude for asteroid AS.
   !! 
-  !! \param as     Asteroid number
-  !! \param delta  Distance to the Earth
-  !! \param r      Distance to the Sun
-  !! \param pa     Phase angle
+  !! \param  as     Asteroid number
+  !! \param  delta  Distance to the Earth
+  !! \param  r      Distance to the Sun
+  !! \param  pa     Phase angle
+  !! 
+  !! \retval asteroid_magn  Magnitude of the asteroid
   !!
   !! \see Meeus, Astronomical Algorithms, 1998, Ch.33
   

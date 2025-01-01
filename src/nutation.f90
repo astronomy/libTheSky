@@ -230,13 +230,17 @@ contains
   !TITLE LS_NUT
   
   !*********************************************************************************************************************************
+  !> \brief  Compute the MHB_2000 luni-solar contributions the nutations in longitude and obliquity.
+  !!
+  !! \param jd       Julian day
+  !! \param dpsi_ls  Nutation in longitude (milliarcsec)
+  !! \param deps_ls  Nutation in obliquity (milliarcsec)
+  
   subroutine ls_nut( jd, dpsi_ls, deps_ls )
     use SUFR_kinds, only: double
     implicit none
     
-    !     Routine to compute the MHB_2000 luni-solar contributions
-    !     the nutations in longitude and obliquity.  The MHB_2000 is
-    !     based on:
+    !     The MHB_2000 is based on:
     
     !     (1) The Souchay and Kinoshita Rigid Earth nutation series
     !     SKRE1997.   There are many duplicate argument terms in this
@@ -370,6 +374,11 @@ contains
   !TITLE LS_ANGLES
   
   !*********************************************************************************************************************************
+  !> \brief  compute the value of the fundamental argument for Brown's arguments.
+  !!
+  !! \param epoch   Julian day for arguments (input)
+  !! \param ls_arg   Brown's arguments (rad)
+  
   subroutine ls_angles( epoch, ls_arg )
     use SUFR_kinds, only: double
     implicit none
@@ -501,6 +510,13 @@ contains
   !TITLE EVAL_LS_NUT
   
   !*********************************************************************************************************************************
+  !> \brief  Compute the nutations in longitude and obliquity by summing over all terms in the nutations series.
+  !! 
+  !! \param epoch   Julian day for arguments (input)
+  !! \param ls_arg  Brown's arguments (input; rad)
+  !! \param dpsi_ls  Nutation in longitude (output; milliarcsec)
+  !! \param deps_ls  Nutation in obliquity (output; milliarcsec)
+  
   subroutine eval_ls_nut( epoch, ls_arg, dpsi_ls, deps_ls )
     use SUFR_kinds, only: double
     implicit none
@@ -1377,7 +1393,9 @@ contains
   !TITLE OUT_PLAN_NUT
   
   !*********************************************************************************************************************************
-  subroutine out_plan_nut   
+  !> \brief  Write the planetary contribution to the nutations to stdout.
+  !!
+  subroutine out_plan_nut()
     use SUFR_kinds, only: double
     implicit none
     
@@ -1438,6 +1456,12 @@ contains
   !TITLE PLAN_NUT                                
   
   !*********************************************************************************************************************************
+  !> \brief  Compute the planetary contribution to the nutations.
+  !!
+  !! \param jd    Julian day (input)
+  !! \param dpsi  Contribution to the nutation in longitude (output; mas)
+  !! \param deps  Contribution to the nutation in obliquity (output; mas)
+  
   subroutine plan_nut( jd, dpsi, deps )   
     use SUFR_kinds, only: double
     implicit none
@@ -1537,6 +1561,14 @@ contains
   !TITLE EVAL_PLAN_NUT
   
   !*********************************************************************************************************************************
+  !> \brief  Compute the planetary nutations by summing over the KS1990 coefficients.
+  !!
+  !! \param plan_arg  Planetary arguments including pa as given (KS1990) (input; rad)
+  !! \param plan_rat  Planetary argument rates (input; rad/yr)
+  !! \param dpsi      Contribution to nutations in longitude (output; mas)
+  !! \param deps      Contribution to nutations in obliquity (output; mas)
+  !! \param out       'YES' to write data to stdout (input)
+  
   subroutine eval_plan_nut( plan_arg, plan_rat, dpsi, deps, out ) 
     use SUFR_kinds, only: double
     implicit none
@@ -2489,6 +2521,12 @@ contains
   !TITLE 'PLAN_ANGLES'
   
   !*********************************************************************************************************************************
+  !> \brief  Compute of planetary arguments for planetary nutation.
+  !!
+  !! \param epoch     Julian day (input)
+  !! \param plan_arg  Planetary arguments for longtitudes of L, L', F, D, Om, Mercury, Ven, Ear, Mar, Jup, Sat, Ura, Ura(?), pa.
+  !! \param plan_rat  Planetary argument rates (rads/year)
+  !! 
   subroutine plan_angles( epoch, plan_arg, plan_rat )
     use SUFR_kinds, only: double
     implicit none
@@ -2654,6 +2692,12 @@ contains
   !TITLE FCN_NUT
   
   !*********************************************************************************************************************************
+  !> \brief  Compute the consttributions of the freely excited FCN mode to the nutations in longitude and obliquity.
+  !! 
+  !! \param  jd       Julian day (input)
+  !! \param dpsi_fcn  Contribution to the nutation in longitude (output; milliarcsec)
+  !! \param deps_fcn  Contribution to the nutation in obliquity (output; milliarcsec)
+  !!
   subroutine fcn_nut ( jd, dpsi_fcn, deps_fcn )
     use SUFR_kinds, only: double
     implicit none
@@ -2838,6 +2882,13 @@ contains
   !TITLE PREC_NUT
   
   !*********************************************************************************************************************************
+  !> \brief Evaluate the corrections to the nutations in longitude and obliquity due to the corrections to the
+  !!        IAU-1976 Luni-solar precession constant and the secular rate of change of the obliquity of the ecliptic.
+  !! 
+  !! \param jd         Julian day (input)
+  !! \param dpsi_prec  Contribution to the nutation in longitude (output; mas)
+  !! \param deps_prec  Contribution to the nutation in obliquity (output; mas)
+  
   subroutine prec_nut( jd, dpsi_prec, deps_prec )
     use SUFR_kinds, only: double
     implicit none
@@ -2931,6 +2982,11 @@ contains
   !TITLE ls_iau76
   
   !*********************************************************************************************************************************
+  !> \brief Compute the value of the fundamental argument for Brown's arguments.
+  !!
+  !! \param  epoch   Julian day (input)  
+  !! \param  ls_arg  Brown's arguments (output; rad)
+  
   subroutine ls_iau76( epoch, ls_arg )
     use SUFR_kinds, only: double
     implicit none

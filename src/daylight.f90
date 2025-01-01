@@ -35,9 +35,10 @@ contains
   
   !*********************************************************************************************************************************
   !> \brief  Compute an approximation for the bolometric atmospheric extinction factor for the Sun with a given air mass
-  !!
-  !! \param airmass  Airmass for the position of the Sun
-  !!
+  !! 
+  !! \param  airmass                 Airmass for the position of the Sun
+  !! \retval extinction_sun_airmass  The approximated bolometric atmospheric extinction factor for the Sun
+  !! 
   !! \note  - extinction_fac = 1: no extinction, extinction_fac > 1 extinction.
   !!        - Hence, the flux, corrected for extinction, should be  f' = f / extinction_fac(alt,ele)
   !!        - Fit of the power extinction computed by the NREL SMARTS code (valid for airmass <= 38.2):
@@ -81,7 +82,8 @@ contains
   !*********************************************************************************************************************************
   !> \brief  Compute an approximation for the bolometric atmospheric extinction factor for the Sun with a given altitude
   !!
-  !! \param alt  TRUE altitude of the Sun (radians)
+  !! \param  alt             TRUE altitude of the Sun (radians)
+  !! \retval extinction_sun  The approximated bolometric atmospheric extinction factor for the Sun
   !!
   !! \note  - extinction_fac = 1: no extinction, extinction_fac > 1 extinction.
   !!        - Hence, the flux, corrected for extinction, should be  f' = f / extinction_fac(alt,ele)
@@ -409,7 +411,7 @@ contains
   
   
   !*********************************************************************************************************************************
-  !> \brief  Compute the projection of direct solar radiation (DNI) on a (sloped) surface.
+  !> \brief  Compute the projection factor of direct solar radiation (DNI) on a (sloped) surface.
   !!
   !! This function returns the projection factor of direct sunlight on a surface with given orientation,
   !! useful for e.g. insolation on solar panels, solar collectors or windows.  The projection factor equals
@@ -419,12 +421,14 @@ contains
   !! \param gamma   Azimuth angle of the surface (0=south, pi/2=west, ±pi=north, -pi/2=east) (radians)
   !! \param sunAz   Azimuth of the Sun (0=south, pi/2=west, ±pi=north, -pi/2=east) (radians)
   !! \param sunAlt  Apparent altitude of the Sun (radians)
+  !! 
+  !! \retval project_sunlight_on_surface  The projection factor for direct solar radiation (DNI) on a (sloped) surface (0-1).
   !!
   !! \note
   !! Note that different definitions for gamma and sunAz are possible, as long as they correspond.
   !!
   !! \see
-  !! Celestial mechanics in a nutshell, Sect. 4.3: Insolation on an inclined surface  (http://CMiaNS.sf.net).
+  !! Celestial mechanics in a nutshell, Sect. 4.3: Insolation on an inclined surface  (https://CMiaNS.sf.net).
   
   function project_sunlight_on_surface(beta,gamma, sunAz,sunAlt)
     use SUFR_kinds, only: double

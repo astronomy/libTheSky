@@ -67,12 +67,11 @@ contains
   !*********************************************************************************************************************************
   !> \brief  Find the moment (JD) of optimal excess magnitude for a planet, i.e. the lowest mag - lim.mag
   !!
+  !! \param  jdin     Initial guess for the moment of best excess magnitude (input)
   !! \param  plID     Planet to compute visibility for (0-Moon, 1-Mercury, etc.)
-  !!
-  !! \param jdout    Moment of best excess magnitude (output)
-  !! \param xsmag    Excess magnitude at that moment (magnitude - limiting magnitude; <0: ~visible to the naked eye) (output)
-  !!
-  !! \param  rsCWarn  Print convergence warnings in riset()  (optional; default = true)
+  !! \param  jdout    Moment of best excess magnitude (output)
+  !! \param  xsmag    Excess magnitude at that moment (magnitude - limiting magnitude; <0: ~visible to the naked eye) (output, optional)
+  !! \param  rsCWarn  Print convergence warnings in riset()  (input, optional; default = true)
   
   subroutine best_planet_xsmag(jdin,plID, jdout, xsmag, rsCWarn)
     use SUFR_kinds, only: double
@@ -360,6 +359,8 @@ contains
   !! \param cometID   Comet ID
   !! \param mlim      Maximum magnitude, below which the comet is defined as visible (deg)
   !! \param minalt    Minimum transit altitude, above which the comet is defined as visible (deg)
+  !! 
+  !! \retval comet_invisible  Comet is invisible (true/false)
   !!
   !! \note  The comet may still be invisible if comet_invisible=.false., e.g. when it's too close to the Sun
   
@@ -410,6 +411,8 @@ contains
   !!
   !! \param  lat  Geographic latitude of the observer (-pi/2 - pi/2; rad)
   !! \param  dec  Declination of the object (-pi/2 - pi/2; rad)
+  !!
+  !! \retval transitalt  Transit altitude (rad)
   
   function transitalt(lat, dec)
     use SUFR_kinds, only: double
@@ -469,9 +472,10 @@ contains
   !*********************************************************************************************************************************
   
   !*********************************************************************************************************************************
-  !> \brief  Compute the difference between a given right ascension and the RA of the Sun,  used privately by best_obs_date_ra()
+  !> \brief  Compute the difference between a given right ascension and the RA of the Sun, used privately by best_obs_date_ra()
   !!
-  !! \param jd  Julian day
+  !! \param jd            Julian day
+  !! \retval get_dRA_obj  Difference between a given right ascension and the RA of the Sun (rad)
   !!
   !! \note
   !! - Get (RA_obj - RA_sun) for object with RA ra, passed via the common block best_obs_RA
@@ -499,7 +503,8 @@ contains
   !*********************************************************************************************************************************
   !> \brief  Compute the airmass for a celestial object with a given TRUE altitude
   !!
-  !! \param alt  TRUE altitude of object (radians)
+  !! \param  alt      TRUE altitude of object (radians)
+  !! \retval airmass  The airmass (-)
   !!
   !! \note
   !! - Results are 1 <= airmass <~ 38.35; return ~1000 for h<-34'
@@ -533,7 +538,8 @@ contains
   !*********************************************************************************************************************************
   !> \brief  Compute the airmass for a celestial object with a given apparent altitude; low-accuracy alternative for airmass()
   !!
-  !! \param alt  Apparent altitude of object (radians)
+  !! \param  alt         Apparent altitude of object (radians)
+  !! \retval airmass_la  The airmass (-)
   !!
   !! \note
   !! - Results are 1 <= airmass <~ 37.92; return ~1000 for h<0
@@ -565,7 +571,8 @@ contains
   !*********************************************************************************************************************************
   !> \brief  Compute the extinction in magnitdes per unit airmass for an observer with given elevation
   !!
-  !! \param ele  Evelation of the observer above sea level (metres)
+  !! \param  ele                Evelation of the observer above sea level (metres)
+  !! \retval extinction_magPam  Extinction (magnitdes per unit airmass)
   !!
   !! \note  
   !!   - The magnitude of an object corrected for airmass should be  m' = m + extinction_magPam(ele) * airmass(alt) 
@@ -597,8 +604,9 @@ contains
   !*********************************************************************************************************************************
   !> \brief  Compute the extinction in magnitdes for an observer with given elevation and an object with given TRUE altitude
   !!
-  !! \param alt  Altitude of object (radians)
-  !! \param ele  Evelation of the observer above sea level (metres; optional)
+  !! \param  alt             Altitude of object (radians)
+  !! \param  ele             Evelation of the observer above sea level (metres; optional)
+  !! \retval extinction_mag  Extinction (magnitudes)
   !!
   !! \note - The magnitude of an object corrected for airmass should be  m' = m + extinction_mag(alt,ele)
   !!       - Assumed is the response of the rods in the human retina, hence night vision
@@ -626,8 +634,9 @@ contains
   !*********************************************************************************************************************************
   !> \brief  Compute the extinction factor for an observer with given elevation and an object with given altitude
   !!
-  !! \param alt  Altitude of object (radians)
-  !! \param ele  Evelation of the observer above sea level (metres; optional)
+  !! \param  alt             Altitude of object (radians)
+  !! \param  ele             Evelation of the observer above sea level (metres; optional)
+  !! \retval extinction_fac  Extinction factor (-)
   !!
   !! \note - extinction_fac = 1: no extinction, extinction_fac > 1 extinction.
   !!       - Hence, the flux, corrected for extinction, should be  f' = f / extinction_fac(alt,ele)
@@ -1167,8 +1176,10 @@ contains
   !*********************************************************************************************************************************
   !> \brief  Compute the excess magnitude for planet pl at JD, considering Sun, Moon and airmass
   !!
-  !! \param jd  Julian day for moment of interest
-  !! \param pl  Planet ID (0-Moon, 1-Mer, 8-Nep, >10-comet
+  !! \param  jd        Julian day for moment of interest
+  !! \param  pl        Planet ID (0-Moon, 1-Mer, 8-Nep, >10-comet
+  !! 
+  !! \retval pl_xsmag  The excess magnitude
   !!
   !! \note
   !! - The excess magnitude is defined as  the magnitude of an object  MINUS  the limiting magnitude
@@ -1207,7 +1218,8 @@ contains
   !> \brief  Compute the excess magnitude at JD, wrapper for pl_xsmag() for solvers.
   !!         The planet ID pl0 is passed through module planetdata.
   !!
-  !! \param jd  Julian day for moment of interest
+  !! \param  jd           Julian day for moment of interest
+  !! \retval pl_xsmag_pl  The excess magnitude
   
   function pl_xsmag_pl(jd)
     use SUFR_kinds, only: double
@@ -1226,8 +1238,10 @@ contains
   !*********************************************************************************************************************************
   !> \brief  Compute the excess magnitude for planet pl at JD, considering airmass and Sun alt - low-accuracy version of pl_xsmag()
   !!
-  !! \param jd  Julian day for moment of interest
-  !! \param pl  Planet ID (0-Moon, 1-Mer, 8-Nep, >10-comet
+  !! \param  jd           Julian day for moment of interest
+  !! \param  pl           Planet ID (0-Moon, 1-Mer, 8-Nep, >10-comet
+  !!
+  !! \retval pl_xsmag_la  The excess magnitude
   !!
   !! \note
   !! - The excess magnitude is defined as  the magnitude of an object  MINUS  the limiting magnitude
@@ -1265,7 +1279,8 @@ contains
   !> \brief  Compute the excess magnitude at JD, wrapper for pl_xsmag_la() for solvers.
   !!         The planet ID pl0 is passed through module planetdata.
   !!
-  !! \param jd  Julian day for moment of interest
+  !! \param  jd              Julian day for moment of interest
+  !! \retval pl_xsmag_la_pl  The excess magnitude
   
   function pl_xsmag_la_pl(jd)
     use SUFR_kinds, only: double
@@ -1287,6 +1302,8 @@ contains
   !! \param xsmag  Excess magnitude:  magnitude of an object  MINUS  limiting magnitude  (>0: too weak for naked eye)
   !! \param pupil  Pupil diameter (mm, default: 6)
   !! \param tc     Transmission coefficient of the instrument (default: 0.8 = 80%)
+  !! 
+  !! \retval aperture  The aperture diameter (cm)
   !!
   !! \note  This routine should be used as an indication only - no hard facts...
   !!

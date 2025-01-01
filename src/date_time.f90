@@ -344,6 +344,8 @@ contains
   !! \param jd               Julian day
   !! \param force_recompute  Force recomputation of DeltaT, even if the year is the same as in the last call (done in calc_deltat_ymd())
   !! 
+  !! \retval calc_deltat  Delta T (s)
+  !! 
   !! \note VERY SLOW, use calc_deltat_ymd() if y,m,d are known
   
   function calc_deltat(jd, force_recompute)
@@ -396,6 +398,8 @@ contains
   !! \param d                Day
   !! 
   !! \param force_recompute  Force recomputation of DeltaT, even if the year is the same as in the last call
+  !! 
+  !! \retval calc_deltat_ymd  Delta T (s)
   !! 
   !! \note
   !! - Faster than calc_deltat. Use this routine rather than calc_deltat() if y,m,d are known
@@ -475,6 +479,8 @@ contains
   !!
   !! \param y   Current year
   !! \param y0  Current date, as fractional year
+  !! 
+  !! \retval find_deltat_in_range  Delta T (s)
   
   function find_deltat_in_range(y,y0)
     use SUFR_kinds, only: double
@@ -662,7 +668,8 @@ contains
   !*********************************************************************************************************************************
   !> \brief  Convert a Julian day (UT) to a local time (LT, h)
   !!
-  !! \param jd0  Julian day (UT)
+  !! \param  jd0       Julian day (UT)
+  !! \retval jd2ltime  Local time (h)
   
   function jd2ltime(jd0)
     use SUFR_kinds, only: double
@@ -799,9 +806,11 @@ contains
   !*********************************************************************************************************************************
   !> \brief  Returns time zone: tz0 (standard time) or tz0+1 (daylight-savings time)
   !!
-  !! \param jd     Julian day (UT?)
-  !! \param tz0    Default time zone for the current location ('winter time')
-  !! \param dsttp  Daylight-savings time rules to use:  0: no DST (e.g. UT),  1: EU,  2: USA/Canada
+  !! \param jd      Julian day (UT?)
+  !! \param tz0     Default time zone for the current location ('winter time')
+  !! \param dsttp   Daylight-savings time rules to use:  0: no DST (e.g. UT),  1: EU,  2: USA/Canada
+  !! 
+  !! \retval gettz  The time zone (h; positive east of Greenwich)
   !! 
   !! \note
   !!  - currently only implemented for no DST (dsttp=0), EU (dsttp=1) and USA/Canada >2007 (dsttp=2)
@@ -986,9 +995,10 @@ contains
   
   
   !*********************************************************************************************************************************
-  !> \brief  Calculates day of week (0 - Sunday, ... 6)
+  !> \brief  Calculates day of week (0 - Sunday, ...,  6=Saturday)
   !!
-  !! \param jd0  Julian day (UT)
+  !! \param  jd0  Julian day (UT)
+  !! \retval dow  The day of week (0=Sunday, ...,  6=Saturday)
   !!
   !! \note Input in UT, output in local time
   !! \todo Switch using dow(jd) to dow_ut(jd+tz/24.d0) to make it general
@@ -1013,7 +1023,8 @@ contains
   !*********************************************************************************************************************************
   !> \brief   Calculate the week-of-year number
   !!
-  !! \param jd  Julian day
+  !! \param  jd   Julian day
+  !! \retval woy  Week number in the year
   !!
   !! \todo 
   !! - CHECK: int or floor?

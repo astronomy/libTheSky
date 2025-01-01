@@ -726,7 +726,12 @@ contains
   
   
   
-  !***************************************************************************************************
+  !*********************************************************************************************************************************
+  !> \brief  Initialise ELP-MPP02 data and read the data files.
+  !!
+  !! \param mode  Index of the corrections to the constants: 0: LLR observations for 1970-2000, 1: DE405 ephemeris for 1950-2060 (input)
+  !! \param ierr  File error index: ierr=0: no error, ierr=1: file error (output)
+  
   subroutine elp_mpp02_initialise_and_read_files(mode, ierr)
     implicit none
     integer, intent(in) :: mode
@@ -736,7 +741,7 @@ contains
     
     ! Initializing of constants and reading the files:
     ierr = 0
-    !print*,mode,modeInit
+    ! print*,mode,modeInit
     if(mode.ne.modeInit) then
        call elp_mpp02_initialise(mode)
        call elp_mpp02_read_files(ierr)
@@ -746,11 +751,11 @@ contains
     end if
     
   end subroutine elp_mpp02_initialise_and_read_files
-  !***************************************************************************************************
+  !*********************************************************************************************************************************
   
   
   
-  !***************************************************************************************************
+  !*********************************************************************************************************************************
   !> \brief  Initialization of the constants and parameters used for the evaluation of the ELP/MPP02 series
   !!
   !! \param mode  Index of the corrections to the constants: 0: LLR observations for 1970-2000, 1: DE405 ephemeris for 1950-2060
@@ -975,14 +980,14 @@ contains
     q5 = -0.320334d-14
     
   end subroutine elp_mpp02_initialise
-  !***************************************************************************************************
+  !*********************************************************************************************************************************
   
   
   
-  !***************************************************************************************************
+  !*********************************************************************************************************************************
   !> \brief  Read the six data files containing the ELP/MPP02 series
   !!
-  !! \param ierr      File error index: ierr=0: no error, ierr=1: file error
+  !! \param ierr      File error index: ierr=0: no error, ierr=1: file error (output)
   !!
   !! \note
   !! - module elp_mpp02_constants:  Set of the constants of ELP/MPP02 solution (input)
@@ -1108,11 +1113,18 @@ contains
     ipt = ipt        ! Suppress 'variable set but not used' compiler warnings
     
   end subroutine elp_mpp02_read_files
-  !***************************************************************************************************
+  !*********************************************************************************************************************************
   
   
-  !***************************************************************************************************
+  !*********************************************************************************************************************************
   !> \brief Function for the conversion: sexagesimal degrees -> radians
+  !! 
+  !! \param  deg  Degrees
+  !! \param  min  Minutes or arc
+  !! \param  sec  Seconds of arc
+  !! 
+  !! 
+  !! \retval elp_dms2rad  The angle in radians
   
   function elp_dms2rad(deg,min,sec)
     use SUFR_kinds, only: double
@@ -1125,7 +1137,7 @@ contains
     
     elp_dms2rad = (deg+min/60.d0+sec/3600.d0) * d2r
   end function elp_dms2rad
-  !***************************************************************************************************
+  !*********************************************************************************************************************************
   
   
   

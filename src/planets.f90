@@ -848,6 +848,8 @@ contains
   !! 
   !! \param magmdl  Model to use:  1: Müller (1893),  2: Meeus p.286;  optional, default: 2.
   !!
+  !! \retval satmagn  The magnitude of Saturn
+  !! 
   !! \see
   !! - Müller, POPot 8, 193 (1893) - https://ui.adsabs.harvard.edu/abs/1893POPot...8..193M/ - p.341/149
   !! - Meeus, Astronomical Algorithms, 1998, Ch.41
@@ -897,6 +899,8 @@ contains
   !! 
   !! \param glon   Geocentric longitude (rad).
   !! \param glat   Geocentric latitude (rad).
+  !! 
+  !! \retval dsatmagn  Correction to Saturn's magnitude due to its rings.
   !! 
   !! \see Müller, POPot 8, 193 (1893) - https://ui.adsabs.harvard.edu/abs/1893POPot...8..193M/ - p.341/149
   

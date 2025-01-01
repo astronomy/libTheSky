@@ -607,8 +607,10 @@ contains
   !*********************************************************************************************************************************
   !> \brief  Calculate the magnitude of the Moon
   !!
-  !! \param pa     Phase angle (rad)
-  !! \param delta  Geocentric(?) distance (AU)
+  !! \param  pa        Phase angle (rad)
+  !! \param  delta     Geocentric(?) distance (AU)
+  !! 
+  !! \retval moonmagn  The magnitude of the Moon
   !!
   !! \see
   !! - Allen, 1976, par.66

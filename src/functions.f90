@@ -24,7 +24,7 @@
 
 !  conabr2conid:                        Convert a three-letter constellation abbreviation to a constellation ID number
 
-!  fillfloat                            Print a floating-point number with leading zeroes in format (0...0)Ftot.dgt to a string
+!  fillfloat                            Print a floating-point number with leading zeros in format (0...0)Ftot.dgt to a string
 
 !  ds:                                  Returns distance as a nice string in AU
 !  ds1:                                 Returns distance as a nice, smaller string in AU
@@ -77,6 +77,8 @@ contains
   !! \param jd   Equinox in JD
   !! \param ra   RA in radians
   !! \param dec  Dec in radians
+  !! 
+  !! \retval const_id  The constellation ID
   
   function const_id(jd, ra,dec)
     use SUFR_kinds, only: double
@@ -142,9 +144,10 @@ contains
   !! \param jd0  Julian day for calculation
   !! \param p1   ID of planet 1
   !! \param p2   ID of planet 2
+  !! 
+  !! \retval plsep  The angular separation between the two planets (rad)
   !!
-  !! \note
-  !!  Uses asep()
+  !! \note  Uses asep()
   
   function plsep(jd0, p1,p2)
     use SUFR_kinds, only: double
@@ -178,9 +181,10 @@ contains
   !*********************************************************************************************************************************
   !> \brief  Calculates the position angle of planet 2 with respect to planet 1, COUNTERCLOCKWISE from the north
   !!
-  !! \param jd0  Julian day for calculation
-  !! \param p1   ID of planet 1
-  !! \param p2   ID of planet 2
+  !! \param  jd0   Julian day for calculation
+  !! \param  p1    ID of planet 1
+  !! \param  p2    ID of planet 2
+  !! \retval plpa  The position angle of planet 2 with respect to planet 1, COUNTERCLOCKWISE from the north (rad)
   !!
   !! \note
   !!   Uses calpa()
@@ -242,11 +246,13 @@ contains
   
   
   !*********************************************************************************************************************************
-  !> \brief  Print a floating-point number with leading zeroes in format (0...0)Ftot.dgt to a string
+  !> \brief  Print a floating-point number with leading zeros in format (0...0)Ftot.dgt to a string
   !!
   !! \param x    Number to be printed
   !! \param tot  Total length of printed number - Ftot.dgt
   !! \param dgt  Number of decimal digits - Ftot.dgt
+  !! 
+  !! \retval fillfloat  String containing the float with leading zeros.
   
   function fillfloat(x,tot,dgt)
     use SUFR_kinds, only: double
@@ -273,7 +279,8 @@ contains
   !*********************************************************************************************************************************
   !> \brief  Print planet distance in AU as a nice string, but use km for the Moon
   !!
-  !! \param d  Distance (AU)
+  !! \param   d  Distance (AU)
+  !! \retval ds  String containing the formatted distance in AU
   
   function ds(d)
     use SUFR_kinds, only: double
@@ -293,7 +300,8 @@ contains
   !*********************************************************************************************************************************
   !> \brief  Print planet distance in AU as a nice string, but use km for the Moon - smaller string
   !!
-  !! \param d  Distance (AU)
+  !! \param    d  Distance (AU)
+  !! \retval ds1  String containing the formatted distance in AU
   
   function ds1(d)
     use SUFR_kinds, only: double

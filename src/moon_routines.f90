@@ -200,7 +200,8 @@ contains
   !*********************************************************************************************************************************
   !> \brief  Calculates Julian Day of phase of the Moon for the desired phase k0
   !!
-  !! \param k0   Desired phase:  x.00: New Moon - k = x.75: Last Quarter.  k=0 ~ 2000.0
+  !! \param  k0         Desired phase:  x.00: New Moon - k = x.75: Last Quarter.  k=0 ~ 2000.0
+  !! \retval moonphase  JD of the desired lunar phase
   !!
   !! \see Meeus, Astronomical Algorithms, 1998, Ch. 49
   !!
@@ -359,7 +360,7 @@ contains
          + 0.000035d0 * sin(aa(13))  +  0.000023d0 * sin(aa(14))
     
     
-    moonphase = jde - deltat/86400.d0
+    moonphase = jde - deltat/86400.d0  ! JDE - DeltaT = JD
     
   end function moonphase
   !*********************************************************************************************************************************
