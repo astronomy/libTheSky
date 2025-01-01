@@ -1213,7 +1213,7 @@ contains
     cometDatFile = 2  ! 1: comets.dat (MANY comets, no magnitude info), 2: comets_mpc.dat (currently visible comets + magn. info)
     
     cometElems = 0.d0
-    cometDiedAtP = 0   ! By default, comets do not die at perihelion - set to 1 for a given comet to change this
+    cometDiedAtP = .false.   ! By default, comets do not die at perihelion - set to .true. for a given comet to change this
     nComets = 0
     
     call find_free_io_unit(ip)

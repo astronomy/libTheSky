@@ -384,8 +384,8 @@ contains
     call cometgc(tjm,tjm, cometID, hcr,gcl,gcb,delta)
     
     ! Typical difference with full method: ~10^-4 mag:
-    if(cometDiedAtP(cometID).ne.0 .and. jd.gt.cometElems(cometID,7)) then
-       magn = 99.9d0                                                                           ! Comet died at perihelion
+    if(cometDiedAtP(cometID) .and. jd.gt.cometElems(cometID,7)) then  ! Comet died at perihelion and is now dead
+       magn = 99.9d0
     else
        magn = cometElems(cometID,8) + 5*log10(delta) + 2.5d0*cometElems(cometID,9)*log10(hcr)  ! m = H + 5log(d) + 2.5*G*log(r)
     end if

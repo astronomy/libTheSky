@@ -325,10 +325,13 @@ module TheSky_cometdata
   save
   private :: double
   
-  integer, parameter :: nCometsMax=10000   ! Max. number of comets
-  integer :: nComets, cometDatFile, cometDiedAtP(nCometsMax)
-  real(double) :: cometelems(nCometsMax,9), comepoche
-  character :: cometnames(nCometsMax)*(60)
+  integer, parameter :: nCometsMax=10000    !< Size of comet database
+  integer :: nComets                        !< Actual number of comets in database
+  integer :: cometDatFile                   !< Data file to use 1: comets.dat (MANY comets, no magnitude info), 2: comets_mpc.dat (currently visible comets + magn. info)
+  logical :: cometDiedAtP(nCometsMax)       !< This comet died at perihelion (true/false)
+  real(double) :: cometelems(nCometsMax,9)  !< Orbital elements of the comets: 1: JD of epoch (often J2000), 2: Perihelion distance (AU?), 3: Eccentricity, 4: Inclination, 5: Argument of perihelion (omega), 6: Longitude of ascending node (OMEGA) i, 7: JD of perihelion
+  real(double) :: comepoche                 !< JD of epoch (often J2000) == cometelems(i,1)
+  character :: cometnames(nCometsMax)*(60)  !< Names of the comets
   
 end module TheSky_cometdata
 !***********************************************************************************************************************************
@@ -344,16 +347,38 @@ module TheSky_stardata
   private :: double
   
   ! Selected bright stars close to the ecliptic:
-  integer, parameter :: nstars=17,nconstel=88,nconid=357
-  real(double) :: starra(nstars),stardec(nstars),starl(nstars),starb(nstars)
-  real :: starmags(nstars),starrads(nstars)
-  character :: starnames(nstars)*(10),starnamesnl(nstars)*(11),starcons(nstars)*(10),starconsnl(nstars)*(10),starconsabr(nstars)*(3)
+  integer, parameter :: nstars=17    !< Number of bright stars close to the ecliptic (including Pleiades)
+  
+  real(double) :: starra(nstars)   !< Right ascensions of the bright, ecliptical stars
+  real(double) :: stardec(nstars)  !< Declinations of the bright, ecliptical stars
+  real(double) :: starl(nstars)    !< Ecliptic longitudes of the bright, ecliptical stars
+  real(double) :: starb(nstars)    !< Ecliptic latitudes of the bright, ecliptical stars
+  
+  real :: starmags(nstars)  !< Magnitudes of the bright, ecliptical stars
+  real :: starrads(nstars)  !< Radii of the bright, ecliptical stars (only non-zero for Pleiades)
+  
+  character :: starnames(nstars)*(10)    !< English names of the bright, ecliptical stars
+  character :: starnamesnl(nstars)*(11)  !< Dutch names of the bright, ecliptical stars
+  character :: starcons(nstars)*(10)     !< Latin/English constellation names for the bright, ecliptical stars
+  character :: starconsnl(nstars)*(10)   !< Dutch constellation names for the bright, ecliptical stars
+  character :: starconsabr(nstars)*(3)   !< Constellation abbreviations for the bright, ecliptical stars
   
   ! Constellations:
-  integer :: conid(nconid)
-  real(double) :: conidral(nconid),conidrau(nconid),coniddecl(nconid)
-  character :: conabr(nconstel)*(3), conidabr(nconid)*(3)
-  character :: latconnames(nconstel)*(19),genconnames(nconstel)*(19),nlconnames(nconstel)*(17),enconnames(nconstel)*(18)
+  integer, parameter :: nconstel=88  !< Number of constellations
+  integer, parameter :: nconid=357   !< Number of data points for constellation ID 
+  integer :: conid(nconid)           !< Constellation ID
+  
+  real(double) :: conidral(nconid)   !< Constellation lower RA boundary for ID
+  real(double) :: conidrau(nconid)   !< Constellation uppwer RA boundary for ID
+  real(double) :: coniddecl(nconid)  !< Constellation lower declination boundary for ID
+  
+  character :: conabr(nconstel)*(3)  !< Abbreviations of the constellations
+  character :: conidabr(nconid)*(3)  !< Abbreviations of the constellation IDs
+  
+  character :: latconnames(nconstel)*(19)  !< Latin constellation names
+  character :: genconnames(nconstel)*(19)  !< Genitives of the Latin constellation names
+  character :: nlconnames(nconstel)*(17)   !< Dutch constellation names
+  character :: enconnames(nconstel)*(18)   !< English constellation names
   
 end module TheSky_stardata
 !***********************************************************************************************************************************
@@ -368,11 +393,27 @@ module TheSky_BSCdata
   save
   private :: double
   
-  integer, parameter :: n_bsc=9110
-  integer :: bsc_sao(n_bsc),bsc_vm_indx(n_bsc)
-  real(double) :: bsc_ra(n_bsc),bsc_dec(n_bsc),bsc_pma(n_bsc),bsc_pmd(n_bsc),bsc_rv(n_bsc),bsc_vm(n_bsc)
-  real(double) :: bsc_par(n_bsc),bsc_bv(n_bsc),bsc_ub(n_bsc),bsc_ri(n_bsc)
-  character :: bsc_name(n_bsc)*(10),bsc_abbr(n_bsc)*(10),bsc_mult(n_bsc),bsc_var(n_bsc),bsc_sptype(n_bsc)*(20)
+  integer, parameter :: n_bsc=9110  !< Size of the Bright Star Catalogue (BSC)
+  integer :: bsc_sao(n_bsc)         !< SAO numbers of the BSC stars
+  integer :: bsc_vm_indx(n_bsc)     !< Index array for sorting to visual magnitude
+  
+  real(double) :: bsc_ra(n_bsc)     !< Right ascensions of the BSC stars
+  real(double) :: bsc_dec(n_bsc)    !< Declinations of the BSC stars
+  real(double) :: bsc_pma(n_bsc)    !< Proper motions in RA of the BSC stars
+  real(double) :: bsc_pmd(n_bsc)    !< Proper motions in declination of the BSC stars
+  real(double) :: bsc_rv(n_bsc)     !< Radial velocities of the BSC stars
+  real(double) :: bsc_vm(n_bsc)     !< Visual magnitudes of the BSC stars
+  
+  real(double) :: bsc_par(n_bsc)    !< Parallaxes of the BSC stars
+  real(double) :: bsc_bv(n_bsc)     !< B-V colours of the BSC stars
+  real(double) :: bsc_ub(n_bsc)     !< U-B colours of the BSC stars
+  real(double) :: bsc_ri(n_bsc)     !< R-I colours of the BSC stars
+  
+  character :: bsc_name(n_bsc)*(10)    !< Proper names of the BSC stars
+  character :: bsc_abbr(n_bsc)*(10)    !< Abbreviated names/codes for the BSC stars
+  character :: bsc_mult(n_bsc)         !< Multiplicity codes for the BSC stars
+  character :: bsc_var(n_bsc)          !< Variability codes for the BSC stars
+  character :: bsc_sptype(n_bsc)*(20)  !< Spectral types of the BSC stars
   
 end module TheSky_BSCdata
 !***********************************************************************************************************************************
