@@ -190,7 +190,7 @@ module TheSky_planetdata
   !! - 69 = delta0            =  True geocentric distance
   
   real(double) :: planpos(nplanpos)
-  ! character :: plcon(0:19)*(3)  !< Constellation abbreviation for the planets (0-9) and bright stars
+  character :: plcon(0:19)*(3)  !< Constellation abbreviation for the planets (0-9) and bright stars
   
 end module TheSky_planetdata
 !***********************************************************************************************************************************
