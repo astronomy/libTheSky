@@ -196,7 +196,7 @@ contains
   !! \param  pl      Planet ID (1-2, 4-8 for Mer-Ven, Mar-Nep)
   !! \param  sunAlt  Sun altitude below which planet is visible (deg; e.g. -6.d0)
   !! \param  plalt   Planet altitude above which planet is visible (deg; e.g. 5.d0)
-  !! \param  comp    Compute: 1-compute twilight/planet at plalt events only (1,4),  2-include actual rise/set times (2,5)
+  !! \param  comp    Compute: 1-compute twilight/planet at plalt events only,  2-include actual rise/set times
   !!                 11, 12 = 1, 2 + compute only for today, not tomorrow
   !!
   !! \param plvis   Planet visibility times (hours):    1-begin, 2-end;  plvis(1)*plvis(2) = 0 when invisible (output)
@@ -240,30 +240,31 @@ contains
     ! On day JD, we want set times for JD and rise times for JD+1:
     
     ! Sun:
-    maxi = 1                              ! exclude rise/set times
-    if(comp.eq.2.or.comp.eq.12) maxi = 2  ! include rise/set times
+    maxi = 1                              ! exclude rise/set times - (1,4)
+    if(comp.eq.2.or.comp.eq.12) maxi = 2  ! include rise/set times - (2,5)
     alt = sunAlt
     do irs=1,maxi   ! 1-twilight (sun @sunAlt), 2-Sun rise/set
        if(irs.eq.2) alt = 0.d0
        
-       ! Today:    s.set lsts:
+       ! Today:     END of twilight (lsts(1))  OR  sunSET (lsts(2)):
        call riset(jd, 3,   lrts(irs), ltts(irs), lsts(irs),   lras(irs), ltas(irs), lsas(irs),   alt,  cWarn=lrsCWarn)
        
-       ! Tomorrow: s.rise lrts(2) / st. twl lrts(1):
+       ! Tomorrow:  START of twilight (lrts(1))  OR  sunRISE (lrts(2)):
        if(comp.lt.10) call riset(jd+1.d0, 3,   lrts(irs), ltts(irs), st,   lras(irs), ltas(irs), sh,   alt,  cWarn=lrsCWarn)
     end do  ! irs=1,2
     
     
-    maxi = 4                              ! exclude rise/set times
-    if(comp.eq.2.or.comp.eq.12) maxi = 5  ! include rise/set times
+    ! Planet:
+    maxi = 4                              ! exclude rise/set times - (1,4)
+    if(comp.eq.2.or.comp.eq.12) maxi = 5  ! include rise/set times - (2,5)
     alt = plalt
     do irs=4,maxi   ! 4-planet @plalt, 5-planet rise/set
        if(irs.eq.5) alt = 0.d0
        
-       ! Today: planet set:
+       ! Today: planet RISES above given altitude (lrts(4))  OR  planet RISES (lrts(5)):
        call riset(jd, pl,   lrts(irs), ltts(irs), lsts(irs),   lras(irs), ltas(irs), lsas(irs),   alt,  cWarn=lrsCWarn)
        
-       ! Tomorrow: planet rise, transit:
+       ! Tomorrow: planet DROPS below given altitude (lsts(4))  OR  planet SETS (lsts(5)):
        if(comp.lt.10) call riset(jd+1.d0, pl,   lrts(irs), ltts(irs), st,   lras(irs), ltas(irs), sh,   alt,  cWarn=lrsCWarn)
     end do  ! irs=4,5
     
@@ -271,9 +272,9 @@ contains
     
     ! When is the planet visible?
     !   plvis(1): time planet becomes visible, plvis(2): time planet becomes invisible
-    
-    times = (/rv12(lrts(1)), rv12(lsts(1)),  rv12(lrts(4)), rv12(lsts(4))/)  ! rv12: -12 - 12h; noon - noon: Sun rise,set, pl r,s
-    azs   = (/lras(1), lsas(1),  lras(4), lsas(4)/)
+    !       [      SunRise,        SunSet,     PlanetRise,     PlanetSet]
+    times = [rv12(lrts(1)), rv12(lsts(1)),  rv12(lrts(4)), rv12(lsts(4))]  ! rv12: -12 - 12h; noon - noon: Sun rise,set, pl r,s
+    azs   = [lras(1), lsas(1),  lras(4), lsas(4)]
     call sorted_index_list(times,ind)
     
     ! Special case: ind = [2 4 3 1] - Ss Ps Pr Sr: Planet is visible twice.  Program takes latter, make sure it's the longest:

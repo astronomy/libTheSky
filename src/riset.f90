@@ -234,6 +234,7 @@ contains
        ! - Planets may rise/transit/set twice a day; do this only for Sun and Moon?
        !   - The Sun is also used for twilight, which can cross midnight in summer, HENCE rsAlt?
        !   - doesn't seem to matter...
+       ! if(tmRad(evi).lt.0.d0 .and. deq0(rsAlt)) then  ! Pre-2025
        if((pl.eq.0.or.pl.eq.3) .and. tmRad(evi).lt.0.d0 .and. deq0(rsAlt)) then
        ! if((pl.eq.0.or.pl.eq.3) .and. tmRad(evi).lt.0.d0) then
           tmRad(evi) = 0.d0
@@ -468,6 +469,7 @@ contains
        ! - Planets may rise/transit/set twice a day; do this only for Sun and Moon?
        !   - The Sun is also used for twilight, which can cross midnight in summer, HENCE rsAlt?
        !   - doesn't seem to matter...
+       ! if(tmdy(evi).lt.0.d0 .and. deq0(rsAlt)) then  ! Pre-2025
        if((pl.eq.0.or.pl.eq.3) .and. tmdy(evi).lt.0.d0 .and. deq0(rsAlt)) then
        ! if((pl.eq.0.or.pl.eq.3) .and. tmdy(evi).lt.0.d0) then
           tmdy(evi) = 0.d0
