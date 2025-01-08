@@ -29,7 +29,8 @@ contains
   
   !*********************************************************************************************************************************
   !> \brief  Rise, transit and set times routine for Sun, Moon, planets and asteroids.
-  !!         Based on riset_ipol(), but recomputes positions (low accuracy first, then full accuracy) rather than interpolating.
+  !!         This version recomputes positions (low accuracy first, then full accuracy) during the convergence process.
+  !!         See riset_ipol() for a version using interpolation, to be used for planets only(!)
   !! 
   !! \param  jd        Julian day number
   !! \param  pl        Planet/object number  (-1 - 9: ES, Moon, Mer-Plu; >10000 asteroids)
@@ -79,6 +80,7 @@ contains
     use SUFR_constants, only: pi2, d2r,am2r, r2h, enpname, earthr,AU
     use SUFR_angles, only: rev, rev2
     use SUFR_date_and_time, only: cal2jd,jd2cal
+    use SUFR_time2string, only: hm
     use SUFR_numerics, only: deq0
     
     use TheSky_local, only: tz, lat0,lon0,deltat
@@ -113,7 +115,7 @@ contains
     
     
     alt=0.d0; ha=0.d0; h0=0.d0; azAlt=0.d0; tmRad=0.d0
-    tc = 1        ! 0: geocentric, 1: topocentric;  see also different rsa for the Moon below
+    tc = 1  ! 0: geocentric (unused), 1: topocentric;  see also different rsa for the Moon below
     event = ['Transit time ','Rise time    ','Set time     ']
     
     if(abs(rsAlt).gt.1.d-9) then
@@ -139,7 +141,7 @@ contains
     agst0 = planpos(45)       ! AGST for midnight
     
     if(pl.eq.0) then  ! Moon
-       if(tc.eq.0) then  ! Geocentric
+       if(tc.eq.0) then  ! Geocentric (unused)
           rsa = asin(earthr/(planpos(4)*AU))*0.7275d0-0.5667d0*d2r  ! Exact altitude for Moon, ~0.1-0.2deg, for geocentric coord.
        else  ! tc.eq.1 - topocentric:
           rsa = -0.8333d0*d2r  ! For Moon, in combination with topocentric coordinates
@@ -166,7 +168,7 @@ contains
     
     do evi=1,evMax         ! Transit, rise, set
        iter = 0
-       accur = 1.d-3       ! Accuracy.  Initially 1d-3, later 1d-5 ~ 0.1s. Don't make this smaller than 1d-16
+       accur = 1.d-3       ! Accuracy (time in rad).  Initially 1d-3 (~14s), later 1d-5 (~0.14s). Don't make this smaller than 1d-16
        use_vsop = .false.  ! Initially
        
        dTmRad = huge(dTmRad)
@@ -176,7 +178,7 @@ contains
           
           if(abs(dTmRad).le.accur) then
              use_vsop = .true.
-             accur = 1.d-5  ! 1d-5~0.1s.  Changing this to 1.d-4 (~1s) speeds the code yearly_moon_table code up by ~30%.  Don't make this smaller than 1d-16.
+             accur = 1.d-5  ! 1d-5 rad ~ 0.14s.  Changing this to 1.d-4 (~1s) speeds the code yearly_moon_table code up by ~30%.  Don't make this smaller than 1d-16.
           end if
           
           if(use_vsop) then
@@ -207,7 +209,8 @@ contains
        
        
        if(iter.gt.30) then  ! Convergence failed
-          if(lcWarn .and. (pl.ne.3.or.nint(rsAlt).ne.-18)) write(0,'(A,F10.3,A)') '  * WARNING:  riset():  Riset failed to '// &
+          if(lcWarn .and. (pl.ne.3.or.nint(rsAlt).ne.-18)) &
+               write(0,'(A,F10.3,A)') '  * WARNING:  riset():  Riset failed to '// &
                'converge: '//trim(enpname(pl))//'  '//trim(event(evi)),rsAlt,'d *'
           
           tmRad(evi) = 0.d0
@@ -220,7 +223,7 @@ contains
           end if
        end if
        
-       
+       ! The Moon may rise/transit/set AFTER MIDNIGHT (t>24h; tmRad > 2pi):
        if(pl.eq.0 .and. tmRad(evi).gt.pi2) then  ! Moon;  in case after m_i = m_i+1, m_f > 1
           tmRad(evi) = 0.d0
           azAlt(evi) = 0.d0
@@ -262,9 +265,9 @@ contains
   
   
   !*********************************************************************************************************************************
-  !> \brief  Old routine for rise, transit and set times routine for planets and asteroids - don't use this for Sun and Moon
-  !!         Computes three sets of planet positions, and interpolates
-  !!
+  !> \brief  Old routine for rise, transit and set times for planets and asteroids - don't use this for Sun and Moon
+  !!         Computes three sets of planet positions, and interpolates between them.
+  !! 
   !! \param jd     Julian day number
   !! \param pl     Planet/object number  (-1 - 9: ES, Moon, Mer-Plu; >10000 asteroids)
   !! \param rsAlt  Altitude to return rise/set data for (degrees; 0. is actual rise/set).  rsAlt>90: compute transit only
@@ -326,12 +329,13 @@ contains
     
     rt=0.d0; tt=0.d0; st=0.d0;  rh=0.d0; ta=0.d0; sh=0.d0
     alt = 0.d0;  ha = 0.d0;  dTmdy = 0.d0;  h0 = 0.d0;  dec = 0.d0
-    tc = 1        ! 0: geocentric, 1: topocentricl;  see also different rsa for the Moon below
+    tc = 1        ! 0: geocentric (unused), 1: topocentricl;  see also different rsa for the Moon below
     event = ['Transit time ','Rise time    ','Set time     ']
     accur = 1.d-6          ! Accuracy.  1d-6 ~ 0.1s. Don't make this smaller than 1d-16
     
     
     rsa = -0.5667d0*d2r                     ! Standard rise/set altitude for planets
+    ! NOTE: Sun and Moon should not use this routine(!)
     if(pl.eq.3) rsa = rsa - 16.0d0*am2r     ! Compensate for radius of Sun, -16 arcminutes  ! rsa = -0.8333d0*d2r - default for Sun
     if(pl.eq.0) rsa = 0.125d0*d2r           ! Approximate standard altitude for Moon
     
@@ -353,8 +357,9 @@ contains
     dec1  = planpos(6+tc*20)
     agst0 = planpos(45)       ! AGST for midnight
     
+    ! NOTE: Sun and Moon should not use this routine(!)
     if(pl.eq.0) then
-       if(tc.eq.0) then  ! Geocentric
+       if(tc.eq.0) then  ! Geocentric (unused)
           rsa = asin(earthr/(planpos(4)*AU))*0.7275d0-0.5667d0*d2r  ! Exact altitude for Moon, ~0.1-0.2deg, for geocentric coord.
        else  ! tc.eq.1 - topocentric:
           rsa = -0.8333d0*d2r  ! For Moon, in combination with topocentric coordinates
@@ -420,7 +425,8 @@ contains
        
        
        if(iter.gt.30) then  ! Convergence failed
-          if(lcWarn .and. (pl.ne.3.or.nint(rsAlt).ne.-18)) write(0,'(A,F10.3,A)') '  * WARNING:  riset_ipol():  Riset failed '// &
+          if(lcWarn .and. (pl.ne.3.or.nint(rsAlt).ne.-18)) &
+               write(0,'(A,F10.3,A)') '  * WARNING:  riset_ipol():  Riset failed '// &
                'to converge: '//trim(enpname(min(pl,19)))//'  '//trim(event(evi)),rsAlt,'d'
           
           tmdy(evi) = 0.d0
@@ -434,6 +440,7 @@ contains
        end if
        
        
+       ! NOTE: Sun and Moon should not use this routine(!)
        if(pl.eq.0) then
           if(tmdy(evi).lt.0.) then    ! Sometimes, (at least) the Moon doesn't r,t,s twice, because m_i slightly > 1, and rev(m_i) << 1,
              dTmdy(evi) = dTmdy(evi) + 1.d0     ! then initially m_f < 0, though if m_i = m_i + 1,  then 0 < m_f < 1
@@ -455,6 +462,7 @@ contains
        end if  ! if(pl.eq.0)
        
        
+       ! NOTE: Sun and Moon should not use this routine(!)
        ! - If the time is < 0, the Moon's SET times (only?) may repeat the previous value on days where
        !   the Moon does not set.
        ! - Planets may rise/transit/set twice a day; do this only for Sun and Moon?
