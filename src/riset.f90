@@ -35,19 +35,19 @@ contains
   !! \param  pl        Planet/object number  (-1 - 9: ES, Moon, Mer-Plu; >10000 asteroids)
   !! \param  rsAlt     Altitude to return rise/set data for (degrees; 0. is actual rise/set).  rsAlt>90: compute transit only
   !! 
-  !! \param rt        Rise time (hours) (output)
-  !! \param tt        Transit time (hours) (output)
-  !! \param st        Set time (hours) (output)
+  !! \param  rt        Rise time (hours) (output)
+  !! \param  tt        Transit time (hours) (output)
+  !! \param  st        Set time (hours) (output)
   !! 
-  !! \param rh        Rising wind direction (rad) (output)
-  !! \param ta        Transit altitude (rad) (output)
-  !! \param sh        Setting wind direction (rad) (output)
+  !! \param  rh        Rising wind direction (rad) (output)
+  !! \param  ta        Transit altitude (rad) (output)
+  !! \param  sh        Setting wind direction (rad) (output)
   !! 
   !! \param  ltime     Passed to planet_position(). If .true., include light time, doubling the CPU time while gaining a bit of 
   !!                     accuracy (optional; default: false)
   !! \param  cWarn     Warn upon convergence failure (optional; default: true)
   !! 
-  !! \param converge  Number of iterations needed to converge (optional) (output)
+  !! \param  converge  Number of iterations needed to converge (optional) (output)
   !!
   !! \note
   !! - for rsAlt = 0.d0, rise and set times are computed
@@ -106,7 +106,7 @@ contains
     if(present(cWarn)) lcWarn = cWarn
     
     ! Use the old interpolation routine for all but Moon and Sun:
-    if(pl.ne.0.and.pl.ne.3) then  ! A planet
+    if(pl.ne.0.and.pl.ne.3) then  ! Not the Moon or the Sun, but a planet
        call riset_ipol(jd,pl, rt,tt,st, rh,ta,sh, rsAlt, lltime, lcWarn)
        return
     end if
@@ -183,13 +183,13 @@ contains
              ! Accuracy of 1 min = 0.25 deg = 4e-3 rad.  1.d-6,1.d-2 saves ~43% CPU time for the Sun, <1 round-off errors/year
              call planet_position(jd1,pl, LBaccur=1.d-6,Raccur=1.d-2, ltime=lltime)  ! Uses truncated VSOP87
           else
-            call planet_position_la(jd1,pl, 2,60)  ! Computes low-accuracy positions - calc=2 computes ra,dec - use 60 terms
+             call planet_position_la(jd1,pl, 2,60)  ! Computes low-accuracy positions - calc=2 computes ra,dec - use 60 terms
           end if
           
           ra  = planpos(5+tc*20)  ! Right ascension
           dec = planpos(6+tc*20)  ! Declination
           
-          ha  = rev2(th0 + lon0 - ra)                                  ! Hour angle
+          ha  = rev2(th0 + lon0 - ra)                                  ! Hour angle;  Meeus p.103
           ! ha  = planpos(8+tc*20)                                       ! Hour angle -/- DeltaT
           alt = asin(sin(lat0)*sin(dec) + cos(lat0)*cos(dec)*cos(ha))  ! Altitude;  Meeus, Eq.13.6
           
@@ -220,19 +220,26 @@ contains
           end if
        end if
        
+       
        if(pl.eq.0 .and. tmRad(evi).gt.pi2) then  ! Moon;  in case after m_i = m_i+1, m_f > 1
           tmRad(evi) = 0.d0
           azAlt(evi) = 0.d0
        end if
        
-       if(tmRad(evi).lt.0.d0 .and. deq0(rsAlt)) then
+       ! - If the time is < 0, the Moon's SET times (only?) may repeat the previous value on days where
+       !   the Moon does not set.
+       ! - Planets may rise/transit/set twice a day; do this only for Sun and Moon?
+       !   - The Sun is also used for twilight, which can cross midnight in summer, HENCE rsAlt?
+       !   - doesn't seem to matter...
+       if((pl.eq.0.or.pl.eq.3) .and. tmRad(evi).lt.0.d0 .and. deq0(rsAlt)) then
+       ! if((pl.eq.0.or.pl.eq.3) .and. tmRad(evi).lt.0.d0) then
           tmRad(evi) = 0.d0
           azAlt(evi) = 0.d0
        end if
        
        lconverge(evi) = iter  ! Number of iterations needed to converge
        
-    end do  ! evi
+    end do  ! evi: 1-evMax to cycle through transit, rise, set
     
     
     ! Store results:
@@ -370,6 +377,7 @@ contains
     
     tmdy = 0.d0
     azAlt = 0.d0
+    
     evMax = 3                    ! 'Maximum' event to compute: transit only: evMax=1, +rise/set: evMax=3
     if(abs(cosH0).gt.1.d0) then  ! Body never rises/sets
        evMax = 1                 ! Compute transit time and altitude only
@@ -396,7 +404,7 @@ contains
           dec = rsIpol(dec0,dec1,dec2, n)  ! Interpolate declination
           
           ha = rev2(th0 + lon0 - ra)                                   ! Hour angle;  Meeus p.103
-          alt = asin(sin(lat0)*sin(dec) + cos(lat0)*cos(dec)*cos(ha))  ! Meeus, Eq.13.6
+          alt = asin(sin(lat0)*sin(dec) + cos(lat0)*cos(dec)*cos(ha))  ! Altitude; Meeus, Eq.13.6
           
           ! Correction to transit/rise/set times:
           if(evi.eq.1) then  ! Transit
@@ -447,12 +455,18 @@ contains
        end if  ! if(pl.eq.0)
        
        
-       if(tmdy(evi).lt.0. .and. deq0(rsAlt)) then
+       ! - If the time is < 0, the Moon's SET times (only?) may repeat the previous value on days where
+       !   the Moon does not set.
+       ! - Planets may rise/transit/set twice a day; do this only for Sun and Moon?
+       !   - The Sun is also used for twilight, which can cross midnight in summer, HENCE rsAlt?
+       !   - doesn't seem to matter...
+       if((pl.eq.0.or.pl.eq.3) .and. tmdy(evi).lt.0.d0 .and. deq0(rsAlt)) then
+       ! if((pl.eq.0.or.pl.eq.3) .and. tmdy(evi).lt.0.d0) then
           tmdy(evi) = 0.d0
           azAlt(evi) = 0.d0
        end if
        
-       evi = evi+1  ! evi=1,evMax
+       evi = evi+1  ! evi=1,evMax: cycle through transit, rise, set
     end do  ! do while(evi.le.evMax)
     
     
