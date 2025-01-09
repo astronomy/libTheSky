@@ -231,12 +231,14 @@ contains
        
        ! - If the time is < 0, the Moon's SET times (only?) may repeat the previous value on days where
        !   the Moon does not set.
-       ! - Planets may rise/transit/set twice a day; do this only for Sun and Moon?
-       !   - The Sun is also used for twilight, which can cross midnight in summer, HENCE rsAlt?
-       !   - doesn't seem to matter...
+       ! - Don't do this for planets, which may rise/transit/set twice a day!
+       ! - Don't do this for twilight (Sun with rsAlt<0), which can cross midnight in summer!
+       ! - This may be needed for planets/the Sun near the poles...
+       ! 
        ! if(tmRad(evi).lt.0.d0 .and. deq0(rsAlt)) then  ! Pre-2025
-       if((pl.eq.0.or.pl.eq.3) .and. tmRad(evi).lt.0.d0 .and. deq0(rsAlt)) then
-       ! if((pl.eq.0.or.pl.eq.3) .and. tmRad(evi).lt.0.d0) then
+       ! if((pl.eq.0.or.pl.eq.3) .and. tmRad(evi).lt.0.d0 .and. deq0(rsAlt)) then  ! Sun and Moon only
+       ! if(pl.eq.0 .and. tmRad(evi).lt.0.d0 .and. deq0(rsAlt)) then  ! Moon only
+       if(pl.eq.0 .and. tmRad(evi).lt.0.d0) then  ! Moon only - all altitudes
           tmRad(evi) = 0.d0
           azAlt(evi) = 0.d0
        end if
@@ -466,12 +468,14 @@ contains
        ! NOTE: Sun and Moon should not use this routine(!)
        ! - If the time is < 0, the Moon's SET times (only?) may repeat the previous value on days where
        !   the Moon does not set.
-       ! - Planets may rise/transit/set twice a day; do this only for Sun and Moon?
-       !   - The Sun is also used for twilight, which can cross midnight in summer, HENCE rsAlt?
-       !   - doesn't seem to matter...
+       ! - Don't do this for planets, which may rise/transit/set twice a day!
+       ! - Don't do this for twilight (Sun with rsAlt<0), which can cross midnight in summer!
+       ! - This may be needed for planets/the Sun near the poles...
+       ! 
        ! if(tmdy(evi).lt.0.d0 .and. deq0(rsAlt)) then  ! Pre-2025
-       if((pl.eq.0.or.pl.eq.3) .and. tmdy(evi).lt.0.d0 .and. deq0(rsAlt)) then
-       ! if((pl.eq.0.or.pl.eq.3) .and. tmdy(evi).lt.0.d0) then
+       ! if((pl.eq.0.or.pl.eq.3) .and. tmdy(evi).lt.0.d0 .and. deq0(rsAlt)) then
+       ! if(pl.eq.0 .and. tmdy(evi).lt.0.d0 .and. deq0(rsAlt)) then  ! Moon only
+       if(pl.eq.0 .and. tmdy(evi).lt.0.d0) then  ! Moon only - all altitudes
           tmdy(evi) = 0.d0
           azAlt(evi) = 0.d0
        end if
