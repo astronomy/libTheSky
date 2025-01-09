@@ -108,7 +108,7 @@ contains
     if(present(cWarn)) lcWarn = cWarn
     
     ! Use the old interpolation routine for all but Moon and Sun:
-    if(pl.ne.0.and.pl.ne.3) then  ! Not the Moon or the Sun, but a planet
+    if(pl.ne.0.and.pl.ne.3) then  ! Not the Moon or the Sun, but a planet, comet or asteroid
        call riset_ipol(jd,pl, rt,tt,st, rh,ta,sh, rsAlt, lltime, lcWarn)
        return
     end if
@@ -131,8 +131,8 @@ contains
     
     call jd2cal(jd, yr,mnt,dy)
     
-    day0 = dble(int(dy))-tz/24.d0  ! Midnight local time, needed for agst0
-    jd0  = cal2jd(yr,mnt,day0)
+    day0 = dble(floor(dy))-tz/24.d0  ! Midnight local time, needed for agst0
+    jd0  = cal2jd(yr,mnt,day0)       ! Midnight local time, needed for agst0
     
     call planet_position_la(jd0, pl, 3, 60)  ! Compute low-accuracy positions - calc=2 computes ra,dec, calc=3 computes AGST
     
@@ -346,10 +346,10 @@ contains
     
     call jd2cal(jd,yr,mnt,dy)
     
-    day0 = dble(int(dy))-tz/24.d0  ! Midnight local time, needed for agst0
-    jd0  = cal2jd(yr,mnt,day0-1.d0)
-    jd1  = cal2jd(yr,mnt,day0)
-    jd2  = cal2jd(yr,mnt,day0+1.d0)
+    day0 = dble(floor(dy))-tz/24.d0  ! Midnight local time, needed for agst0
+    jd0  = cal2jd(yr,mnt,day0-1.d0)  ! Midnight local time, day before
+    jd1  = cal2jd(yr,mnt,day0)       ! Midnight local time, needed for agst0
+    jd2  = cal2jd(yr,mnt,day0+1.d0)  ! Midnight local time, day after
     
     call planet_position(jd0,pl, LBaccur=1.d-6,Raccur=1.d-2, ltime=ltime)
     ra0  = planpos(5+tc*20)
@@ -558,8 +558,8 @@ contains
     evMax = 3                     ! 'Maximum' event to compute: transit only: evMax=1, +rise/set: evMax=3
     if(rsAlt.gt.90.d0) evMax = 1  ! Compute transit time and altitude only
     
-    call jd2cal(jd,yr,mnt,dy)
-    day0 = dble(int(dy))-tz/24.d0  ! Midnight local time, needed for agst0
+    call jd2cal(jd, yr,mnt,dy)
+    day0 = dble(floor(dy))-tz/24.d0  ! Midnight local time, needed for agst0
     jd1  = cal2jd(yr,mnt,day0)
     call planet_position(jd1,3)
     agst0 = planpos(45)            ! AGST for midnight
