@@ -215,6 +215,7 @@ contains
   subroutine planet_visibility_tonight(jd, pl, sunAlt, plalt, comp,   plvis, plazs,   rts, tts, sts,  ras, tas, sas, rsCWarn)
     use SUFR_kinds, only: double
     use SUFR_constants, only: r2d
+    use SUFR_numerics, only: deq0
     use SUFR_angles, only: rv12
     use SUFR_sorting, only: sorted_index_list
     
@@ -228,7 +229,7 @@ contains
     logical, intent(in), optional :: rsCWarn
     
     integer :: irs, ix, maxi, ind(4)
-    real(double) :: alt, times(4),azs(4), st,sh,  lrts(5), ltts(5), lsts(5), lras(5),ltas(5),lsas(5)
+    real(double) :: alt, times(4),azs(4),  lrts(5), ltts(5), lsts(5), lras(5),ltas(5),lsas(5)
     logical :: sup,pup,pvis,pvisold, lrsCWarn
     
     lrts=0.d0; ltts=0.d0; lsts=0.d0; lras=0.d0;ltas=0.d0;lsas=0.d0; plvis=0.d0
@@ -246,11 +247,9 @@ contains
     do irs=1,maxi   ! 1-twilight (sun @sunAlt), 2-Sun rise/set
        if(irs.eq.2) alt = 0.d0
        
-       ! Today:     END of twilight (lsts(1))  OR  sunSET (lsts(2)):
-       call riset(jd, 3,   lrts(irs), ltts(irs), lsts(irs),   lras(irs), ltas(irs), lsas(irs),   alt,  cWarn=lrsCWarn)
+       ! Tonight:
+       call riset(jd, 3,   lrts(irs), ltts(irs), lsts(irs),   lras(irs), ltas(irs), lsas(irs),   alt,  for_night=.true.,  cWarn=lrsCWarn)
        
-       ! Tomorrow:  START of twilight (lrts(1))  OR  sunRISE (lrts(2)):
-       if(comp.lt.10) call riset(jd+1.d0, 3,   lrts(irs), ltts(irs), st,   lras(irs), ltas(irs), sh,   alt,  cWarn=lrsCWarn)
     end do  ! irs=1,2
     
     
@@ -261,11 +260,14 @@ contains
     do irs=4,maxi   ! 4-planet @plalt, 5-planet rise/set
        if(irs.eq.5) alt = 0.d0
        
-       ! Today: planet RISES above given altitude (lrts(4))  OR  planet RISES (lrts(5)):
-       call riset(jd, pl,   lrts(irs), ltts(irs), lsts(irs),   lras(irs), ltas(irs), lsas(irs),   alt,  cWarn=lrsCWarn)
+       ! Tonight:
+       call riset(jd, pl,   lrts(irs), ltts(irs), lsts(irs),   lras(irs), ltas(irs), lsas(irs),   alt,  for_night=.true., cWarn=lrsCWarn)
        
-       ! Tomorrow: planet DROPS below given altitude (lsts(4))  OR  planet SETS (lsts(5)):
-       if(comp.lt.10) call riset(jd+1.d0, pl,   lrts(irs), ltts(irs), st,   lras(irs), ltas(irs), sh,   alt,  cWarn=lrsCWarn)
+       ! If time==0.0 from riset(for_night=.true.), the time lies around noon:
+       if(deq0(lrts(irs))) lrts(irs) = -12.d0  ! Rise at the beginning of the "night" -> probably still up at dusk
+       ! if(deq0(ltts(irs))) ltts(irs) = 12.d0
+       if(deq0(lsts(irs))) lsts(irs) = 12.d0   ! Set at the end of the "night" (-> was likely up at dawn)
+       
     end do  ! irs=4,5
     
     
