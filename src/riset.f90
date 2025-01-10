@@ -32,24 +32,28 @@ contains
   !!         This version recomputes positions (low accuracy first, then full accuracy) during the convergence process.
   !!         See riset_ipol() for a version using interpolation, to be used for planets only(!)
   !! 
-  !! \param  jd        Julian day number
-  !! \param  pl        Planet/object number  (-1 - 9: ES, Moon, Mer-Plu; >10000 asteroids)
-  !! \param  rsAlt     Altitude to return rise/set data for (degrees; 0. is actual rise/set).  rsAlt>90: compute transit only
+  !! \param jd         Julian day number.  The rise/transit and set data are computed for the (calendar) DAY of this JD (midnight-midnight),
+  !!                   unless for_night=.true. in which case this happens for the NIGHT starting at JD.
+  !! \param pl         Planet/object number  (-1 - 9: ES, Moon, Mer-Plu; >10000: asteroids)
   !! 
-  !! \param  rt        Rise time (hours) (output)
-  !! \param  tt        Transit time (hours) (output)
-  !! \param  st        Set time (hours) (output)
+  !! \param rt         Rise time (hours) (output)
+  !! \param tt         Transit time (hours) (output)
+  !! \param st         Set time (hours) (output)
   !! 
-  !! \param  rh        Rising wind direction (rad) (output)
-  !! \param  ta        Transit altitude (rad) (output)
-  !! \param  sh        Setting wind direction (rad) (output)
+  !! \param rh         Rising wind direction (rad) (output)
+  !! \param ta         Transit altitude (rad) (output)
+  !! \param sh         Setting wind direction (rad) (output)
   !! 
-  !! \param  ltime     Passed to planet_position(). If .true., include light time, doubling the CPU time while gaining a bit of 
+  !! \param rsAlt      Altitude to return rise/set data for (degrees; 0. is actual rise/set).  rsAlt>90: compute transit only
+  !! \param for_night  Compute rise/tranit/set data for the NIGHT starting at the indicated JD, rather than the calendar day.
+  !!                   Times between 0h and 12h are for the NEXT calendar day! (optional; default: false)
+  !! 
+  !! \param ltime      Passed to planet_position(). If .true., include light time, doubling the CPU time while gaining a bit of 
   !!                     accuracy (optional; default: false)
-  !! \param  cWarn     Warn upon convergence failure (optional; default: true)
+  !! \param cWarn      Warn upon convergence failure (optional; default: true)
   !! 
-  !! \param  converge  Number of iterations needed to converge (optional) (output)
-  !!
+  !! \param converge   Number of iterations needed to converge (optional) (output)
+  !! 
   !! \note
   !! - for rsAlt = 0.d0, rise and set times are computed
   !! - for (rsAlt.ne.0), the routine calculates when alt=rsAlt is reached
@@ -58,7 +62,7 @@ contains
   !! - Moon transit error ~0.15s (?)
   !! 
   !! \todo
-  !! - This version sometimes finds the answer tmRad(i)>1, which is the answer for the next day...
+  !! - This version sometimes finds the answer tmRad(i)>2pi, which is the answer for the next day...
   !!   - (only?) solution: use a solver on JD for az,alt
   !! 
   !! \note Speed wrt riset_ipol(), transit only, when using low-accuracy approximations:
@@ -75,13 +79,13 @@ contains
   !! - Meeus, Astronomical algorithms, Ch.15, but with geographic longitude east of Greenwich defined as > 0
   
   
-  subroutine riset(jd,pl,  rt,tt,st, rh,ta,sh,  rsAlt, ltime, cWarn, converge)
+  subroutine riset(jd,pl,  rt,tt,st, rh,ta,sh,  rsAlt, for_night, ltime, cWarn, converge)
     use SUFR_kinds, only: double
     use SUFR_constants, only: pi2, d2r,am2r, r2h, enpname, earthr,AU
     use SUFR_angles, only: rev, rev2
     use SUFR_date_and_time, only: cal2jd,jd2cal
     use SUFR_time2string, only: hm
-    use SUFR_numerics, only: deq0
+    use SUFR_numerics, only: deq0, deq
     
     use TheSky_local, only: tz, lat0,lon0,deltat
     use TheSky_planets, only: planet_position, planet_position_la
@@ -92,14 +96,19 @@ contains
     integer, intent(in) :: pl
     real(double), intent(in) :: jd, rsAlt
     real(double), intent(out) :: rt,tt,st,rh,ta,sh
-    logical, intent(in), optional :: ltime, cWarn
+    logical, intent(in), optional :: for_night, ltime, cWarn
     integer, intent(out), optional :: converge(3)
     
     integer :: evi,iter,yr,mnt,tc,evMax, lconverge(3)
-    real(double) :: dy,day0,  jd0,jd1,tmRad(3),  ra,dec
+    real(double) :: dy,day0,  jd0,jd1,tmRad(3),tmhr(3),  ra,dec
     real(double) :: rsa,cosH0,h0,agst0,th0,dTmRad,accur,  ha,alt,azAlt(3)
     character :: event(3)*(13)
-    logical :: use_vsop, lltime, lcWarn
+    logical :: use_vsop, lfor_night, lltime, lcWarn
+    
+    
+    ! Take care of optional input variables:
+    lfor_night = .false.  ! Compute rise/transit/set times for a given NIGHT, rather than a calendar day
+    if(present(for_night)) lfor_night = for_night
     
     lltime = .false.                    ! Call planet_position() IGNORING light time by default (faster, lower accuracy)
     if(present(ltime)) lltime = ltime
@@ -109,7 +118,7 @@ contains
     
     ! Use the old interpolation routine for all but Moon and Sun:
     if(pl.ne.0.and.pl.ne.3) then  ! Not the Moon or the Sun, but a planet, comet or asteroid
-       call riset_ipol(jd,pl, rt,tt,st, rh,ta,sh, rsAlt, lltime, lcWarn)
+       call riset_ipol(jd,pl, rt,tt,st, rh,ta,sh, rsAlt, for_night=lfor_night, ltime=lltime, cWarn=lcWarn)
        return
     end if
     
@@ -130,9 +139,9 @@ contains
     if(rsAlt.gt.90.d0) evMax = 1  ! Compute transit time and altitude only
     
     call jd2cal(jd, yr,mnt,dy)
-    
-    day0 = dble(floor(dy))-tz/24.d0  ! Midnight local time, needed for agst0
-    jd0  = cal2jd(yr,mnt,day0)       ! Midnight local time, needed for agst0
+    day0 = dble(floor(dy))-tz/24.d0     ! Midnight local time at the start of the desired DAY, needed for agst0
+    if(lfor_night) day0 = day0 + 0.5d0  ! Noon local time at the start of the desired NIGHT, needed for agst0
+    jd0  = cal2jd(yr,mnt,day0)          ! Midnight local time at the start of the desired day, needed for agst0
     
     call planet_position_la(jd0, pl, 3, 60)  ! Compute low-accuracy positions - calc=2 computes ra,dec, calc=3 computes AGST
     
@@ -174,7 +183,7 @@ contains
        dTmRad = huge(dTmRad)
        do while(abs(dTmRad).ge.accur .or. .not.use_vsop)
           th0 = agst0 + 1.002737909350795d0*tmRad(evi)   ! Solar day in sidereal days in 2000; Expl.Suppl.tt.Astr.Almanac 3rdEd 
-          jd1 = jd0 + tmRad(evi)/pi2 + deltat/86400.d0   !                                    Eq.3.17 (removed '...37...' typo)
+          jd1 = jd0 + tmRad(evi)/pi2 + deltat/86400.d0   ! ra, s -> days                       Eq.3.17 (removed '...37...' typo)
           
           if(abs(dTmRad).le.accur) then
              use_vsop = .true.
@@ -249,16 +258,25 @@ contains
     
     
     ! Store results:
-    tmRad = tmRad * r2h                ! Times radians -> hours
+    tmhr = tmRad * r2h                ! Times radians -> hours
+    if(lfor_night) then
+       tmhr = tmhr + 12   ! Times relative to noon -> relative to midnight
+       if(deq(tmhr(1),12.d0)) tmhr(1) = 0.d0
+       if(deq(tmhr(2),12.d0)) tmhr(2) = 0.d0
+       if(deq(tmhr(3),12.d0)) tmhr(3) = 0.d0
+    end if
     
-    tt = tmRad(1)                      ! Transit time
-    rt = tmRad(2)                      ! Rise time
-    st = tmRad(3)                      ! Set time
+    
+    tt = tmhr(1)                       ! Transit time
+    rt = tmhr(2)                       ! Rise time
+    st = tmhr(3)                       ! Set time
     
     ta = azAlt(1) + refract(azAlt(1))  ! Transit altitude + refraction
     rh = azAlt(2)                      ! Rise azimuth
     sh = azAlt(3)                      ! Set azimuth
     
+    
+    ! Take care of optional output variables:
     if(present(converge)) converge = lconverge  ! Number of iterations needed to converge
     
   end subroutine riset
@@ -271,19 +289,24 @@ contains
   !> \brief  Old routine for rise, transit and set times for planets and asteroids - don't use this for Sun and Moon
   !!         Computes three sets of planet positions, and interpolates between them.
   !! 
-  !! \param jd     Julian day number
-  !! \param pl     Planet/object number  (-1 - 9: ES, Moon, Mer-Plu; >10000 asteroids)
-  !! \param rsAlt  Altitude to return rise/set data for (degrees; 0. is actual rise/set).  rsAlt>90: compute transit only
+  !! \param jd         Julian day number.  The rise/transit and set data are computed for the (calendar) DAY of this JD (midnight-midnight),
+  !!                   unless for_night=.true. in which case this happens for the NIGHT starting at JD.
+  !! \param pl         Planet/object number  (-1 - 9: ES, Moon, Mer-Plu; >10000: asteroids)
   !!
-  !! \param rt   Rise time (hours) (output)
-  !! \param tt   Transit time (hours) (output)
-  !! \param st   Set time (hours) (output)
-  !! \param rh   Rising wind direction (rad) (output)
-  !! \param ta   Transit altitude (rad) (output)
-  !! \param sh   Setting wind direction (rad) (output)
+  !! \param rt         Rise time (hours) (output)
+  !! \param tt         Transit time (hours) (output)
+  !! \param st         Set time (hours) (output)
   !! 
-  !! \param ltime  Passed to planet_position(). If .true., include light time, doubling the CPU time while gaining a bit of accur.
-  !! \param cWarn  Warn upon convergence failure (optional; default: true)
+  !! \param rh         Rising wind direction (rad) (output)
+  !! \param ta         Transit altitude (rad) (output)
+  !! \param sh         Setting wind direction (rad) (output)
+  !! 
+  !! \param rsAlt      Altitude to return rise/set data for (degrees; 0. is actual rise/set).  rsAlt>90: compute transit only
+  !! \param for_night  Compute rise/tranit/set data for the NIGHT starting at the indicated JD, rather than the calendar day.
+  !!                   Times between 0h and 12h are for the NEXT calendar day! (optional; default: false)
+  !! 
+  !! \param ltime      Passed to planet_position(). If .true., include light time, doubling the CPU time while gaining a bit of accur.
+  !! \param cWarn      Warn upon convergence failure (optional; default: true)
   !! 
   !! \note
   !! - for rsAlt = 0.d0, rise and set times are computed
@@ -295,13 +318,13 @@ contains
   !! \see
   !! - Meeus, Astronomical algorithms, Ch.15, but with geographic longitude east of Greenwich defined as > 0
   
-  subroutine riset_ipol(jd,pl, rt,tt,st, rh,ta,sh, rsAlt, ltime, cWarn)
+  subroutine riset_ipol(jd,pl, rt,tt,st, rh,ta,sh, rsAlt, for_night, ltime, cWarn)
     use SUFR_kinds, only: double
     use SUFR_constants, only: pi,pi2, d2r,am2r, enpname, earthr,AU
     use SUFR_system, only: warn
     use SUFR_angles, only: rev, rev2
     use SUFR_date_and_time, only: cal2jd,jd2cal
-    use SUFR_numerics, only: deq0
+    use SUFR_numerics, only: deq0, deq
     
     use TheSky_local, only: tz, lat0,lon0,deltat
     use TheSky_planets, only: planet_position
@@ -312,15 +335,22 @@ contains
     integer, intent(in) :: pl
     real(double), intent(in) :: jd, rsAlt
     real(double), intent(out) :: rt,tt,st, rh,ta,sh
-    logical, intent(in) :: ltime
-    logical, intent(in), optional :: cWarn
+    logical, intent(in), optional :: for_night, ltime, cWarn
     
     integer :: evi,iter,yr,mnt,tc,evMax, indic
-    real(double) :: dy,day0,  jd0,jd1,jd2,tmdy(3),dTmdy(3)
+    real(double) :: dy,day0,  jd0,jd1,jd2, tmdy(3),dTmdy(3), tmhr(3)
     real(double) :: ra0,dec0,ra1,dec1,ra2,dec2,ra,dec, rsa,cosH0,h0,agst0,th0,n,dtm,accur,  ha,alt,azAlt(3)
     character :: event(3)*(13)
-    logical :: lcWarn
+    logical :: lfor_night, lltime, lcWarn
     save :: indic
+    
+    
+    ! Take care of optional input variables:
+    lfor_night = .true.
+    if(present(for_night)) lfor_night = for_night
+    
+    lltime = .true.
+    if(present(ltime)) lltime = ltime
     
     lcWarn = .true.
     if(present(cWarn)) lcWarn = cWarn
@@ -345,17 +375,17 @@ contains
     if(abs(rsAlt).gt.1.d-9) rsa = rsAlt*d2r
     
     call jd2cal(jd,yr,mnt,dy)
-    
-    day0 = dble(floor(dy))-tz/24.d0  ! Midnight local time, needed for agst0
+    day0 = dble(floor(dy))-tz/24.d0  ! Midnight local time of the desired day, needed for agst0
+    if(lfor_night) day0 = day0 + 0.5d0  ! Noon local time at the start of the desired NIGHT, needed for agst0
     jd0  = cal2jd(yr,mnt,day0-1.d0)  ! Midnight local time, day before
     jd1  = cal2jd(yr,mnt,day0)       ! Midnight local time, needed for agst0
     jd2  = cal2jd(yr,mnt,day0+1.d0)  ! Midnight local time, day after
     
-    call planet_position(jd0,pl, LBaccur=1.d-6,Raccur=1.d-2, ltime=ltime)
+    call planet_position(jd0,pl, LBaccur=1.d-6,Raccur=1.d-2, ltime=lltime)
     ra0  = planpos(5+tc*20)
     dec0 = planpos(6+tc*20)
     
-    call planet_position(jd1,pl, LBaccur=1.d-6,Raccur=1.d-2, ltime=ltime)
+    call planet_position(jd1,pl, LBaccur=1.d-6,Raccur=1.d-2, ltime=lltime)
     ra1   = planpos(5+tc*20)
     dec1  = planpos(6+tc*20)
     agst0 = planpos(45)       ! AGST for midnight
@@ -369,7 +399,7 @@ contains
        end if
     end if
     
-    call planet_position(jd2,pl, LBaccur=1.d-6,Raccur=1.d-2, ltime=ltime)
+    call planet_position(jd2,pl, LBaccur=1.d-6,Raccur=1.d-2, ltime=lltime)
     ra2  = planpos(5+tc*20)
     dec2 = planpos(6+tc*20)
     
@@ -406,7 +436,7 @@ contains
        
        dtm = huge(dtm)
        do while(abs(dtm).ge.accur)
-          th0 = agst0 + 6.300388092591991d0*tmdy(evi)  ! Meeus, p.103
+          th0 = agst0 + 6.300388092591991d0*tmdy(evi)  ! Siderial day in radians; Meeus, p.103
           n   = tmdy(evi) + deltat/86400.d0
           ra  = rsIpol( ra0, ra1, ra2, n)  ! Interpolate right ascension
           dec = rsIpol(dec0,dec1,dec2, n)  ! Interpolate declination
@@ -485,9 +515,17 @@ contains
     
     
     ! Store results:
-    rt = tmdy(2)*24                    ! Rise time - days -> hours
-    tt = tmdy(1)*24                    ! Transit time - days -> hours
-    st = tmdy(3)*24                    ! Set time - days -> hours
+    tmhr = tmdy * 24                   ! Times days -> hours
+    if(lfor_night) then
+       tmhr = tmhr + 12   ! Times relative to noon -> relative to midnight
+       if(deq(tmhr(1),12.d0)) tmhr(1) = 0.d0
+       if(deq(tmhr(2),12.d0)) tmhr(2) = 0.d0
+       if(deq(tmhr(3),12.d0)) tmhr(3) = 0.d0
+    end if
+    
+    rt = tmhr(2)                       ! Rise time
+    tt = tmhr(1)                       ! Transit time
+    st = tmhr(3)                       ! Set time
     
     rh = azAlt(2)                      ! Rise azimuth
     ta = azAlt(1) + refract(azAlt(1))  ! Transit altitude + refraction
@@ -502,19 +540,23 @@ contains
   !*********************************************************************************************************************************
   !> \brief Rise, transit and set times routine for an object with fixed ra & dec
   !!
-  !! \param jd     Julian day number
-  !! \param ra     Right ascension (rad)
-  !! \param dec    Declination (rad)
-  !! \param rsAlt  Altitude to return rise/set data for (degrees; 0. is actual rise/set).  rsAlt>90: compute transit only
+  !! \param jd         Julian day number
+  !! \param ra         Right ascension (rad)
+  !! \param dec        Declination (rad)
   !!
-  !! \param rt   Rise time (hours) (output)
-  !! \param tt   Transit time (hours) (output)
-  !! \param st   Set time (hours) (output)
-  !! \param rh   Rising wind direction (rad) (output)
-  !! \param ta   Transit altitude (rad) (output)
-  !! \param sh   Setting wind direction (rad) (output)
+  !! \param rt         Rise time (hours) (output)
+  !! \param tt         Transit time (hours) (output)
+  !! \param st         Set time (hours) (output)
+  !! 
+  !! \param rh         Rising wind direction (rad) (output)
+  !! \param ta         Transit altitude (rad) (output)
+  !! \param sh         Setting wind direction (rad) (output)
   !!
-  !! \param cWarn  Warn upon convergence failure (optional; default: true)
+  !! \param rsAlt      Altitude to return rise/set data for (degrees; 0. is actual rise/set).  rsAlt>90: compute transit only
+  !! \param for_night  Compute rise/tranit/set data for the NIGHT starting at the indicated JD, rather than the calendar day.
+  !!                     Times between 0h and 12h are for the NEXT calendar day! (optional; default: false)
+  !!
+  !! \param cWarn      Warn upon convergence failure (optional; default: true)
   !!
   !! for rsAlt = 0., rise and set times are computed
   !! for rsAlt.ne.0, the routine calculates when alt=rsAlt is reached
@@ -524,12 +566,12 @@ contains
   !! \see
   !! - Meeus, Astronomical algorithms, Ch.15, but with geographic longitude east of Greenwich defined as > 0
   
-  subroutine riset_ad(jd, ra,dec, rt,tt,st,rh,ta,sh, rsAlt, cWarn)
+  subroutine riset_ad(jd, ra,dec, rt,tt,st,rh,ta,sh, rsAlt, for_night, cWarn)
     use SUFR_kinds, only: double
     use SUFR_constants, only: pi2, d2r
     use SUFR_angles, only: rev, rev2
     use SUFR_date_and_time, only: cal2jd, jd2cal
-    use SUFR_numerics, only: deq0
+    use SUFR_numerics, only: deq0, deq
     
     use TheSky_planets, only: planet_position
     use TheSky_planetdata, only: planpos
@@ -538,20 +580,22 @@ contains
     implicit none
     real(double), intent(in) :: jd, ra,dec, rsAlt
     real(double), intent(out) :: rt,tt,st,rh,ta,sh
-    logical, intent(in), optional :: cWarn
+    logical, intent(in), optional :: for_night, cWarn
     
     integer :: evi,iter,yr,mnt,evMax
-    real(double) :: dy,day0,jd1,tmdy(3),  rsa,cosH0,h0,agst0,th0,dtm,accur,  ha,alt,azAlt(3) !,n
+    real(double) :: dy,day0,jd0, tmdy(3),tmhr(3),  rsa,cosH0,h0,agst0,th0,dtm,accur,  ha,alt,azAlt(3)  !,n
     character :: event(3)*(13)
-    logical :: lcWarn
+    logical :: lfor_night, lcWarn
+    
+    ! Take care of optional input variables:
+    lfor_night = .true.
+    if(present(for_night)) lfor_night = for_night
     
     lcWarn = .true.
     if(present(cWarn)) lcWarn = cWarn
     
     alt = 0.d0;  ha = 0.d0;  h0 = 0.d0
-    
     accur = 1.d-6  ! Accuracy.  1d-6 ~ 0.1s. Don't make this smaller than 1d-16
-    
     event = ['Transit time ','Rise time    ','Set time     ']
     
     rsa = rsAlt*d2r
@@ -559,10 +603,12 @@ contains
     if(rsAlt.gt.90.d0) evMax = 1  ! Compute transit time and altitude only
     
     call jd2cal(jd, yr,mnt,dy)
-    day0 = dble(floor(dy))-tz/24.d0  ! Midnight local time, needed for agst0
-    jd1  = cal2jd(yr,mnt,day0)
-    call planet_position(jd1,3)
-    agst0 = planpos(45)            ! AGST for midnight
+    day0 = dble(floor(dy))-tz/24.d0     ! Midnight local time of the desired day, needed for agst0
+    if(lfor_night) day0 = day0 + 0.5d0  ! Noon local time at the start of the desired NIGHT, needed for agst0
+    jd0  = cal2jd(yr,mnt,day0)
+    
+    call planet_position(jd0,3)
+    agst0 = planpos(45)            ! AGST for midnight (or noon)
     
     tmdy = 0.d0
     azAlt = 0.d0
@@ -586,7 +632,7 @@ contains
        iter = 0
        dtm = huge(dtm)
        do while(abs(dtm).ge.accur)
-          th0 = agst0 + 6.300388092591991d0*tmdy(evi)  ! Meeus, p.103
+          th0 = agst0 + 6.300388092591991d0*tmdy(evi)  ! Siderial day in radians; Meeus, p.103
           
           ha = rev2(th0 + lon0 - ra)                                   ! Hour angle;  Meeus p.103
           alt = asin(sin(lat0)*sin(dec) + cos(lat0)*cos(dec)*cos(ha))  ! Altitude;  Meeus Eq. 13.6
@@ -626,9 +672,17 @@ contains
     
     
     ! Store results:
-    rt = tmdy(2)*24  ! Rise time - days -> hours
-    tt = tmdy(1)*24  ! Transit time - days -> hours
-    st = tmdy(3)*24  ! Set time - days -> hours
+    tmhr = tmdy * 24                   ! Times days -> hours
+    if(lfor_night) then
+       tmhr = tmhr + 12   ! Times relative to noon -> relative to midnight
+       if(deq(tmhr(1),12.d0)) tmhr(1) = 0.d0
+       if(deq(tmhr(2),12.d0)) tmhr(2) = 0.d0
+       if(deq(tmhr(3),12.d0)) tmhr(3) = 0.d0
+    end if
+    
+    rt = tmhr(2)   ! Rise time
+    tt = tmhr(1)   ! Transit time
+    st = tmhr(3)   ! Set time
     
     rh = azAlt(2)  ! Rise azimuth
     ta = azAlt(1)  ! Transit altitude
