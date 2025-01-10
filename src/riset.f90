@@ -261,11 +261,8 @@ contains
     tmhr = tmRad * r2h                ! Times radians -> hours
     if(lfor_night) then
        tmhr = tmhr + 12   ! Times relative to noon -> relative to midnight
-       if(deq(tmhr(1),12.d0)) tmhr(1) = 0.d0
-       if(deq(tmhr(2),12.d0)) tmhr(2) = 0.d0
-       if(deq(tmhr(3),12.d0)) tmhr(3) = 0.d0
+       where(deq(tmhr,12.d0)) tmhr = 0.d0
     end if
-    
     
     tt = tmhr(1)                       ! Transit time
     rt = tmhr(2)                       ! Rise time
@@ -518,9 +515,7 @@ contains
     tmhr = tmdy * 24                   ! Times days -> hours
     if(lfor_night) then
        tmhr = tmhr + 12   ! Times relative to noon -> relative to midnight
-       if(deq(tmhr(1),12.d0)) tmhr(1) = 0.d0
-       if(deq(tmhr(2),12.d0)) tmhr(2) = 0.d0
-       if(deq(tmhr(3),12.d0)) tmhr(3) = 0.d0
+       where(deq(tmhr,12.d0)) tmhr = 0.d0
     end if
     
     rt = tmhr(2)                       ! Rise time
@@ -675,9 +670,7 @@ contains
     tmhr = tmdy * 24                   ! Times days -> hours
     if(lfor_night) then
        tmhr = tmhr + 12   ! Times relative to noon -> relative to midnight
-       if(deq(tmhr(1),12.d0)) tmhr(1) = 0.d0
-       if(deq(tmhr(2),12.d0)) tmhr(2) = 0.d0
-       if(deq(tmhr(3),12.d0)) tmhr(3) = 0.d0
+       where(deq(tmhr,12.d0)) tmhr = 0.d0
     end if
     
     rt = tmhr(2)   ! Rise time
