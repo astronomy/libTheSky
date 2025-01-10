@@ -215,7 +215,7 @@ contains
   subroutine planet_visibility_tonight(jd, pl, sunAlt, plalt, comp,   plvis, plazs,   rts, tts, sts,  ras, tas, sas, rsCWarn)
     use SUFR_kinds, only: double
     use SUFR_constants, only: r2d
-    use SUFR_numerics, only: deq0
+    use SUFR_numerics, only: deq, deq0
     use SUFR_angles, only: rv12
     use SUFR_sorting, only: sorted_index_list
     
@@ -228,9 +228,12 @@ contains
     real(double), intent(out), optional :: plazs(2),  rts(5), tts(5), sts(5),  ras(5), tas(5), sas(5)
     logical, intent(in), optional :: rsCWarn
     
-    integer :: irs, ix, maxi, ind(4)
+    integer :: irs, ix, maxi, ind(4), oldComp, firstCall
     real(double) :: alt, times(4),azs(4),  lrts(5), ltts(5), lsts(5), lras(5),ltas(5),lsas(5)
+    real(double) :: oldJD, oldSunAlt, oldSunData(6,2)
     logical :: sup,pup,pvis,pvisold, lrsCWarn
+    
+    save firstCall, oldComp, oldJD, oldSunAlt, oldSunData
     
     lrts=0.d0; ltts=0.d0; lsts=0.d0; lras=0.d0;ltas=0.d0;lsas=0.d0; plvis=0.d0
     if(present(plazs)) plazs=0.d0
@@ -245,12 +248,30 @@ contains
     if(comp.eq.2.or.comp.eq.12) maxi = 2  ! include rise/set times - (2,5)
     alt = sunAlt
     do irs=1,maxi   ! 1-twilight (sun @sunAlt), 2-Sun rise/set
-       if(irs.eq.2) alt = 0.d0
        
-       ! Tonight:
-       call riset(jd, 3,   lrts(irs), ltts(irs), lsts(irs),   lras(irs), ltas(irs), lsas(irs),   alt,  for_night=.true.,  cWarn=lrsCWarn)
+       if( firstCall.eq.12345 .and. comp.eq.oldComp .and. deq(jd,oldJD) .and. deq(sunAlt,oldSunAlt)) then
+          ! Restore old Sun data w/o calculation:
+          lrts(irs) = oldSunData(1, irs)
+          ltts(irs) = oldSunData(2, irs)
+          lsts(irs) = oldSunData(3, irs)
+          lras(irs) = oldSunData(4, irs)
+          ltas(irs) = oldSunData(5, irs)
+          lsas(irs) = oldSunData(6, irs)
+       else
+          if(irs.eq.2) alt = 0.d0
+          
+          ! Compute and store times for tonight:
+          call riset(jd, 3,   lrts(irs), ltts(irs), lsts(irs),   lras(irs), ltas(irs), lsas(irs),   alt,  for_night=.true.,  cWarn=lrsCWarn)
+          oldSunData(1:6, irs) = [lrts(irs), ltts(irs), lsts(irs),   lras(irs), ltas(irs), lsas(irs)]
+       end if
        
     end do  ! irs=1,2
+    
+    ! Save the current input parameters for the next call:
+    firstCall = 12345
+    oldComp   = comp
+    oldJD     = jd
+    oldSunAlt = sunAlt
     
     
     ! Planet:
