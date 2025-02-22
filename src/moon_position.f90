@@ -174,27 +174,36 @@ contains
   !> \brief  Compute the spherical lunar coordinates using the ELP2000/MPP02 lunar theory in the dynamical mean ecliptic and
   !!           equinox of J2000.
   !!
-  !! \param jd    Julian day to compute Moon position for
-  !! \param mode  Index of the corrections to the constants: 0-Fit to LLR observations, 1-Fit to DE405 1950-2060 (historical)
+  !! \param jd        Julian day to compute Moon position for
+  !! \param mode      Index of the corrections to the constants: 0-Fit to LLR observations, 1-Fit to DE405 1950-2060 (historical)
   !!
-  !! \param  lon  Ecliptic longitude (rad) (output)
-  !! \param  lat  Ecliptic latitude (rad) (output)
-  !! \param  rad  Distance (AU) (output)
+  !! \param  lon      Ecliptic longitude (rad) (output)
+  !! \param  lat      Ecliptic latitude (rad) (output)
+  !! \param  rad      Distance (AU) (output)
+  !! 
+  !! \param  precess  Apply precession (input, optional, default=.true.)
   !!
   !! \note  See Lunar Solution ELP 2000/MPP02, Chapront & Francou (2002): ftp://cyrano-se.obspm.fr/pub/2_lunar_solutions/2_elpmpp02/
   
-  subroutine elp_mpp02_lbr(jd, mode, lon,lat,rad)
+  subroutine elp_mpp02_lbr(jd, mode, lon,lat,rad, precess)
     use SUFR_kinds, only: double
-    use SUFR_constants, only: jd2000, au, km  !, r2d
+    use SUFR_constants, only: jd2000, au,km
     use SUFR_angles, only: rev
     use TheSky_coordinates, only: precess_ecl
     
     implicit none
     real(double), intent(in) :: jd
     integer, intent(in) :: mode
+    logical, intent(in), optional :: precess
     real(double), intent(out) :: lon,lat,rad
+    
     integer :: ierr
     real(double) :: xyz(3),vxyz(3)
+    logical :: lprecess
+    
+    ! Handle optional parameters:
+    lprecess = .true.
+    if(present(precess)) lprecess = precess
     
     call elp_mpp02_xyz(jd, mode, xyz,vxyz, ierr)
     
@@ -203,7 +212,8 @@ contains
     lon = atan2(xyz(2),xyz(1))
     lat = asin(xyz(3)/rad)
     
-    call precess_ecl(jd2000,jd, lon,lat)
+    if(lprecess) call precess_ecl(jd2000,jd, lon,lat)
+    lon = rev(lon)
     
     rad = rad*km/au  ! km -> AU
     
