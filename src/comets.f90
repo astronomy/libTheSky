@@ -1,7 +1,7 @@
 !> \file comets.f90  Contains modules and procedures to compute comet positions and properties for libTheSky
 
 
-!  Copyright (c) 2002-2023  Marc van der Sluys - marc.vandersluys.nl
+!  Copyright (c) 2002-2025  Marc van der Sluys - Nikhef/Utrecht University - marc.vandersluys.nl
 !   
 !  This file is part of the libTheSky package, 
 !  see: https://libthesky.sf.net/

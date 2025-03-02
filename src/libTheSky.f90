@@ -5,15 +5,15 @@
 !!  available for free under the conditions of the EUPL v.1.2.
 !!  
 !!  \par  
-!!  Copyright &copy; 2002-2023 Marc van der Sluys - 
-!!  <a href="http://marc.vandersluys.nl">marc.vandersluys.nl</a>
+!!  Copyright &copy; 2002-2025 Marc van der Sluys - Nikhef/Utrecht University
+!!  <a href="https://marc.vandersluys.nl">marc.vandersluys.nl</a>
 !!  
 !!  \see
 !!  These pages contain the documentation for libTheSky, created by Doxygen.  
 !!  For the libTheSky home page, see: https://libthesky.sf.net
 
 
-!  Copyright (c) 2002-2023  Marc van der Sluys - marc.vandersluys.nl
+!  Copyright (c) 2002-2025  Marc van der Sluys - Nikhef/Utrecht University - marc.vandersluys.nl
 !  
 !  This file is part of the libTheSky package, 
 !  see: https://libthesky.sf.net/

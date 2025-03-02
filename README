@@ -2,7 +2,7 @@
 Package:      libTheSky
 Description:  Fortran library to compute properties of objects in The Sky
 Homepage:     https://libthesky.sourceforge.net
-Copyright:    Copyright (c) 2002-2023  Marc van der Sluys - marc.vandersluys.nl
+Copyright:    Copyright (c) 2002-2025  Marc van der Sluys - Nikhef/Utrecht University - marc.vandersluys.nl
 
 
 The package libTheSky provides a Fortran library to compute the positions and other 
@@ -22,7 +22,7 @@ For installation instructions, see INSTALL.
 
 LICENCE:
 
-Copyright (c) 2002-2023  Marc van der Sluys - marc.vandersluys.nl
+Copyright (c) 2002-2025  Marc van der Sluys - Nikhef/Utrecht University - marc.vandersluys.nl
  
 This file is part of the libTheSky package, 
 see: https://libthesky.sf.net/
