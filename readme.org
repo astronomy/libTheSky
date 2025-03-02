@@ -1,0 +1,160 @@
+#+title: libTheSky: Readme
+
+* Summary
++ Package:      libTheSky
++ Description:  Fortran library to compute properties of objects in The Sky
++ Homepage:     https://libthesky.sourceforge.net
++ Copyright:    Copyright (c) 2002-2025  Marc van der Sluys - Nikhef/Utrecht University - marc.vandersluys.nl
+
+
+The package libTheSky provides a Fortran library to compute the positions and other properties of celestial
+bodies (Moon, planets, comets, asteroids, stars), events (e.g.  lunar phases) and coordinate
+transformations. It forms the core of the software that is used to create the Dutch popular-astronomy website
+https://hemel.waarnemen.com.  To download the libTheSky package, read the code documentation, or to contact
+the developer, see: https://libthesky.sourceforge.net/
+
+
+
+* Installation
+
+** Dependencies
+
+libTheSky is written in Fortran, hence you will need a Fortran compiler.  Gfortran, part of gcc, is a free,
+open-source Fortran compiler included in many GNU/Linux distributions and available from
+https://gcc.gnu.org/fortran/.
+
+The default installer uses CMake to configure and compile the code.  CMake is also open-source software, also
+included in most GNU/Linux distributions, and can be downloaded from https://www.cmake.org/.  Alternatively,
+you can create your own Makefile or compile and link the code manually.
+
+libTheSky needs the Fortran library libSUFR in order to compile and run.  libSUFR is free and open software,
+and available under the EUPL v1.2 from https://libsufr.sf.net/.
+
+
+** Unpacking
+
+After downloading from libthesky.sf.net, you can unpack the tarball and cd into its directory by doing e.g.:
+  #+begin_src bash
+    tar xfz libthesky-0.0.1.tar.gz
+    cd libthesky-0.0.1/
+  #+end_src
+(replace "0.0.1" with the correct version number).
+
+
+** Configuring, compiling and installing
+
+To configure, compile and install the code and data files (in the CMake (not Linux! - see below) default
+system directories ~/usr/local/...~), from the main package directory (the one that contains the file
+CMakeLists.txt), do:
+ #+begin_src bash
+   mkdir build && cd build/
+   cmake ..
+   make
+   sudo make install
+ #+end_src
+The second step above configures the code and should find your Fortran compiler and libSUFR.  The third step
+compiles and links the code, and the last step installs it on your system - for which you need root
+priveliges, hence the 'sudo' command.
+
+To install the package in a specific system directory, e.g. the Linux default ~/usr/...~ (RECOMMENDED), do:
+ #+begin_src bash
+   mkdir build && cd build/
+   cmake -DCMAKE_INSTALL_PREFIX:PATH=/usr ..
+   make
+   sudo make install
+ #+end_src
+
+To install the package in your own user directory, you won't need root priveliges, can omit the 'sudo' command
+and combine the last two commands, e.g.:
+ #+begin_src bash
+   mkdir build && cd build/
+   cmake -DCMAKE_INSTALL_PREFIX:PATH=/home/me/usr ..
+   make install
+ #+end_src
+
+To compile the code with your favourite compiler (in case you have several installed), prepend the cmake line
+with e.g. ~FC=gfortran~:
+ #+begin_src bash
+   FC=gfortran cmake ..
+ #+end_src
+
+If you have multiple cores or processors, you can speed up the make step by specifying the number of parallel
+build jobs using the -j option.  E.g., for four cores, you can have four parallel jobs and use:
+ #+begin_src bash
+   make -j4
+ #+end_src
+
+To compile the code without installing it anywhere, leave out the install step
+ #+begin_src bash
+   mkdir build && cd build/
+   cmake ..
+   make
+ #+end_src
+The compiled libraries and modules can then be found in the usr/ subdirectory of the package dir.
+
+On a Linux system, the library and module files could be installed as:
+: /usr/lib/libTheSky.*
+: /usr/include/libTheSky/*.mod
+
+If you want to use the libraries with multiple Fortran compilers, you will want to keep the different versions
+of the library separated.  In this case, use (in addition to any other options):
+ #+begin_src bash
+   cmake -DCOMPILER_SPECIFIC_LIBS=on ..
+ #+end_src
+The library files will then be installed as:
+: /usr/lib/libTheSky_<NameOfFortranCompiler>.*
+: /usr/include/libTheSky/<NameOfFortranCompiler>/*.mod
+
+If one of your Fortran compilers is your default, you can use both the default installation method and the
+compiler-specific method to install the library.
+
+
+** Data files
+
+The data files are distributed in a separate tarball, named ~libthesky-data-<YYYYMMDD>.tar.bz2~.  They will
+unpack into the ~data/~ subdirectory of the package and the code will expect to find them in
+~/usr/shared/libTheSky/~ by default.  Hence, to install the data files manually, do e.g.:
+  #+begin_src bash
+    tar xfj libthesky-data-<YYYYMMDD>.tar.bz2
+    sudo mkdir /usr/shared/libTheSky/
+    sudo cp -vi data/* /usr/shared/libTheSky/
+  #+end_src
+
+Alternatively, you can use the libTheSky_data target in the CMake file of the source code,
+by copying the data files into that package's subdirectory before compiling it, and making
+sure you install the data files as well:
+  #+begin_src bash
+    tar xfz libthesky-<0.0.1>.tar.gz
+    tar xfj libthesky-data-<YYYYMMDD>.tar.bz2
+    mv data libthesky-0.0.1/
+    cd libthesky-0.0.1/
+    ...
+    sudo make libTheSky_data install
+  #+end_src
+
+All data files needed to use libTheSky are provided in the tarball.  The file ~asteroids.dat~ is a reduced
+version of the file https://ssd.jpl.nasa.gov/dat/ELEMENTS.NUMBR.gz, containing all bodies with H<15 and a<100
+AU (~25% of total, ~90,000 objects).  If you want to use the full/latest version instead, do something like:
+  #+begin_src bash
+  .$ wget https://ssd.jpl.nasa.gov/dat/ELEMENTS.NUMBR.gz -O - | gunzip -c > data/asteroids.dat
+  #+end_src
+
+
+** Contact
+
+If you run into problems or have questions, please feel free to contact Marc van der Sluys by email through
+https://marc.vandersluys.nl.
+
+
+
+* Licence
+
+Copyright (c) 2002-2025  Marc van der Sluys - Nikhef/Utrecht University - marc.vandersluys.nl
+ 
+This file is part of the libTheSky package, see: https://libthesky.sf.net/
+
+This is free software: you can redistribute it and/or modify it under the terms of the European Union Public
+Licence 1.2 (EUPL 1.2).  This software is distributed in the hope that it will be useful, but WITHOUT ANY
+WARRANTY; without even the implied warranty of MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE.  See the
+EU Public Licence for more details.  You should have received a copy of the European Union Public Licence
+along with this code.  If not, see <https://www.eupl.eu/1.2/en/>.
