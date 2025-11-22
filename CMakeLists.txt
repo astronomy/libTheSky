@@ -18,7 +18,12 @@
 ##  If not, see <https://www.eupl.eu/1.2/en/>.
 
 
-cmake_minimum_required( VERSION 2.8 FATAL_ERROR )
+# Version check:
+cmake_minimum_required( VERSION 3.5 FATAL_ERROR )
+if (CMAKE_VERSION VERSION_LESS "3.27.0") # Maximum version check
+  message(FATAL_ERROR "CMake version must be 3.5 or higher and less than 3.28.")
+endif()
+  
 
 # Set build type. Do this *before* we set the project name:
 if( NOT CMAKE_BUILD_TYPE )
@@ -122,7 +127,7 @@ if( CREATE_STATICLIB )
     set_target_properties( libTheSky_static PROPERTIES OUTPUT_NAME "TheSky" )
   endif( COMPILER_SPECIFIC_LIBS )
   set_target_properties( libTheSky_static PROPERTIES Fortran_MODULE_DIRECTORY ${MODULE_DIRECTORY} )
-  add_dependencies( libTheSky_static libTheSky_shared PKG_VERSION )  # Ensure it is built after the shared lib
+  add_dependencies( libTheSky_static libTheSky_shared )  # Ensure it is built after the shared lib
 endif( CREATE_STATICLIB )
 
 
