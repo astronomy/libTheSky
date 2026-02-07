@@ -92,7 +92,7 @@ contains
     integer :: j, llunar_theory, lnutat,lmagmdl, lverb
     real(double) :: jdl,jde,jde_lt, tjm,tjm0,  llat,llon,lhgt, lLBaccur,lRaccur,  dpsi,eps0,deps,eps,tau,tau1
     real(double) :: hcl0,hcb0,hcr0, hcl,hcb,hcr, hcl00,hcb00,hcr00, sun_gcl,sun_gcb, gcx,gcy,gcz, gcx0,gcy0,gcz0, dhcr
-    real(double) :: gcl,gcb,delta,gcl0,gcb0,delta0
+    real(double) :: gcl,gcb,delta,gcl0,gcb0,delta0, arg
     real(double) :: ra,dec,gmst,agst,lst,hh,az,alt,elon,  topra,topdec,topl,topb,topdiam,topdelta,tophh,topaz,topalt
     real(double) :: diam,illfr,pa,magn,  parang,parang_ecl,hp, rES1,rES2
     logical :: lltime,laber,lto_fk5
@@ -460,8 +460,9 @@ contains
     
     
     ! Elongation:
-    elon = acos(cos(gcb)*cos(hcb0)*cos(gcl-rev(hcl0+pi)))
-    if(pl.gt.10) elon = acos((hcr0**2 + delta**2 - hcr**2)/(2*hcr0*delta))        ! For comets (only?) - CHECK: looks like phase angle...
+    arg = cos(gcb)*cos(hcb0)*cos(gcl-rev(hcl0+pi))
+    if(pl.gt.10) arg = (hcr0**2 + delta**2 - hcr**2)/(2*hcr0*delta)        ! For comets (only?) - CHECK: looks like phase angle...
+    elon = acos(min(max(arg,-1.d0),1.d0))  ! Catch round-off errors
     
     ! Convert topocentric coordinates: ecliptical -> equatorial -> horizontal:
     ! call geoc2topoc_eq(ra,dec,delta,hh,topra,topdec)                            ! Geocentric to topocentric 
@@ -471,9 +472,10 @@ contains
     ! Phase angle:
     pa = 0.d0  ! Make sure pa is always defined
     if(pl.eq.0) then
-       pa = atan2( hcr0*sin(elon) , delta - hcr0*cos(elon) )         ! Moon
+       pa = atan2( hcr0*sin(elon), delta - hcr0*cos(elon) )         ! Moon
     else if(pl.gt.0) then
-       pa = acos( (hcr**2 + delta**2 - hcr0**2) / (2*hcr*delta) )    ! Planets
+       arg = (hcr**2 + delta**2 - hcr0**2) / (2*hcr*delta)    ! Planets
+       pa = acos(min(max(arg,-1.d0),1.d0))  ! Catch round-off errors
     end if
     illfr = 0.5d0*(1.d0 + cos(pa))                                   ! Illuminated fraction of the disc
     
@@ -784,7 +786,7 @@ contains
     lmodel = 4  ! Model 4: Expl.Supl.tt.Astr.Almanac, 3rd Ed. (2012)
     if(present(model)) lmodel = model
     
-    ! PA must be in degrees:
+    ! PA must be in degrees(!):
     pa  = phang*r2d
     if(lmodel.eq.1 .and. pl.eq.1) pa = pa - 50.d0  ! For Mercury (deg) -- ONLY FOR MODEL 1 !!!
     pa2 = pa*pa
