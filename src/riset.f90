@@ -1,7 +1,7 @@
 !> \file riset.f90  Compute rise, transit and set times, or beginning and end of twilight for libTheSky
 
 
-!  Copyright (c) 2002-2025  Marc van der Sluys - Nikhef/Utrecht University - marc.vandersluys.nl
+!  Copyright (c) 2002-2026  Marc van der Sluys - Nikhef/Utrecht University - marc.vandersluys.nl
 !   
 !  This file is part of the libTheSky package, 
 !  see: https://libthesky.sf.net/

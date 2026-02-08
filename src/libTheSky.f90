@@ -5,7 +5,7 @@
 !!  available for free under the conditions of the EUPL v.1.2.
 !!  
 !!  \par  
-!!  Copyright &copy; 2002-2025 Marc van der Sluys - Nikhef/Utrecht University
+!!  Copyright &copy; 2002-2026 Marc van der Sluys - Nikhef/Utrecht University
 !!  <a href="https://marc.vandersluys.nl">marc.vandersluys.nl</a>
 !!  
 !!  \see
@@ -13,7 +13,7 @@
 !!  For the libTheSky home page, see: https://libthesky.sf.net
 
 
-!  Copyright (c) 2002-2025  Marc van der Sluys - Nikhef/Utrecht University - marc.vandersluys.nl
+!  Copyright (c) 2002-2026  Marc van der Sluys - Nikhef/Utrecht University - marc.vandersluys.nl
 !  
 !  This file is part of the libTheSky package, 
 !  see: https://libthesky.sf.net/
