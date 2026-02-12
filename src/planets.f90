@@ -68,6 +68,7 @@ contains
     use SUFR_dummy, only: dumdbl1,dumdbl2
     use SUFR_text, only: d2s
     use SUFR_numerics, only: deq0
+    use SUFR_math, only: arccos
     
     use TheSky_vsop, only: vsop87d_lbr
     use TheSky_local, only: lon0,lat0,height, deltat
@@ -92,7 +93,7 @@ contains
     integer :: j, llunar_theory, lnutat,lmagmdl, lverb
     real(double) :: jdl,jde,jde_lt, tjm,tjm0,  llat,llon,lhgt, lLBaccur,lRaccur,  dpsi,eps0,deps,eps,tau,tau1
     real(double) :: hcl0,hcb0,hcr0, hcl,hcb,hcr, hcl00,hcb00,hcr00, sun_gcl,sun_gcb, gcx,gcy,gcz, gcx0,gcy0,gcz0, dhcr
-    real(double) :: gcl,gcb,delta,gcl0,gcb0,delta0, arg
+    real(double) :: gcl,gcb,delta,gcl0,gcb0,delta0
     real(double) :: ra,dec,gmst,agst,lst,hh,az,alt,elon,  topra,topdec,topl,topb,topdiam,topdelta,tophh,topaz,topalt
     real(double) :: diam,illfr,pa,magn,  parang,parang_ecl,hp, rES1,rES2
     logical :: lltime,laber,lto_fk5
@@ -106,7 +107,6 @@ contains
     magn = 0.d0  ! Make sure magn is always defined
     
     pl0 = pl                           ! Remember which planet was computed last
-    
     
     ! Handle optional variables:
     ! Geographic location:
@@ -460,9 +460,11 @@ contains
     
     
     ! Elongation:
-    arg = cos(gcb)*cos(hcb0)*cos(gcl-rev(hcl0+pi))
-    if(pl.gt.10) arg = (hcr0**2 + delta**2 - hcr**2)/(2*hcr0*delta)        ! For comets (only?) - CHECK: looks like phase angle...
-    elon = acos(min(max(arg,-1.d0),1.d0))  ! Catch round-off errors
+    if(pl.gt.10) then
+       elon = arccos((hcr0**2 + delta**2 - hcr**2)/(2*hcr0*delta))   ! For comets (only?) - catch round-off errors - |arg| can exceed 1 by ??? - CHECK: looks like phase angle...
+    else
+       elon = arccos(cos(gcb)*cos(hcb0)*cos(gcl-rev(hcl0+pi)))       ! Catch round-off errors - |arg| can exceed 1 by ???
+    end if
     
     ! Convert topocentric coordinates: ecliptical -> equatorial -> horizontal:
     ! call geoc2topoc_eq(ra,dec,delta,hh,topra,topdec)                            ! Geocentric to topocentric 
@@ -474,10 +476,9 @@ contains
     if(pl.eq.0) then
        pa = atan2( hcr0*sin(elon), delta - hcr0*cos(elon) )         ! Moon
     else if(pl.gt.0) then
-       arg = (hcr**2 + delta**2 - hcr0**2) / (2*hcr*delta)    ! Planets
-       pa = acos(min(max(arg,-1.d0),1.d0))  ! Catch round-off errors
+       pa = arccos((hcr**2 + delta**2 - hcr0**2) / (2*hcr*delta))   ! Planets - catch round-off errors - |arg| can exceed 1 by 10^-7-10^-9
     end if
-    illfr = 0.5d0*(1.d0 + cos(pa))                                   ! Illuminated fraction of the disc
+    illfr = 0.5d0*(1.d0 + cos(pa))                                  ! Illuminated fraction of the disc
     
     
     ! Compute magnitude:
