@@ -84,7 +84,6 @@ contains
     use SUFR_constants, only: pi2, d2r,am2r, r2h, enpname, earthr,AU
     use SUFR_angles, only: rev, rev2
     use SUFR_date_and_time, only: cal2jd,jd2cal
-    use SUFR_time2string, only: hm
     use SUFR_numerics, only: deq0, deq
     
     use TheSky_local, only: tz, lat0,lon0,deltat
