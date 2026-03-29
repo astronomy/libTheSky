@@ -76,7 +76,7 @@ contains
   subroutine best_planet_xsmag(jdin,plID, jdout, xsmag, rsCWarn)
     use SUFR_kinds, only: double
     use SUFR_date_and_time, only: cal2jd
-    use SUFR_solvers, only: minimum_solver
+    use SUFR_solvers, only: minimum_solver, minimum_solver_message
     
     use TheSky_planetdata, only: pl0
     use TheSky_datetime, only: gettz
@@ -95,7 +95,8 @@ contains
     lrsCWarn = .true.  ! riset() convergence warnings on by default
     if(present(rsCWarn)) lrsCWarn = rsCWarn
     
-    call planet_visibility_tonight(jdin, plID, 0.d0, 0.d0, 11,  plvis, rsCWarn=lrsCWarn)  ! Sun<0d; Planet>0d, comp=11 twl/today
+    ! NOTE: can lead to minimum not within range from minimum_solver()!!!  call planet_visibility_tonight(jdin, plID, 0.d0, 0.d0, 11,  plvis, rsCWarn=lrsCWarn)  ! Sun<0d; Planet>0d, comp=11 twl/today
+    call planet_visibility_tonight(jdin, plID, 1.d0, 0.d0, 11,  plvis, rsCWarn=lrsCWarn)  ! Sun<+1d; Planet>0d, comp=11 twl/today
     
     tz = gettz(jdin)
     jd1 = floor(jdin+0.5d0) - 0.5d0 + (plvis(1)-tz)/24.d0
@@ -104,7 +105,15 @@ contains
     if(plvis(2).gt.12.d0) jd2 = jd2 - 1.d0
     
     pl0 = plID  ! Needed by pl_xsmag_pl()
-    lxsmag = minimum_solver(pl_xsmag_pl, jd1, (jd1+jd2)/2.d0, jd2, 1.d-3,  jdout, status=status)  ! Use full routine
+    
+    ! Find the minimum:
+    lxsmag = minimum_solver(pl_xsmag_pl, jd1, (jd1+jd2)/2.d0, jd2, 1.d-3,  jdout, status=status, verbosity=0)  ! Use full routine
+    
+    if(status.ne.0) write(0,'(A, I0, 9F15.5)') '  In best_planet_xsmag(): pl_xsmag_pl():  '// &
+         minimum_solver_message(status)//': ', plID, jd1, jd2, jd2-jd1, jdout, lxsmag, &
+         pl_xsmag_pl(jd1), pl_xsmag_pl(jd2), pl_xsmag_pl(jdout)
+    
+    
     
     if(present(xsmag)) xsmag = lxsmag
     
