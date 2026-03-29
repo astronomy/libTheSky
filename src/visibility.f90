@@ -95,8 +95,10 @@ contains
     lrsCWarn = .true.  ! riset() convergence warnings on by default
     if(present(rsCWarn)) lrsCWarn = rsCWarn
     
-    ! NOTE: can lead to minimum not within range from minimum_solver()!!!  call planet_visibility_tonight(jdin, plID, 0.d0, 0.d0, 11,  plvis, rsCWarn=lrsCWarn)  ! Sun<0d; Planet>0d, comp=11 twl/today
-    call planet_visibility_tonight(jdin, plID, 1.d0, 0.d0, 11,  plvis, rsCWarn=lrsCWarn)  ! Sun<+1d; Planet>0d, comp=11 twl/today
+    ! NOTE: can lead to minimum not within range from minimum_solver() for Mercury elongations:
+    call planet_visibility_tonight(jdin, plID, 0.d0, 0.d0, 11,  plvis, rsCWarn=lrsCWarn)  ! Sun<0d; Planet>0d, comp=11 twl/today
+    ! NOTE: can lead to HANG for comets!!!
+    ! call planet_visibility_tonight(jdin, plID, 1.d0, 0.d0, 11,  plvis, rsCWarn=lrsCWarn)  ! Sun<+1d; Planet>0d, comp=11 twl/today
     
     tz = gettz(jdin)
     jd1 = floor(jdin+0.5d0) - 0.5d0 + (plvis(1)-tz)/24.d0
@@ -112,7 +114,6 @@ contains
     if(status.ne.0) write(0,'(A, I0, 9F15.5)') '  In best_planet_xsmag(): pl_xsmag_pl():  '// &
          minimum_solver_message(status)//': ', plID, jd1, jd2, jd2-jd1, jdout, lxsmag, &
          pl_xsmag_pl(jd1), pl_xsmag_pl(jd2), pl_xsmag_pl(jdout)
-    
     
     
     if(present(xsmag)) xsmag = lxsmag
