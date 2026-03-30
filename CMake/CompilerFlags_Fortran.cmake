@@ -41,7 +41,7 @@ if( Fortran_COMPILER_NAME MATCHES "gfortran" )
     COMPILER_VERSION ${_compiler_output})
   
   
-  set( CMAKE_Fortran_FLAGS_ALL "-std=f2008 -fall-intrinsics -pedantic" )
+  set( CMAKE_Fortran_FLAGS_ALL "-cpp -std=f2008 -fall-intrinsics -pedantic" )
   set( CMAKE_Fortran_FLAGS_ALL "${CMAKE_Fortran_FLAGS_ALL} -frecursive" )  # don't complain about Array larger than -fmax-stack-var-size
   if( COMPILER_VERSION VERSION_GREATER "4.4.99" )
     set( CMAKE_Fortran_FLAGS_ALL "${CMAKE_Fortran_FLAGS_ALL} -fwhole-file" )  # >= v.4.5
@@ -115,7 +115,7 @@ elseif( Fortran_COMPILER_NAME MATCHES "g95" )
     COMPILER_VERSION ${_compiler_output})
   
   
-  set( CMAKE_Fortran_FLAGS "" )
+  set( CMAKE_Fortran_FLAGS "-cpp -DG95" )
   set( CMAKE_Fortran_FLAGS_RELEASE "" )
   set( CMAKE_Fortran_FLAGS_DEBUG "-g" )
   
@@ -158,7 +158,7 @@ elseif( Fortran_COMPILER_NAME MATCHES "ifort" )
     COMPILER_VERSION ${_compiler_output})
   
   
-  set( CMAKE_Fortran_FLAGS_ALL "-nogen-interfaces -heap-arrays 1024" )
+  set( CMAKE_Fortran_FLAGS_ALL "-fpp -nogen-interfaces -heap-arrays 1024" )
   set( CMAKE_Fortran_FLAGS "-vec-guard-write -fpconstant -funroll-loops -align all -ip" )
   if( LINUX )
     set( CMAKE_Fortran_FLAGS_ALL "${CMAKE_Fortran_FLAGS_ALL} -mcmodel=large" )  # -mcmodel exists for Linux only...
