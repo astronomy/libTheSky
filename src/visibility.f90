@@ -75,6 +75,7 @@ contains
   
   subroutine best_planet_xsmag(jdin,plID, jdout, xsmag, rsCWarn)
     use SUFR_kinds, only: double
+    use SUFR_numerics, only: deq, deq0
     use SUFR_date_and_time, only: cal2jd
     use SUFR_solvers, only: minimum_solver, minimum_solver_message
     
@@ -84,8 +85,10 @@ contains
     implicit none
     real(double), intent(in) :: jdin
     integer, intent(in) :: plID
+    
     real(double), intent(out) :: jdout
     real(double), intent(out), optional :: xsmag
+    
     logical, intent(in), optional :: rsCWarn
     
     integer :: status
@@ -100,15 +103,33 @@ contains
     ! NOTE: can lead to HANG for comets!!!
     ! call planet_visibility_tonight(jdin, plID, 1.d0, 0.d0, 11,  plvis, rsCWarn=lrsCWarn)  ! Sun<+1d; Planet>0d, comp=11 twl/today
     
+    
+    if(deq0(plvis(1)) .and. deq0(plvis(2))) then  ! Both plvis times are 0 -> object is never visible
+       ! write(0,'(A)') 'The object is never visible!'
+       jdout = jdin
+       if(present(xsmag)) xsmag = pl_xsmag_pl(jdin)
+       return
+    end if
+    
+    
     tz = gettz(jdin)
     jd1 = floor(jdin+0.5d0) - 0.5d0 + (plvis(1)-tz)/24.d0
     jd2 = floor(jdin+0.5d0) - 0.5d0 + (plvis(2)-tz)/24.d0
     if(plvis(1).gt.12.d0) jd1 = jd1 - 1.d0  ! After noon, use the previous day
     if(plvis(2).gt.12.d0) jd2 = jd2 - 1.d0
     
-    pl0 = plID  ! Needed by pl_xsmag_pl()
+    
+    if(deq(jd1,jd2)) then  ! The JDs are identical -> the object is visible for 0s (this ought to be caught by the previous check...)
+       ! write(0,'(A)') 'The object is visible for 0s!'
+       jdout = jdin
+       if(present(xsmag)) xsmag = pl_xsmag_pl(jdin)
+       return
+    end if
+    
+    
     
     ! Find the minimum:
+    pl0 = plID  ! Needed by pl_xsmag_pl()
     lxsmag = minimum_solver(pl_xsmag_pl, jd1, (jd1+jd2)/2.d0, jd2, 1.d-3,  jdout, status=status, verbosity=0)  ! Use full routine
     
     if(status.ne.0) write(0,'(A, I0, 9F15.5)') '  In best_planet_xsmag(): pl_xsmag_pl():  '// &
