@@ -96,7 +96,7 @@ contains
     real(double) :: gcl,gcb,delta,gcl0,gcb0,delta0
     real(double) :: ra,dec,gmst,agst,lst,hh,az,alt,elon,  topra,topdec,topl,topb,topdiam,topdelta,tophh,topaz,topalt
     real(double) :: diam,illfr,pa,magn,  parang,parang_ecl,hp, rES1,rES2
-    logical :: lltime,laber,lto_fk5
+    logical :: lltime,laber,lto_fk5, lassume_jde
     
     ! Make sure these are always defined:
     gcl0 = 0.d0;  gcb0 = 0.d0;  hcr00 = 0.d0
@@ -133,6 +133,9 @@ contains
     lto_fk5 = .true.                      ! Convert to FK5 by default
     if(present(to_fk5)) lto_fk5 = to_fk5
     
+    lassume_jde = .false.                 ! Assume JD provided is really JD, not JDE
+    if(present(assume_jde)) lassume_jde = assume_jde
+    
     ! Select lunar theory:
     ! llunar_theory = 1  ! Use (corrected) ELP82b as default
     llunar_theory = 3  ! Use ELP-MPP02/DE405 ('historical') as default.  This should be the "default default" :-)
@@ -167,7 +170,7 @@ contains
     ! deltat = 0.d0
     ! write(*,'(/,A,/)') '*** WARNING: libTheSky/planets.f90: setting DeltaT to 0 ***'
     
-    if(present(assume_jde) .and. assume_jde) then
+    if(lassume_jde) then
        jde = jdl  ! JD provided is actually JDE
        jdl = jde - deltat/86400.d0
     else
