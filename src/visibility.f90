@@ -92,16 +92,18 @@ contains
     logical, intent(in), optional :: rsCWarn
     
     integer :: status
-    real(double) :: tz, jd1,jd2, plvis(2), lxsmag
+    real(double) :: tz, jd1,jd2, plvis(2), lxsmag,lxsmag1,lxsmag2
     logical :: lrsCWarn
     
     lrsCWarn = .true.  ! riset() convergence warnings on by default
     if(present(rsCWarn)) lrsCWarn = rsCWarn
     
     ! NOTE: can lead to minimum not within range from minimum_solver() for Mercury elongations:
-    call planet_visibility_tonight(jdin, plID, 0.d0, 0.d0, 11,  plvis, rsCWarn=lrsCWarn)  ! Sun<0d; Planet>0d, comp=11 twl/today
-    ! NOTE: can lead to HANG for comets!!!
-    ! call planet_visibility_tonight(jdin, plID, 1.d0, 0.d0, 11,  plvis, rsCWarn=lrsCWarn)  ! Sun<+1d; Planet>0d, comp=11 twl/today
+    ! call planet_visibility_tonight(jdin, plID, 0.d0, 0.d0, 11,  plvis, rsCWarn=lrsCWarn)  ! Sun<0d; Planet>0d, comp=11 twl/today
+    
+    ! NOTE: this makes things WORSE for comets(?) - can lead to DEADLOCKs (but only if de or dtannu2 become NaN/Inf - now caught)?
+    ! ALSO: see deadlock below for the actual or a second source of deadlocks...
+    call planet_visibility_tonight(jdin, plID, 1.d0, 0.d0, 11,  plvis, rsCWarn=lrsCWarn)  ! Sun<+1d; Planet>0d, comp=11 twl/today
     
     
     if(deq0(plvis(1)) .and. deq0(plvis(2))) then  ! Both plvis times are 0 -> object is never visible
@@ -132,9 +134,13 @@ contains
     pl0 = plID  ! Needed by pl_xsmag_pl()
     lxsmag = minimum_solver(pl_xsmag_pl, jd1, (jd1+jd2)/2.d0, jd2, 1.d-3,  jdout, status=status, verbosity=0)  ! Use full routine
     
-    if(status.ne.0) write(0,'(A, I0, 9F15.5)') '  In best_planet_xsmag(): pl_xsmag_pl():  '// &
-         minimum_solver_message(status)//': ', plID, jd1, jd2, jd2-jd1, jdout, lxsmag, &
-         pl_xsmag_pl(jd1), pl_xsmag_pl(jd2), pl_xsmag_pl(jdout)
+    if(status.ne.0) then
+       lxsmag1 = pl_xsmag_pl(jd1)  ! print*'ing or write(0,)'ing these causes deadlocks!!!  -> precompute
+       lxsmag2 = pl_xsmag_pl(jd2)
+       write(0,'(A, I0, 9F15.5)') '  In best_planet_xsmag(): pl_xsmag_pl():  '// &
+            minimum_solver_message(status)//': ', &
+            plID, jd1, jd2, jd2-jd1, jdout, lxsmag, lxsmag1, lxsmag2
+    end if
     
     
     if(present(xsmag)) xsmag = lxsmag
