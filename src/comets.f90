@@ -45,7 +45,7 @@ contains
   subroutine cometxyz(t1,comID, x,y,z)
     use SUFR_kinds, only: double
     use SUFR_constants, only: nlpname,enpname, jd2000
-    use SUFR_numerics, only: deq
+    use SUFR_numerics, only: deq, isnotnormal
     
     use TheSky_constants, only: TheSky_verbosity
     use TheSky_nutation, only: nutation
@@ -58,7 +58,8 @@ contains
     
     integer, parameter :: max_try_i = nint(1e5)  ! Was 1e7 until 2023-05, but can take ages if diverging
     integer :: i,j,j1,j2
-    real(double) :: k,jj,del,  tp,q,a,e,o1,o2,in,nu,r,t,jde,te,  m,n,ee,ee1,de,  qq,gamma,tannu2,tannu2_0,tannu2_1,w,q2,q3,dq3
+    real(double) :: k,jj,del,  tp,q,a,e,o1,o2,in,nu,r,t,jde,te,  m,n,ee,ee1,de
+    real(double) :: qq,gamma, tannu2,tannu2_0,tannu2_1,dtannu2, w,q2,q3,dq3
     real(double) :: eps,dpsi,eps0,deps,  ff,gg,hh,pp,qqq,rr,a1,a2,b1,b2,c1,c2
     
     jde = t1*365250.d0 + jd2000  ! t1 is in Julian Millennia after 2000.0 in dynamical time
@@ -105,11 +106,15 @@ contains
        if(e.lt.0.5d0) then
           do i=1,max_try_i
              ee1 = m + e*sin(ee)  ! Eq. 30.6
-             de = ee-ee1
+             
+             ! Check convergence and divergence:
+             de = ee - ee1
              if(abs(de).lt.del) exit
+             if(isnotnormal(de)) return  ! Is not normal: +-Inf or NaN -> will not converge...
+             
              ee = ee1
           end do
-          ee = ee1
+          ee = ee1  ! CHECK: redundant if previous line is moved up?
           
           
           !  Solve Kepler's equation for strongly elliptic orbits ("second method", p.199):
@@ -117,7 +122,10 @@ contains
           do i=1,max_try_i
              de = (m + e*sin(ee) - ee) / (1.d0 - e*cos(ee))  ! Eq. 30.7
              ee = ee + de
+             
+             ! Check convergence and divergence:
              if(abs(de).lt.del) exit
+             if(isnotnormal(de)) return  ! Is not normal: +-Inf or NaN -> will not converge...
           end do
        end if
        if(i.ge.max_try_i) write(0,'(A,I0,A,F8.5,A, I0,A, 2(ES10.3,A))') &
@@ -135,15 +143,20 @@ contains
        tannu2 = w/3.d0  ! 0.d0  Starting value for auxillary variable tannu2 = tan(nu/2) = s
        do i=1,1000
           tannu2_1 = (2*tannu2**3 + w)/(3*(tannu2**2+1.d0))  ! Eq. 34.4
-          if(abs(tannu2-tannu2_1).lt.del) exit
+          
+          ! Check convergence and divergence:
+          dtannu2 = tannu2 - tannu2_1
+          if(abs(dtannu2).lt.del) exit
+          if(isnotnormal(dtannu2)) return  ! Is not normal: +-Inf or NaN -> will not converge...
+          
           tannu2 = tannu2_1
        end do  ! i
-       tannu2 = tannu2_1
+       tannu2 = tannu2_1  ! CHECK: redundant if previous line is moved up?
        
        
        ! Parabolic orbit:
        if(deq(e,1.d0)) then
-          !write(6,*)'iter, delta: ',i,tannu2-tannu2_0
+          ! write(6,*) 'iter, delta: ',i,tannu2 - tannu2_0
           nu = 2.d0*atan(tannu2)    ! True anomaly, parabolic orbits, Eq. 34.2
           
           
@@ -161,16 +174,11 @@ contains
              j1loop: do j=3,1000            ! Eq. 35.1c, d, ...  -  program p.246, loop lines 44-56
                 jj = dble(j)
                 dq3 = (-1)**(j-1) * gamma**(j-2) * ((jj-1.d0) - j*gamma) * tannu2**(2*j-1) / (2*jj-1.d0)
-                
-                ! if(isnan(dq3)) return  ! NaN -> will not converge...
-#ifdef G95
-                if(dq3.ne.dq3) return    ! NaN check for obsolete g95
-#else
-                if(isnan(dq3)) return    ! NaN check for newer compilers
-#endif
-                
                 q3 = q3 + dq3               ! Program p.246, loop line 52
+                
+                ! Check convergence and divergence:
                 if(abs(dq3).lt.del) exit  j1loop  ! j
+                if(isnotnormal(dq3)) return  ! Is not normal: +-Inf or NaN -> will not converge...
                 
                 if(j.eq.1000) j1 = j1+1
                 
@@ -186,28 +194,35 @@ contains
              j2loop: do j=1,1000                       ! Program p.246, loop lines 60-62
                 tannu2_1 = tannu2
                 tannu2 = (2.d0/3.d0*tannu2**3+q3) / (tannu2**2+1.d0)  ! Program p.246, loop line 60
-                if(abs(tannu2-tannu2_1).lt.del) exit  j2loop  ! j
+                
+                ! Check convergence and divergence:
+                dtannu2 = tannu2 - tannu2_1
+                if(abs(dtannu2).lt.del) exit  j2loop  ! j
+                if(isnotnormal(dtannu2)) return  ! Is not normal: +-Inf or NaN -> will not converge...
                 
                 if(j.eq.1000) j2 = j2+1
                 if(j2.eq.100) then
                    if(TheSky_verbosity.gt.0) write(0,'(A,I0,A,F8.5,A, I0,A, 2(ES10.3,A))') &
                         '  cometxyz():  WARNING:  j2-iteration did not converge for hyperbolic comet '// &
                         trim(cometNames(comID))//' (',comID,'), with e =', e, '  (',i,' iterations; ', &
-                        abs(tannu2-tannu2_1), ' >', del,').'
+                        abs(tannu2 - tannu2_1), ' >', del,').'
                    return
                 end if
              end do  j2loop  ! j
              
-             if(abs(tannu2-tannu2_0).lt.del) then
+             ! Check convergence and divergence:
+             dtannu2 = tannu2 - tannu2_0
+             if(abs(dtannu2).lt.del) then
                 nu = 2.d0*atan(tannu2)    ! True anomaly, hyperbolic orbits, Eq. "35.2" / 34.2
                 exit  iloop  ! i
              end if
+             if(isnotnormal(dtannu2)) return  ! Is not normal: +-Inf or NaN -> will not converge...
              
              if(i.ge.max_try_i) then
                 if(TheSky_verbosity.gt.0) write(0,'(A,I0,A,F8.5,A, I0,A, 2(ES10.3,A))') &
                      '  cometxyz():  WARNING:  i-iteration did not converge for hyperbolic comet '// &
                      trim(cometNames(comID))//' (',comID,'), with e =', e, '  (',i,' iterations; ', &
-                     abs(tannu2-tannu2_0), ' >', del,').'
+                     abs(tannu2 - tannu2_0), ' >', del,').'
                 return
              end if
              
