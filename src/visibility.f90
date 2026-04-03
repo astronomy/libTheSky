@@ -134,16 +134,24 @@ contains
     pl0 = plID  ! Needed by pl_xsmag_pl()
     lxsmag = minimum_solver(pl_xsmag_pl, jd1, (jd1+jd2)/2.d0, jd2, 1.d-3,  jdout, status=status, verbosity=0)  ! Use full routine
     
+    if(present(xsmag)) xsmag = lxsmag
+    
     if(status.ne.0) then
        lxsmag1 = pl_xsmag_pl(jd1)  ! print*'ing or write(0,)'ing these causes deadlocks!!!  -> precompute
        lxsmag2 = pl_xsmag_pl(jd2)
-       write(0,'(A, I0, 9F15.5)') '  In best_planet_xsmag(): pl_xsmag_pl():  '// &
-            minimum_solver_message(status)//': ', &
-            plID, jd1, jd2, jd2-jd1, jdout, lxsmag, lxsmag1, lxsmag2
+       ! Don't print the warning for comets with status=5: minimum not within specified range:
+       ! Presumably this happens when a comet is close to the Sun (similar rise/set) and becomes brighter
+       !   as both rise.  Magnitudes are not affected by atmospheric extinction -> Sun mag ~ constant...
+       ! - keeping jdout and lxsmag seems to be a better solution than using jdin and its xsmag.
+       if(plID.gt.10 .and. plID.lt.10000 .and. status.eq.5) return
+       
+       ! Print warning:
+       write(0,'(A,I0,A,  I0, 3F15.5, 9F8.3)') '  In best_planet_xsmag(): pl_xsmag_pl():  '// &
+            minimum_solver_message(status)//' (status=',status,'): ', &
+            plID, jd1, jd2, jdout, jd2-jd1, lxsmag, lxsmag1, lxsmag2, plvis
     end if
     
     
-    if(present(xsmag)) xsmag = lxsmag
     
   end subroutine best_planet_xsmag
   !*********************************************************************************************************************************

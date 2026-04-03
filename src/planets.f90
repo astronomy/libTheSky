@@ -31,27 +31,28 @@ contains
   !*********************************************************************************************************************************
   !> \brief  Compute the position, distance, etc of a planet
   !!
-  !! \param jd          Julian date of computation
-  !! \param pl          Planet number: Moon=0, Merc=1,Nep=8,Plu=9 3=Sun, 0=Moon, >10 for other objects
-  !!
-  !! \param lat         Latitude of the observer (rad, optional)
-  !! \param lon         Longitude of the observer (rad, optional)
-  !! \param hgt         Altitude/elevation of the observer above sea level (metres, optional)
+  !! \param jd            Julian date of computation
+  !! \param pl            Planet number: -1: Earth shadow, 0: Moon, 3: Sun;  1-2, 4-8: Mer-Ven, Mar-Nep, 9: Plu;
+  !!                        11-10000: comet, >10000: asteroid
   !! 
-  !! \param LBaccur     Desired accuracy of the heliocentric L,B in VSOP87 (rad, optional; defaults to full accuracy)
-  !! \param Raccur      Desired accuracy of the heliocentric R in VSOP87 (AU, optional; defaults to full accuracy)
-  !!
-  !! \param ltime       Correct for light time (optional; defaults to true). .false. saves ~50% in CPU time at the cost of some accuracy.
-  !! \param aber        Correct for aberration (optional; defaults to true).
-  !! \param to_fk5      Convert coordinates to the FK5 system (optional; defaults to true).
-  !! \param assume_jde  Assume JD provided is actually JDE (optional; defaults to false).
+  !! \param lat           Latitude of the observer (rad, optional)
+  !! \param lon           Longitude of the observer (rad, optional)
+  !! \param hgt           Altitude/elevation of the observer above sea level (metres, optional)
+  !! 
+  !! \param LBaccur       Desired accuracy of the heliocentric L,B in VSOP87 (rad, optional; defaults to full accuracy)
+  !! \param Raccur        Desired accuracy of the heliocentric R in VSOP87 (AU, optional; defaults to full accuracy)
+  !! 
+  !! \param ltime         Correct for light time (optional; defaults to true). .false. saves ~50% in CPU time at the cost of some accuracy.
+  !! \param aber          Correct for aberration (optional; defaults to true).
+  !! \param to_fk5        Convert coordinates to the FK5 system (optional; defaults to true).
+  !! \param assume_jde    Assume JD provided is actually JDE (optional; defaults to false).
   !! 
   !! \param lunar_theory  Choose Lunar theory:  1: ELP82b,  2: ELP-MPP02/LLR,  3: ELP-MPP02/DE405 ('historical' - default)
   !! \param nutat         IAU nutation model to use: 0 (no nutation!), 1980 or 2000 (default).
   !! \param magmdl        Planet-magnitude model: 1: Müller (1893), 2: Meeus p.286, 3: AA 1992, 4: AA 2012 (optional, defaults to 4).
   !! \param verbosity     Verbosity for debug output (0-3).  Defaults to 0: silent.
   !! 
-  !!
+  !! 
   !! \note
   !! - lat0 and lon0 can be provided through the module TheSky_local (rad, rad and m), or through the optional arguments.
   !!   Note that using the latter will update the former!
