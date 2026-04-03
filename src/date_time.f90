@@ -560,7 +560,7 @@ contains
     call jd2cal(jd + tz/24.d0,  yy,mm,dd)  ! in LT
     if(mm.lt.1 .or. mm.gt.12) call quit_program_error('libTheSky: jd2dtm(): something went wrong in the jd2cal() call: month must be between 1 and 12.', 1)  ! Needed because of mlen()
     
-    ! jd2cal returns zeroes if JD not defined (i.e., JD=-huge), and mlen(mm) is not defined - catch this:
+    ! jd2cal returns zeroes if JD not defined (e.g., JD=-huge), and mlen(mm) is not defined - catch this:
     if(yy.eq.0.and.mm.eq.0) then
        d = 0
        h = 0
@@ -573,22 +573,23 @@ contains
     mlen(2) = 28 + leapyr(yy)
     
     d  = int(dd)
-    tm = (dd - dble(d))*24.d0
-    h  = int(tm)
-    m  = int((tm-h)*60.d0)
-    s  = (tm-h-m/60.d0)*3600.d0
     
-    if(s.gt.59.999) then
-       s = 0.d0
+    tm = (dd - dble(d))*24
+    h  = int(tm)
+    m  = int((tm-h)*60)
+    s  = (tm-h-m/60.d0)*3600
+    
+    if(s.gt.59.9995d0) then  ! 60s - 0.5ms
+       s = s - 60
        m = m + 1
     end if
     if(m.eq.60) then
-       m = 0
-       h = h+1
+       m = m - 60
+       h = h + 1
     end if
     if(h.eq.24) then
-       h = 0
-       d = d+1
+       h = h - 24
+       d = d + 1
     end if
     if(d.gt.mlen(mm)) then
        d  = d - mlen(mm)
@@ -708,7 +709,7 @@ contains
     implicit none
     real(double), intent(in) :: jd
     real(double), intent(in), optional :: jde
-
+    
     if(present(jde)) then
        call printdate1(jd, jde)
     else
@@ -727,39 +728,19 @@ contains
   
   subroutine printdate1(jd, jde)
     use SUFR_kinds, only: double
-    use SUFR_date_and_time, only: jd2cal
+    use SUFR_date_and_time, only: jd2ymdhms
     
     implicit none
     real(double), intent(in) :: jd
     real(double), intent(in), optional :: jde
-    real(double) :: dd,tm,s
+    real(double) :: s
     integer :: d,mm,yy,h,m
     
-    call jd2cal(jd+1.d-10, yy,mm,dd)
+    call jd2ymdhms(jd + 5.d-4/86400.d0, yy, mm, d, h, m, s)  ! Add 0.5ms to ensure correct rounding off for printing with ms accuracy
     
-    d  = int(dd)
-    
-    tm = (dd - dble(d))*24.d0
-    h  = int(tm)
-    m  = int((tm-h)*60.d0)
-    s  = (tm-h-m/60.d0)*3600.d0
-    
-    if(s.gt.59.999d0) then
-       s = s - 60.d0
-       m = m + 1
-    end if
-    if(m.ge.60) then
-       m = m - 60
-       h = h + 1
-    end if
-    if(h.ge.24) then
-       h = h - 24
-       d = d + 1
-    end if
-    
-    write(*,'(A,F0.6)', advance='no') '  JD:  ', jd
-    if(present(jde)) write(*,'(A,F0.6)', advance='no') '  JDE:  ', jde
-    write(*,'(A,I0,2I3.2, A,2I3.2,F7.3,A)', advance='no') '   date:  ',yy,mm,d, '   time:  ',h,m,s,'  UT'
+    write(*,'(A,F0.6)', advance='no') '  JD: ', jd
+    if(present(jde)) write(*,'(A,F0.6)', advance='no') '  JDE: ', jde
+    write(*,'(A,I0,2I3.2, A,2I3.2,F7.3,A)', advance='no') '  date: ',yy,mm,d, '  time: ',h,m,s,'  UT'
     
   end subroutine printdate1
   !*********************************************************************************************************************************
