@@ -913,8 +913,9 @@ contains
   subroutine print_date_time_and_location(op,nlbef,nlaf, ut,jd,jde, locname,tzname)
     use SUFR_kinds, only: double
     use SUFR_constants, only: r2d,r2h, endays,enmonths
-    use SUFR_time2string, only: hms_sss
+    use SUFR_io, only: ansi_grey, ansi_reset
     use SUFR_text, only: d2s
+    use SUFR_time2string, only: hms_sss
     
     use TheSky_local, only: year,month,day, hour,minute,second, tz, lat0,lon0,height,deltat
     
@@ -953,14 +954,22 @@ contains
        write(opl,'(A)') ''  ! Newline
     end do
     
+    ! If not writing to file, make text grey:
+    if(opl.eq.0 .or. opl.eq.6) write(opl, '(A)', advance='no') ansi_grey
+    
     write(opl,'(A20,3A,I3,A1,I5,  A9,A13,2x,A,  A13,2(A4,A), A4,A,A1)') &
          'LOCAL:      Date: ',trim(endays(dow(jdl))),' ', trim(enmonths(month)),nint(day),',',year,  &
          'Time:',hms_sss(lt),'tz: '//trim(tznamel)//' '//d2s(tz,1),   &
          'Location:','l: ',d2s(lon0*r2d,4),'b: ',d2s(lat0*r2d,4), 'h: ',d2s(height,1),'m'
     
-    write(opl,'(A17,A13, A5,F15.6, A10,F0.2,A1, A6,F15.6, A7,F8.4, 5x,A)') &
+    write(opl,'(A17,A13, A5,F15.6, A10,F0.2,A1, A6,F15.6, A7,F8.4, 5x,A)', advance='no') &
          'UNIVERSAL:  UT:',hms_sss(utl), 'JD:',jdl, 'DeltaT: ',DeltaT,'s', &
          'JDE:',jdel, 'GMST:',gmst, trim(locnamel)
+    
+    ! If not writing to file, reset text colour:
+    if(opl.eq.0 .or. opl.eq.6) write(opl, '(A)', advance='no') ansi_reset
+    
+    write(opl,*) ''                       ! Finish the line
     
     do il=1,nlafl
        write(opl,'(A)') ''  ! Newline
