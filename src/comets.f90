@@ -45,6 +45,7 @@ contains
   subroutine cometxyz(t1,comID, x,y,z)
     use SUFR_kinds, only: double
     use SUFR_constants, only: nlpname,enpname, jd2000
+    use SUFR_io, only: ansi_yellow, ansi_reset
     use SUFR_numerics, only: deq, isnotnormal
     
     use TheSky_constants, only: TheSky_verbosity
@@ -129,9 +130,9 @@ contains
           end do
        end if
        if(i.ge.max_try_i) write(0,'(A,I0,A,F8.5,A, I0,A, 2(ES10.3,A))') &
-            '  cometxyz():  WARNING:  Kepler solution did not converge for elliptical comet '// &
+            ansi_yellow//'  cometxyz():  WARNING:  Kepler solution did not converge for elliptical comet '// &
             trim(cometNames(comID))//' (',comID,'), with e =', e, '  (',i,' iterations; ', &
-            abs(de), ' >', del,').'
+            abs(de), ' >', del,').'//ansi_reset
        
        nu = 2.d0 * atan( sqrt( (1.d0+e)/(1.d0-e) ) * tan(ee/2.d0) )  ! True anomaly, elliptic orbits, Eq. 30.1
        
@@ -184,9 +185,9 @@ contains
                 
                 if(j1.eq.100) then
                    if(TheSky_verbosity.gt.0) write(0,'(A,I0,A,F8.5,A, I0,A, 2(ES10.3,A))') &
-                        '  cometxyz():  WARNING:  j1-iteration did not converge for hyperbolic comet '// &
+                        ansi_yellow//'  cometxyz():  WARNING:  j1-iteration did not converge for hyperbolic comet '// &
                         trim(cometNames(comID))//' (',comID,'), with e =', e, '  (',i,' iterations; ', &
-                        abs(dq3), ' >', del,').'
+                        abs(dq3), ' >', del,').'//ansi_reset
                    return
                 end if
              end do  j1loop  ! j
@@ -203,9 +204,9 @@ contains
                 if(j.eq.1000) j2 = j2+1
                 if(j2.eq.100) then
                    if(TheSky_verbosity.gt.0) write(0,'(A,I0,A,F8.5,A, I0,A, 2(ES10.3,A))') &
-                        '  cometxyz():  WARNING:  j2-iteration did not converge for hyperbolic comet '// &
+                        ansi_yellow//'  cometxyz():  WARNING:  j2-iteration did not converge for hyperbolic comet '// &
                         trim(cometNames(comID))//' (',comID,'), with e =', e, '  (',i,' iterations; ', &
-                        abs(tannu2 - tannu2_1), ' >', del,').'
+                        abs(tannu2 - tannu2_1), ' >', del,').'//ansi_reset
                    return
                 end if
              end do  j2loop  ! j
@@ -220,9 +221,9 @@ contains
              
              if(i.ge.max_try_i) then
                 if(TheSky_verbosity.gt.0) write(0,'(A,I0,A,F8.5,A, I0,A, 2(ES10.3,A))') &
-                     '  cometxyz():  WARNING:  i-iteration did not converge for hyperbolic comet '// &
+                     ansi_yellow//'  cometxyz():  WARNING:  i-iteration did not converge for hyperbolic comet '// &
                      trim(cometNames(comID))//' (',comID,'), with e =', e, '  (',i,' iterations; ', &
-                     abs(tannu2 - tannu2_0), ' >', del,').'
+                     abs(tannu2 - tannu2_0), ' >', del,').'//ansi_reset
                 return
              end if
              
