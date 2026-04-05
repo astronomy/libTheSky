@@ -78,9 +78,9 @@ contains
     use TheSky_nutation, only: nutation, nutation2000
     use TheSky_sun, only: sunmagn
     use TheSky_moon, only: elp82b_lbr, elp_mpp02_lbr, moonmagn
-    use TheSky_comets, only: cometgc
+    use TheSky_comets, only: cometgc, currentCometID
     use TheSky_planetdata, only: planpos, pl0
-    use TheSky_cometdata, only: cometElems, cometDiedAtP
+    use TheSky_cometdata, only: cometElems, cometDiedAtP, cometNames
     use TheSky_asteroids, only: asteroid_magn, asteroid_lbr
     use TheSky_datetime, only: calc_deltat, calc_gmst
     
@@ -317,7 +317,16 @@ contains
        
        j = j+1
        if(j.ge.30) then
-          call warn('planet_position():  Light time failed to converge for '//trim(enpname(pl)), 0)
+          select case(pl)
+             case(-1:9)  ! Sun, Moon, planet, Earth shadow, Pluto
+                call warn('planet_position():  Light time failed to converge for '//trim(enpname(pl)), 0)
+             case(10:9999)  ! Comet
+                call warn('planet_position():  Light time failed to converge for comet '//trim(cometNames(currentCometID)), 0)
+             case(10000:)  ! Asteroid
+                call warn('planet_position():  Light time failed to converge for this asteroid', 0)
+             case default
+                call warn('planet_position():  Light time failed to converge for this UNKNOWN OBJECT', 0)
+             end select
           exit
        end if
     end do

@@ -24,6 +24,8 @@ module TheSky_comets
   implicit none
   save
   
+  integer :: currentCometID                 !< ID of the comet currently under consideration
+  
 contains
   
   !*********************************************************************************************************************************

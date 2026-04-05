@@ -329,9 +329,9 @@ module TheSky_cometdata
   integer :: nComets                        !< Actual number of comets in database
   integer :: cometDatFile                   !< Data file to use 1: comets.dat (MANY comets, no magnitude info), 2: comets_mpc.dat (currently visible comets + magn. info)
   logical :: cometDiedAtP(nCometsMax)       !< This comet died at perihelion (true/false)
-  real(double) :: cometelems(nCometsMax,9)  !< Orbital elements of the comets: 1: JD of epoch (often J2000), 2: Perihelion distance (AU?), 3: Eccentricity, 4: Inclination, 5: Argument of perihelion (omega), 6: Longitude of ascending node (OMEGA) i, 7: JD of perihelion
-  real(double) :: comepoche                 !< JD of epoch (often J2000) == cometelems(i,1)
-  character :: cometnames(nCometsMax)*(60)  !< Names of the comets
+  real(double) :: cometElems(nCometsMax,9)  !< Orbital elements of the comets: 1: JD of epoch (often J2000), 2: Perihelion distance (AU?), 3: Eccentricity, 4: Inclination, 5: Argument of perihelion (omega), 6: Longitude of ascending node (OMEGA) i, 7: JD of perihelion
+  real(double) :: comEpoche                 !< JD of epoch (often J2000) == cometelems(i,1)
+  character :: cometNames(nCometsMax)*(60)  !< Names of the comets
   
 end module TheSky_cometdata
 !***********************************************************************************************************************************
